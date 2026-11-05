@@ -1,0 +1,134 @@
+name: Build HyperCool module
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build flashable zip
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Read module version
+        id: ver
+        run: |
+          set -euo pipefail
+          if [ ! -f module.prop ]; then
+            echo "module.prop not found" >&2
+            exit 1
+          fi
+          version=$(sed -n 's/^version=//p' module.prop | head -n1)
+          code=$(sed -n 's/^versionCode=//p' module.prop | head -n1)
+          if [ -z "$version" ]; then
+            echo "Version is empty in module.prop" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "versionCode=$code" >> "$GITHUB_OUTPUT"
+          echo "zip=HyperCool_${version}.zip" >> "$GITHUB_OUTPUT"
+          echo "Building HyperCool $version (code $code)"
+
+      - name: Syntax check shell scripts
+        run: |
+          set -euo pipefail
+          find . -path ./.git -prune -o -name '*.sh' -type f -print0 \
+            | xargs -0 -r -n1 bash -n
+          echo "All shell scripts passed 'bash -n'"
+
+      - name: Build zip
+        env:
+          ZIP: ${{ steps.ver.outputs.zip }}
+        run: |
+          set -euo pipefail
+          python3 - "$ZIP" <<'PY'
+          import os
+          import sys
+          import zipfile
+
+          zip_name = sys.argv[1]
+
+          # Everything a flashable KernelSU/Magisk module needs.
+          required = [
+              "META-INF/com/google/android/update-binary",
+              "META-INF/com/google/android/updater-script",
+              "module.prop",
+          ]
+
+          # Entries packed into the zip. Optional extras are only added when present.
+          entries = ["META-INF", "common", "webroot"]
+          entries += [
+              "module.prop",
+              "customize.sh",
+              "service.sh",
+              "post-fs-data.sh",
+              "uninstall.sh",
+              "action.sh",
+          ]
+          entries += [f for f in ("banner.jpg", "README.md", "LICENSE") if os.path.exists(f)]
+
+          missing = [p for p in entries if not os.path.exists(p)]
+          if missing:
+              sys.exit(f"Missing required path(s): {', '.join(missing)}")
+
+          files = []
+          for entry in entries:
+              if os.path.isdir(entry):
+                  for root, _dirs, names in os.walk(entry):
+                      for name in names:
+                          if name == ".DS_Store":
+                              continue
+                          files.append(os.path.join(root, name))
+              else:
+                  files.append(entry)
+
+          files.sort()
+          with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+              for path in files:
+                  zf.write(path, path.replace(os.sep, "/"))
+
+          with zipfile.ZipFile(zip_name) as zf:
+              packed = zf.namelist()
+              bad = zf.testzip()
+              if bad is not None:
+                  sys.exit(f"Corrupt entry in {zip_name}: {bad}")
+              for entry in required:
+                  if entry not in packed:
+                      sys.exit(f"{entry} is missing from {zip_name}")
+
+          print(f"Packed {len(files)} files into {zip_name}")
+          print("\n".join(sorted(packed)))
+          PY
+
+          echo "== Size =="
+          ls -lh "$ZIP"
+
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: hypercool-module
+          path: ${{ steps.ver.outputs.zip }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" "$ZIP" \
+            --title "HyperCool ${{ steps.ver.outputs.version }}" \
+            --generate-notes
