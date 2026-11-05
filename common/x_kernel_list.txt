@@ -1,0 +1,5 @@
+# HyperCool - extra scheduler/kernel tweaks (path|value). Values HyperCool already sets (printk, schedstats,
+# nmi_watchdog, perf_cpu_time_max_percent, ramdumps, tracing) are not repeated.
+# Shorter CFS latency/granularity values were removed: more preemption = more CPU wake-ups.
+/proc/sys/kernel/sched_migration_cost_ns|5000000
+/proc/sys/kernel/sched_nr_migrate|32

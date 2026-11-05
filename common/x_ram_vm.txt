@@ -1,0 +1,8 @@
+# HyperCool - RAM optimizer VM tweaks (path|value).
+# Dirty ratios are left to vm_tune (lower ratios = more writeback wake-ups);
+# watermark_scale_factor stays stock (a higher value keeps kswapd reclaiming more).
+/proc/sys/vm/vfs_cache_pressure|80
+/proc/sys/vm/oom_dump_tasks|0
+/proc/sys/vm/overcommit_memory|1
+/proc/sys/vm/overcommit_ratio|75
+/proc/sys/vm/watermark_boost_factor|0

@@ -1,0 +1,15 @@
+# HyperCool - dropbox tags disabled by x_log_nuke
+dumpsys:procstats
+dumpsys:usagestats
+procstats
+usagestats
+data_app_wtf
+system_server_wtf
+system_app_strictmode
+system_app_wtf
+system_server_strictmode
+data_app_strictmode
+netstats
+system_server_lowmem
+storage_trim
+SYSTEM_AUDIT

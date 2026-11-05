@@ -1,0 +1,13 @@
+# HyperCool - extra kernel quieting (path|value).
+# What HyperCool's debug_off already covers is not repeated.
+/sys/devices/system/edac/qcom-llcc/log_ce|0
+/sys/devices/system/edac/qcom-llcc/log_ue|0
+/sys/kernel/tracing/events/bpf_trace/bpf_trace_printk/enable|0
+/proc/sys/kernel/printk_ratelimit|5
+/proc/sys/vm/block_dump|0
+/proc/sys/kernel/random/read_wakeup_threshold|256
+/proc/sys/kernel/random/write_wakeup_threshold|320
+/proc/sys/kernel/ftrace_dump_on_oops|0
+/sys/module/qcom_ramdump/parameters/enable_dump_collection|0
+/sys/module/msm_show_resume_irq/parameters/debug_mask|0
+/proc/sys/vm/oom_dump_tasks|0

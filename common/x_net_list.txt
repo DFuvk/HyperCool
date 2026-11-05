@@ -1,0 +1,7 @@
+# HyperCool - network stack tuning (path|value).
+# tcp_syncookies stays enabled (security).
+/proc/sys/net/ipv4/tcp_slow_start_after_idle|0
+/proc/sys/net/ipv4/tcp_no_metrics_save|1
+/proc/sys/net/ipv4/tcp_fastopen|3
+/proc/sys/fs/inotify/max_user_watches|262144
+/proc/sys/fs/inotify/max_user_instances|512

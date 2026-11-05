@@ -1,0 +1,7 @@
+id=hypercool
+name=HyperCool - Heat & Battery Fix
+version=v2.0
+versionCode=200
+author=Yudharn
+banner=banner.jpg
+description=Heat and battery fix for Android - Device: Qualcomm | MediaTek (one-shot at boot, only tiny opt-in keepers). Configure in WebUI, then reboot. Telegram Channel: @ModuleArchives.
