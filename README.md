@@ -22,7 +22,7 @@ small keepers (charge limit, charge hold, screen-off keeper that also serves Kee
 - CPU keeper: keeps the big/little caps and the prime parking in place when the ROM undoes them
 - Disable UI blur
 - Cooler charging (current limit) and charge limit ~80% (Xiaomi)
-- Hold charge at a set level (50-99%, experimental): charging stops at the level and starts again a few % lower. The kernel's own end threshold is used when it has one and checked at the level; if the kernel ignores it, the charger input is cut instead (input_suspend / charging_enabled keeper)
+- Hold charge at a set level (50-99%, experimental): charging stops at the level and starts again a few % lower. The kernel's own end threshold is used when it has one and checked at the level; if the kernel ignores it, the charging is stopped instead (charging_enabled / input_suspend keeper; on Xiaomi qti kernels `qcom-battery/charging_enabled=0` stops the charge current and runs the phone from the charger)
 
 **Battery drain (kernel)**
 - Adaptive screen-off power profile

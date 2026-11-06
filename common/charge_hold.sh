@@ -14,14 +14,16 @@
 #   charge_hold.sh restore             put every node back to the value it had (marker charge_hold.save)
 # Nodes tried, in this order (none is invented: a node that is missing or not writable is skipped):
 #   power_supply/battery/charge_control_end_threshold   (mainline; the kernel does the stopping)
+#   qcom-battery/charging_enabled           0 = cut   1 = normal  (Xiaomi qti: charge current 0, runs from the charger)
+#   power_supply/battery/charging_enabled   0 = cut   1 = normal
 #   power_supply/battery/input_suspend      1 = cut   0 = normal
 #   qcom-battery/input_suspend              1 = cut   0 = normal
-#   power_supply/battery/charging_enabled   0 = cut   1 = normal
 #   power_supply/battery/battery_charging_enabled   0 = cut   1 = normal
 #   qcom-battery/restricted_charging        1 = cut   0 = normal
 #   power_supply/battery/charge_disable     1 = cut   0 = normal
-# A cut node must really stop the charging (status leaves "Charging" within 10 s), otherwise it is put back and the
-# next one is tried. The kernel threshold is checked the first time the level is reached and falls back the same way.
+# A cut node must really stop the charging (status leaves "Charging" within 10 s, or the charge current falls from
+# 0.8 A or more to 0.3 A or less), otherwise it is put back and the next one is tried. The kernel threshold is
+# checked the first time the level is reached and falls back the same way.
 # A failed attempt is retried on the next charge cycle (or after 5 min), not only after a reboot.
 # The input is always let through again: when the level falls to <pct>-<gap>, under 30%, during a battery calibration,
 # when the keeper stops (switch off, module disabled / removed, uninstall) and at every boot.
@@ -60,9 +62,10 @@ usable() {
 }
 cands() {
   echo "threshold|$HC_PS/battery/charge_control_end_threshold|$1|100"
+  echo "suspend|$HC_SYS/class/qcom-battery/charging_enabled|0|1"
+  echo "suspend|$HC_PS/battery/charging_enabled|0|1"
   echo "suspend|$HC_PS/battery/input_suspend|1|0"
   echo "suspend|$HC_SYS/class/qcom-battery/input_suspend|1|0"
-  echo "suspend|$HC_PS/battery/charging_enabled|0|1"
   echo "suspend|$HC_PS/battery/battery_charging_enabled|0|1"
   echo "suspend|$HC_SYS/class/qcom-battery/restricted_charging|1|0"
   echo "suspend|$HC_PS/battery/charge_disable|1|0"
@@ -71,7 +74,11 @@ cands() {
 restore() {
   [ -s "$SAVE" ] || { rm -f "$SAVE"; return 0; }
   while IFS='|' read -r _n _v; do
-    [ -n "$_n" ] && wr "$_n" "$_v"
+    [ -n "$_n" ] || continue
+    wr "$_n" "$_v"
+    # the qti charging_enabled store only writes the real charge current on the second call: the first one
+    # clears restrict_chg_en while the 0 uA cap is still in force, so the battery would stay at 0 uA
+    case "$_n" in */charging_enabled) wr "$_n" "$_v" ;; esac
   done < "$SAVE"
   rm -f "$SAVE"
   return 0
@@ -207,6 +214,9 @@ hold() {
     case " $BADN " in *" $_n "*) continue ;; esac
     usable "$_n" || continue
     _was=$(bstat)
+    _wua=$(cat "$HC_PS/battery/current_now" 2>/dev/null)
+    case "$_wua" in ''|*[!0-9-]*) _wua=0 ;; esac
+    _wua=${_wua#-}
     printf '%s|%s\n' "$_n" "$_rel" > "$SAVE"
     wr "$_n" "$_h" || { rm -f "$SAVE"; BADN="$BADN $_n"; continue; }
     NODE=$_n; HOLD=$_h; REL=$_rel; VERIFIED=no
@@ -214,6 +224,14 @@ hold() {
       _i=0
       while [ "$_i" -lt "$VER" ]; do
         [ "$(bstat)" = Charging ] || { VERIFIED=yes; break; }
+        if [ "$_wua" -ge 800000 ]; then
+          # some kernels keep reporting "Charging" for a moment even when no current flows: also accept a
+          # current that was high before the write and is (almost) gone now
+          _nua=$(cat "$HC_PS/battery/current_now" 2>/dev/null)
+          case "$_nua" in ''|*[!0-9-]*) _nua=999999999 ;; esac
+          _nua=${_nua#-}
+          [ "$_nua" -le 300000 ] && { VERIFIED=yes; break; }
+        fi
         sleep 1; _i=$((_i + 1))
       done
       if [ "$VERIFIED" != yes ]; then

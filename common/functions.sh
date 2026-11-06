@@ -851,7 +851,7 @@ f_charge_hold() {
       fi
       _i=0; while [ "$_i" -lt 5 ] && ! hc_hold_pid >/dev/null; do sleep 1; _i=$((_i + 1)); done
       if _hp=$(hc_hold_pid); then
-        st charge_hold applied "charger input cut at ${_chp}% and let through again at $((_chp - _chg))% (${_chn#/sys/class/}, keeper pid $_hp, checked at every battery level change; the node is tested the first time the limit is reached, see charge_hold.state)"
+        st charge_hold applied "charging stopped at ${_chp}% and let through again at $((_chp - _chg))% (${_chn#/sys/class/}, keeper pid $_hp, checked at every battery level change; the node is tested the first time the limit is reached, see charge_hold.state)"
       else
         st charge_hold failed "keeper did not start"
       fi ;;

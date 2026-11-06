@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.1 (211)
+
+- Fix: Xiaomi qti kernels (qcom-battery, e.g. POCO F5 / marble) do not take the battery input_suspend node reliably and expose no usable power_supply/battery cut node, so Hold charge at a set level kept charging past the level. The keeper now tries qcom-battery/charging_enabled = 0 (charge current 0, the phone runs from the charger) before input_suspend and lets go with 1 twice (this driver only restores the charge current on the second write)
+- Fix: a cut counts as working also when the charge current falls from 0.8 A or more to 0.3 A or less, even if the battery keeps reporting "Charging" for a moment
+
 ## v2.1 (210)
 
 - Fix: Hold charge at a set level did nothing on kernels whose charge_control_end_threshold accepts a write but is ignored: the node was written and trusted, so the phone kept charging. The keeper now checks the first time the level is reached that the charging really stops and, if it does not, puts the node back and cuts the charger input instead
