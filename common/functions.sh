@@ -819,15 +819,28 @@ f_charge_hold() {
     threshold\|*)
       _chn=${_chf#threshold|}; _chs=${_chn#*|}; _chn=${_chn%%|*}
       rm -f "$HC_DATA/charge_hold.state"
-      printf '%s|%s\n' "$_chn" "$(cat "$_chn" 2>/dev/null)" > "$HC_DATA/charge_hold.save"
-      if ! wtry "$_chn" "$_chp"; then
-        rm -f "$HC_DATA/charge_hold.save"; st charge_hold failed "${_chn#/sys/class/} rejected the write"; return
+      # the keeper writes the threshold and checks the first time the level is reached that the kernel really
+      # stops; when the node is ignored it is put back and the charger input is cut instead
+      if command -v nice >/dev/null 2>&1; then
+        nohup nice -n 19 sh "$MODDIR/common/charge_hold.sh" run "$_chp" "$_chg" "$_chn" "$_chs" >/dev/null 2>&1 &
+      else
+        nohup sh "$MODDIR/common/charge_hold.sh" run "$_chp" "$_chg" "$_chn" "$_chs" >/dev/null 2>&1 &
       fi
-      if [ "$_chs" != - ]; then
-        printf '%s|%s\n' "$_chs" "$(cat "$_chs" 2>/dev/null)" >> "$HC_DATA/charge_hold.save"
-        wtry "$_chs" "$((_chp - _chg))" || true
-      fi
-      st charge_hold applied "the kernel stops charging at ${_chp}% (${_chn#/sys/class/}), no keeper; $([ "$_chs" != - ] && echo "charging starts again at $((_chp - _chg))%" || echo "this kernel has no start threshold, so it starts again when the level falls a little")" ;;
+      _i=0; while [ "$_i" -lt 5 ] && ! hc_hold_pid >/dev/null; do sleep 1; _i=$((_i + 1)); done
+      if _hp=$(hc_hold_pid); then
+        st charge_hold applied "the kernel stops charging at ${_chp}% (${_chn#/sys/class/}, checked the first time the level is reached; if it does not stop, the charger input is cut instead); $([ "$_chs" != - ] && echo "charging starts again at $((_chp - _chg))%" || echo "this kernel has no start threshold, so it starts again when the level falls a little") (keeper pid $_hp, see charge_hold.state)"
+      else
+        # no keeper: still ask the kernel, but nothing can check it
+        printf '%s|%s\n' "$_chn" "$(cat "$_chn" 2>/dev/null)" > "$HC_DATA/charge_hold.save"
+        if ! wtry "$_chn" "$_chp"; then
+          rm -f "$HC_DATA/charge_hold.save"; st charge_hold failed "${_chn#/sys/class/} rejected the write"; return
+        fi
+        if [ "$_chs" != - ]; then
+          printf '%s|%s\n' "$_chs" "$(cat "$_chs" 2>/dev/null)" >> "$HC_DATA/charge_hold.save"
+          wtry "$_chs" "$((_chp - _chg))" || true
+        fi
+        st charge_hold applied "the kernel stops charging at ${_chp}% (${_chn#/sys/class/}, written directly: the keeper did not start, so the node is not checked)"
+      fi ;;
     suspend\|*)
       _chn=${_chf#suspend|}; _chn=${_chn%%|*}
       rm -f "$HC_DATA/charge_hold.state"

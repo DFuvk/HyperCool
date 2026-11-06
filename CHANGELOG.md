@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.1 (210)
+
+- Fix: Hold charge at a set level did nothing on kernels whose charge_control_end_threshold accepts a write but is ignored: the node was written and trusted, so the phone kept charging. The keeper now checks the first time the level is reached that the charging really stops and, if it does not, puts the node back and cuts the charger input instead
+- Fix: On kernels where the cut node is charging_enabled / battery_charging_enabled (1 = normal), the value saved to let the charging through again was 0 instead of 1, so the phone could stay "not charging" after the level fell and charging never came back until a reboot
+- Fix: a node (or all of them) that failed the 10 s test is tried again on the next charge cycle and at most 5 min later, instead of staying failed until a reboot
+- New: two more cut nodes where the kernel has them: qcom-battery/restricted_charging and power_supply/battery/charge_disable
+- The bug report lists the charge_hold and bcal_watch keepers too
+
 ## v2.0 (200)
 
 - New: Auto clean app cache every 1 to 7 days (was daily only)
