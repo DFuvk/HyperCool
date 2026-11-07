@@ -1,26 +1,12 @@
 # Changelog
 
-> Current build: **v2.0.1 (201)**. It is v2.0 plus the screen-off keeper fixes. The v2.1 and v2.1.1 changes below
-> are not part of it: this build has no "Hold charge at a set level" (an older version's cut is put back at boot).
+> Current build: **v2.0.1 (201)**. It is v2.0 plus the screen-off keeper fixes.
 
 ## v2.0.1 (201)
 
 - Fix: Keep Wi-Fi on while the screen is off could turn Wi-Fi back on while the screen was on (a screen event replayed at start, or a panel brightness node that stays 0). It now asks the power service and only acts when the screen is really off; the screen-on state clears the intent
 - Fix: Compact background apps counted every compaction as failed because it looked for the wrong output text ("Finished compacting"); Android prints "Finished some compaction for <pid>". The state file now shows the real count
 - Fix: Location and Bluetooth off during long screen-off: `svc bluetooth` no longer exists on Android 13+, so Bluetooth was never switched off. It now uses `cmd bluetooth_manager` first, with `svc bluetooth` as the fallback for older ROMs
-
-## v2.1.1 (211)
-
-- Fix: Xiaomi qti kernels (qcom-battery, e.g. POCO F5 / marble) do not take the battery input_suspend node reliably and expose no usable power_supply/battery cut node, so Hold charge at a set level kept charging past the level. The keeper now tries qcom-battery/charging_enabled = 0 (charge current 0, the phone runs from the charger) before input_suspend and lets go with 1 twice (this driver only restores the charge current on the second write)
-- Fix: a cut counts as working also when the charge current falls from 0.8 A or more to 0.3 A or less, even if the battery keeps reporting "Charging" for a moment
-
-## v2.1 (210)
-
-- Fix: Hold charge at a set level did nothing on kernels whose charge_control_end_threshold accepts a write but is ignored: the node was written and trusted, so the phone kept charging. The keeper now checks the first time the level is reached that the charging really stops and, if it does not, puts the node back and cuts the charger input instead
-- Fix: On kernels where the cut node is charging_enabled / battery_charging_enabled (1 = normal), the value saved to let the charging through again was 0 instead of 1, so the phone could stay "not charging" after the level fell and charging never came back until a reboot
-- Fix: a node (or all of them) that failed the 10 s test is tried again on the next charge cycle and at most 5 min later, instead of staying failed until a reboot
-- New: two more cut nodes where the kernel has them: qcom-battery/restricted_charging and power_supply/battery/charge_disable
-- The bug report lists the charge_hold and bcal_watch keepers too
 
 ## v2.0 (200)
 
