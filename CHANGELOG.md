@@ -18,6 +18,7 @@
 
 ## v2.0 (200)
 
+- Fix: Keep Wi-Fi on while the screen is off could turn Wi-Fi back on while the screen was on (a screen event replayed at start, or a panel brightness node that stays 0). It now asks the power service and only acts when the screen is really off; the screen-on state clears the intent
 - New: Auto clean app cache every 1 to 7 days (was daily only)
 - New: Keep cache of chosen apps (skipped by the auto clean and Clean now; good for games so they do not load shaders again)
 - New: CPU keeper. When a big-core cap, a little-core cap or Park prime core is on, a tiny keeper checks every 30 s (only while the phone is awake) and puts them back if the ROM undid them. It gives up for 10 minutes if the ROM undoes them 5 times in 10 minutes. No new setting

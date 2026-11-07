@@ -135,9 +135,13 @@ wifi_check() {
   [ "$_wn" -lt "$_whold" ] && return 0
   [ "$(wifi_now)" = off ] || return 0
   [ "$(settings get global airplane_mode_on 2>/dev/null)" = 1 ] && return 0
+  # only ever act while the screen is really off: a stale screen event or a panel node that stays 0
+  # while the screen is on must not turn Wi-Fi back on while you are using the phone
+  scr_off_real || return 0
   # let the ROM finish its own change, then look again
   sleep 2
   [ "$(wifi_now)" = off ] || return 0
+  scr_off_real || return 0
   # 3 re-enables in 10 min: the ROM keeps switching it off, pause 5 min
   _wk=""; _wc=0
   for _wt in $_wrec; do
@@ -314,6 +318,8 @@ while :; do
   else
     if [ "$_on" = 0 ]; then
       _on=1
+      # the screen is on: do not keep any intent to turn Wi-Fi back on
+      [ "$WIFI" = 1 ] && _want=off
       # a compaction still running stops with the screen-off period
       job_kill "$_cj"; _cj=""
       job_kill "$_gj"; _gj=""

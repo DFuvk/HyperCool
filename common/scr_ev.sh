@@ -32,6 +32,19 @@ scr_off() {
     dumpsys power 2>/dev/null | grep -qE 'mWakefulness=(Asleep|Dozing)'
   fi
 }
+# The event feed and the panel node can be wrong (an event replayed at start, a node that stays 0
+# while the screen is on): ask the power service too when the screen state decides an action.
+scr_awake() { dumpsys power 2>/dev/null | grep -q 'mWakefulness=Awake'; }
+scr_off_real() {
+  scr_off || return 1
+  if scr_awake; then
+    # the panel node says off while the power service says the screen is on: stop trusting it
+    # (only when the state came from that node, not from a screen event)
+    [ -z "$EV_VAL" ] && [ -n "$SCR_BL" ] && bl_bad
+    return 1
+  fi
+  return 0
+}
 
 EV=0; EV_VAL=""; EV_PID=""; EV_FIFO=""
 ev_stop() {
@@ -55,6 +68,14 @@ ev_start() {
   EV_PID=$!
   echo "$EV_PID" > "$EV_FIFO.pid"
   EV=1
+  # -T 1 replays the last buffered event: it can be from before the keeper started (the screen was
+  # off then), so drop it and take the screen state right now from the power service
+  read -r -t 1 _l <&3 2>/dev/null
+  EV_VAL=""
+  case "$(dumpsys power 2>/dev/null)" in
+    *mWakefulness=Awake*) EV_VAL=1 ;;
+    *mWakefulness=Asleep*|*mWakefulness=Dozing*) EV_VAL=0 ;;
+  esac
 }
 # ev_line <line>: keep the value of a screen_toggled line (anything but 0 = on)
 ev_line() {
