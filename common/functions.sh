@@ -822,7 +822,7 @@ f_cpu_idle() {
     if [ "$(rd "$_s")" = "1" ]; then wn "$_s" 0 && _re=$((_re + 1)); fi
   done
   [ "$HC_OK" = 0 ] && [ "$HC_FAIL" = 0 ] && [ -d /sys/devices/system/cpu/cpu0/cpuidle ] && HC_OK=1
-  fin cpu_idle "deep idle states verified, $_re re-enabled"
+  fin cpu_idle "deep idle states checked: all on ($_re re-enabled)"
 }
 
 f_ufs_pm() {
@@ -1018,7 +1018,8 @@ apply_pkgs() {
     if ! pkg_installed "$_p"; then _miss=$((_miss + 1)); continue; fi
     if has_rec "$_feat" pkg - "$_p"; then
       pkg_disabled "$_p" || pm disable-user --user 0 "$_p" </dev/null >/dev/null 2>&1
-      _already=$((_already + 1)); cnt_ok; continue
+      if pkg_disabled "$_p"; then _already=$((_already + 1)); cnt_ok; else cnt_fail; log "  $_feat: $_p could not be disabled again"; fi
+      continue
     fi
     if pkg_disabled "$_p"; then _already=$((_already + 1)); cnt_ok; continue; fi
     if pm disable-user --user 0 "$_p" </dev/null >/dev/null 2>&1; then
@@ -1078,7 +1079,10 @@ f_protect_apps() {
     # 4) keep in the ACTIVE standby bucket for this boot
     am set-inactive "$_p" false </dev/null >/dev/null 2>&1
     am set-standby-bucket "$_p" active </dev/null >/dev/null 2>&1
-    _n=$((_n + 1)); cnt_ok
+    case "$(cmd appops get "$_p" RUN_ANY_IN_BACKGROUND </dev/null 2>/dev/null)" in
+      *allow*) _n=$((_n + 1)); cnt_ok ;;
+      *) cnt_fail; log "  protect_apps: $_p background permission not confirmed" ;;
+    esac
   done
   _d="$_n protected (Doze whitelist + background + autostart $_as), $_miss not installed"
   fin protect_apps "$_d" "$_d"
@@ -1192,7 +1196,10 @@ f_bg_block() {
     am set-standby-bucket "$_p" "$_b" </dev/null >/dev/null 2>&1 && recv bg_block bucket - "$_p" "$_ob"
     # 5) stop it now: stays stopped (no alarms/jobs/broadcasts) until opened
     am force-stop "$_p" </dev/null >/dev/null 2>&1
-    _n=$((_n + 1)); cnt_ok
+    case "$(cmd appops get "$_p" RUN_ANY_IN_BACKGROUND </dev/null 2>/dev/null)" in
+      *ignore*|*deny*) _n=$((_n + 1)); cnt_ok ;;
+      *) cnt_fail; log "  bg_block: $_p background block not confirmed" ;;
+    esac
   done
   _d="$_n apps blocked in background, $_sk protected skipped, $_miss not installed"
   fin bg_block "$_d" "$_d"
@@ -1287,8 +1294,12 @@ f_gms_doze_verify() {
   if echo "$_wlo" | grep -q "^user,$_g,"; then
     dumpsys deviceidle whitelist -"$_g" </dev/null >/dev/null 2>&1 && rec gms_doze uwl - "$_g"
   fi
-  if dumpsys deviceidle whitelist </dev/null 2>/dev/null | grep -q "^system,$_g,"; then
+  _wl2=$(dumpsys deviceidle whitelist </dev/null 2>/dev/null)
+  if echo "$_wl2" | grep -q "^system,$_g,"; then
     _rt=no
+  elif [ -z "$_wl2" ]; then
+    # Doze service did not answer: fall back to Android's own saved record
+    if hc_gms_unwl || has_rec gms_doze syswl - "$_g"; then _rt=yes; else _rt=no; fi
   else
     _rt=yes
   fi
@@ -1365,7 +1376,7 @@ f_tracking_off() {
     set_s tracking_off global "$_k" 0
   done
   set_s tracking_off global limit_ad_tracking 1
-  fin tracking_off "telemetry/upload switches off"
+  fin tracking_off "telemetry/upload switches written (only apps and ROM parts that read them react)"
 }
 
 # Fixed list: Xiaomi analytics / ad services and preinstalled Facebook stubs only
@@ -1506,6 +1517,8 @@ f_smart_px() {
   fi
   [ "$_h" = 2 ] && _d="$_d (could not check the ROM; works only if it has Smart Pixels)"
   fin smart_px "$_d"
+  # the setting is written, but without Smart Pixels in the ROM it does nothing
+  [ "$_h" = 2 ] && sed -i 's/^smart_px=applied|/smart_px=partial|/' "${HC_STATUS_OUT:-$HC_STATUS}"
 }
 
 # hc_near <hz> <mode>... : the mode closest to hz
@@ -1568,6 +1581,8 @@ f_rr_adapt() {
     _rd="$_rd, touch-only keeper did not start ($(cat "$HC_DATA/rr_watch.state" 2>/dev/null || echo "no getevent")), Android decides instead"
   fi
   fin rr_adapt "$_rd$([ "${_rp:-0}" -gt 0 ] && echo ", touch timer 500 ms, idle timer 1 s")${_ml:+ (panel modes: $_ml)}"
+  # the touch-only part is the point of this feature: without the keeper only the rate range is set
+  if [ -z "$(hc_rr_pid)" ]; then sed -i 's/^rr_adapt=applied|/rr_adapt=partial|/' "${HC_STATUS_OUT:-$HC_STATUS}"; fi
 }
 
 f_refresh_rate() {

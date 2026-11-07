@@ -1,7 +1,7 @@
 id=hypercool
 name=HyperCool - Heat & Battery Fix
-version=v2.0.1
-versionCode=201
+version=v2.1
+versionCode=210
 author=Yudharn
 banner=banner.jpg
 updateJson=https://raw.githubusercontent.com/yudharn/HyperCool/master/update.json

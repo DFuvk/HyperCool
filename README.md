@@ -92,7 +92,7 @@ Turning a feature off puts the original value back. Unsupported features are ski
 - Power Saver Pro by @ShastikXD & @TempMeow (some code by @kveld9)
 - Hyper Optimize by Tatsh
 - Xtreme Battery Saver (DethByte64), Universal GMS Doze, sysconfig-patcher
-- Specter for the WebUI style
+- Specter by @dpejoh1 for the WebUI style, the Appearance settings (dark theme, dynamic colors) and the dynamic color method
 
 ## Support
 - SociaBuzz: https://sociabuzz.com/yudharn
@@ -112,6 +112,18 @@ Modified versions must stay GPL-3.0, keep the source open and keep this copyrigh
 Google Sans font: SIL Open Font License (`webroot/GoogleSans-OFL.txt`).
 
 ## Changelog
+
+**v2.1**
+- New: WebUI redesign: dark violet palette, separate rounded cards, flat top bar, floating bottom navigation with a tonal active tab
+- New: Appearance in Tools: Dark theme (Standard, AMOLED, Light, Follow system) and Colors (System Dynamic from the wallpaper, HyperCool Violet, 9 color presets)
+- Changed: the HyperCool title in the header keeps its color gradient, as in v2.0.1
+- New: Experimental features are collected in a red "Experimental" zone at the bottom of their page (red title, red icons and switches)
+- Changed: the labels KERNEL, SYSTEM, XIAOMI, SAFE, MODERATE, EXPERIMENTAL and the status labels (Applied, Partial, Failed) are now soft tonal pills instead of bright outlines
+- Fixed: false "Applied" status. Protected apps and Block background apps now check that the background permission really changed; Debloat, Disable apps and Joyose count an app only if it is really disabled; GMS Doze, Smart Pixels and Adaptive refresh rate show Partial or Failed when they could not be confirmed; log and debug props show Failed when no prop was accepted
+- Changed: Quick presets Max battery and Cool gaming now also switch on auto F2FS GC, auto dex2oat and runtime power (Max battery also fewer background jobs and Location/Bluetooth off during long screen-off). Keep Wi-Fi on, Charge limit, Adaptive refresh rate, ZRAM, Multitasking and Compact background apps are left as you set them when a preset does not mention them
+- New: Appearance > Blur toolbar (on by default): frosted glass effect on the header and the bottom bar
+- Changed: the header has rounded bottom corners, and the bottom bar no longer has an outline
+- Banner unchanged
 
 **v2.0.1**
 - Fix: Keep Wi-Fi on while the screen is off no longer turns Wi-Fi back on while the screen is on (a screen event replayed at start, or a panel brightness node that stays 0). It only acts when the power service says the screen is really off

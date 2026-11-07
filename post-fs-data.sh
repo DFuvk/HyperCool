@@ -78,8 +78,11 @@ fi
 
 # ---------- Reduce logging (non-persistent, gone when turned off) ----------
 if on log_reduce; then
-  resetprop -n log.tag W
-  st log_reduce applied "only Warning+ logs written"
+  if resetprop -n log.tag W 2>/dev/null; then
+    st log_reduce applied "only Warning+ logs written"
+  else
+    st log_reduce failed "resetprop not available or refused log.tag"
+  fi
 else
   st log_reduce off
 fi
@@ -87,7 +90,8 @@ fi
 # ---------- Debug / ramdump / trace props (runtime only, never persisted) ----------
 if on debug_props; then
   _c=$(hc_props "$HC_DEBUG_PROPS")
-  st debug_props applied "$_c debug/trace props set for this boot"
+  if [ "${_c:-0}" -gt 0 ]; then st debug_props applied "$_c debug/trace props set for this boot"
+  else st debug_props failed "no prop accepted (resetprop missing or refused)"; fi
 else
   st debug_props off
 fi
@@ -95,7 +99,8 @@ fi
 # ---------- Extra logging props (runtime only) ----------
 if on x_props; then
   _c=$(apply_props_file "$MODDIR/common/x_props.txt")
-  st x_props applied "$_c extra logging props set for this boot"
+  if [ "${_c:-0}" -gt 0 ]; then st x_props applied "$_c extra logging props set for this boot"
+  else st x_props failed "no prop accepted (resetprop missing or refused)"; fi
 else
   st x_props off
 fi

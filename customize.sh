@@ -93,6 +93,7 @@ set_perm "$MODPATH/common/restore.sh" 0 0 0755
 set_perm "$MODPATH/common/charge_cal.sh" 0 0 0755
 set_perm "$MODPATH/common/chg_watch.sh" 0 0 0755
 set_perm "$MODPATH/common/soff_watch.sh" 0 0 0755
+set_perm "$MODPATH/common/monet.sh" 0 0 0755
 set_perm "$MODPATH/common/cache_clean.sh" 0 0 0755
 set_perm "$MODPATH/common/cpu_watch.sh" 0 0 0755
 set_perm "$MODPATH/common/dexopt.sh" 0 0 0755

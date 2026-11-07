@@ -274,8 +274,8 @@ f_x_gms_freeze() {
     if ! pkg_installed "$_pk"; then _miss=$((_miss + 1)); continue; fi
     if pkg_disabled "$_pk"; then _alr=$((_alr + 1)); continue; fi
     if has_rec x_gms_freeze pkg - "$_c"; then
-      pm disable --user 0 "$_c" </dev/null >/dev/null 2>&1
-      _alr=$((_alr + 1)); cnt_ok; continue
+      if pm disable --user 0 "$_c" </dev/null >/dev/null 2>&1; then _alr=$((_alr + 1)); cnt_ok; else _miss=$((_miss + 1)); fi
+      continue
     fi
     if grep -qx " *${_c#*/}" "$_dcf" 2>/dev/null; then _alr=$((_alr + 1)); cnt_ok; continue; fi
     if pm disable --user 0 "$_c" </dev/null >/dev/null 2>&1; then
@@ -380,8 +380,7 @@ f_x_diag() {
     esac
   done
   setprop debug.sys.looper_stats_enabled false 2>/dev/null
-  cmd looper_stats disable </dev/null >/dev/null 2>&1
-  cnt_ok
+  if cmd looper_stats disable </dev/null >/dev/null 2>&1; then cnt_ok; fi
   set_s x_diag system anr_debugging_mechanism 0
   set_s x_diag system send_security_reports 0
   # props only where the ROM already exposes them
