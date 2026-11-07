@@ -1,7 +1,5 @@
 # HyperCool - Heat & Battery Fix
 
-By Yudharn
-
 ![HyperCool](banner.jpg)
 
 KernelSU / Magisk module for Qualcomm and MediaTek phones. Less heat, less battery drain, longer battery life.
