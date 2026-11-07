@@ -307,7 +307,7 @@ textarea:disabled{opacity:.45}
     </div>
 
     <div class="ccard bcheck">
-      <div class="cbig">Top battery use</div><div class="clbl">Which apps and system parts used the most battery since the last charge, user apps and system apps (read only)</div>
+      <div class="cbig">Top battery use</div><div class="clbl">Apps, system apps and hardware that used the most battery since the last charge (read only)</div>
       <button class="btn fill" id="td-run">Show top battery use</button>
     </div>
 
@@ -564,11 +564,6 @@ textarea:disabled{opacity:.45}
     { k: 'charge_limit', s: 'heat', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0', only: 'XIAOMI',
       t: 'Charge limit ~80% (night charging)',
       d: 'Stops charging around 80% with Xiaomi night_charging. A small keeper sets it again after every replug (every 15 s, no wakelock). Xiaomi kernels only.' },
-    { k: 'charge_hold', s: 'heat', src: 'kernel', risk: 'exp', type: 'toggle', def: '0',
-      t: 'Hold charge at a set level',
-      d: 'Stops charging when the battery reaches the level you set and lets it charge again a few % lower, so it stays near that level on the charger. Uses the first charge-control node that works on your kernel; skipped if none does. If Charge limit ~80% is also on, whichever level is lower stops first. Charging is always let through again when you switch it off, when the module is disabled and at every boot.',
-      fields: [{ k: 'charge_hold_pct', label: 'Stop charging at', def: '80', min: 50, max: 99, unit: '%' },
-               { k: 'charge_hold_gap', label: 'Charge again when it falls by', def: '3', min: 1, max: 15, unit: '%' }] },
 
     // ---- kernel drain
     { k: 'soff_prof', s: 'kdrain', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
@@ -798,8 +793,8 @@ textarea:disabled{opacity:.45}
                { k: 'f2fs_gc_notify', label: 'Notification with the result', def: '1', bool: true }] },
     { k: 'x_dexopt_auto', s: 'xstore', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Auto optimize apps (dex2oat)',
-      d: 'Once a week, after the screen has been off 10 minutes, compiles apps in the background (mode of your choice, speed-profile by default; one at a time, no force recompile, so apps that are already optimized are skipped). No charger needed, but without one the battery must be at least 40%. Starts under 40\u00b0C, stops at 45\u00b0C, under 15% battery or when the screen turns on. Uses some battery and heat while it runs.',
-      fields: [{ k: 'x_dexopt_mode', label: 'Mode', def: '1', sel: [['1', 'Speed-profile (recommended, light)'], ['2', 'Speed (full, more storage and time)'], ['3', 'Everything (heaviest, most storage)']] },
+      d: 'Compiles apps in the background once a week, after the screen has been off 10 minutes. One app at a time, never forced, so apps already optimized are skipped. Starts under 40\u00b0C and on the charger or at 40% battery or more. Stops at 45\u00b0C, under 15% battery or when the screen turns on. Uses some battery and heat while it runs.',
+      fields: [{ k: 'x_dexopt_mode', label: 'Compile mode', def: '1', sel: [['1', 'Speed-profile (recommended, light)'], ['2', 'Speed (more storage and time)'], ['3', 'Everything (heaviest, most storage)']] },
                { k: 'x_dexopt_notify', label: 'Notification with the result', def: '1', bool: true }] },
     { k: 'x_kpower', s: 'xpower', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Kernel power-saving switches',
@@ -830,7 +825,6 @@ textarea:disabled{opacity:.45}
  "blur_off": "settings global disable_window_blurs = 1 (restored when off)|cmd window disable-blur 1|runtime props (Xiaomi ROMs): ro.miui.has_real_blur, ro.miui.has_blur, ro.miui.backdrop_sampling_enabled, persist.sys.background_blur_supported, persist.sysui.miui_blur_enabled, ro.surface_flinger.supports_background_blur, ro.sf.blurs_are_expensive, disableBlurs, enable_blurs_on_windows",
  "charge_cool": "power_supply/battery/charge_control_limit = charger thermal level|level = the one you pick in 'Charger level', else from the mA value using your Calibrate table, else a device-tree table, else an estimate|value read back after 2 s|Calibrate (manual, ~5 min while charging) steps every level, measures current_now and restores the original level",
  "charge_limit": "qcom-battery/night_charging = 1 (or power_supply/battery/night_charging)|keeper common/chg_watch.sh: every 15 s, if a charger is online and the flag is 0, writes 1 again|keeper stops when the switch is off (next boot), the module is disabled or removed|uninstall: keeper stopped, flag set back to 0",
- "charge_hold": "node (first one that exists, holds a number and accepts a write): power_supply/battery/charge_control_end_threshold (the kernel stops by itself, also charge_control_start_threshold when present); the keeper checks the first time the level is reached that the charging really stops and, when the kernel ignores the node, puts it back and cuts the charger input instead|else a keeper common/charge_hold.sh: qcom-battery/charging_enabled = 0 (Xiaomi qti: charge current 0, the phone runs from the charger), power_supply/battery/charging_enabled = 0, power_supply/battery/input_suspend = 1, qcom-battery/input_suspend = 1, battery_charging_enabled = 0, qcom-battery/restricted_charging = 1 or power_supply/battery/charge_disable = 1 cuts the charger input; the same node back to 0 / 1 lets it through|cut: a charger is online (or status Charging) and the level is at charge_hold_pct; it must really work: status has to leave Charging within 10 s (or the charge current has to fall from 0.8 A or more to 0.3 A or less), otherwise the node is put back and the next one is tried|retry: a node that failed (or all of them) is tried again on the next charge cycle and at most 5 min later, no reboot needed; if none works the state says failed= (charge_hold.state)|let through again: level at or under pct minus charge_hold_gap, under 30%, level unreadable, during a battery calibration, keeper stopped (switch off, module disabled or removed, uninstall), every boot (marker charge_hold.save)|checked at every battery_level event (logcat events, the phone is awake then), else every 10-30 s; state in charge_hold.state|the Android battery shows not charging while it holds, even with the charger plugged in",
  "soff_prof": "keeper common/soff_watch.sh: screen state from Android's screen_toggled events (logcat events buffer; off = not interactive, AOD counts as off), sleeps until the next event (wakes at most once a minute while the CPU is awake); without events it polls /sys/class/backlight/*/brightness (or leds/lcd-backlight) every 2-3 s, or dumpsys power every 10 s when there is no backlight node|screen off: policy*/scaling_max_freq of every non-little cluster = the % above (never raised), kgsl max_pwrlevel = min_pwrlevel or Mali devfreq max_freq = lowest|boosts: /proc/sys/walt/sched_boost = 0, policy*/walt/pl = 0, MediaTek fpsgo force_onoff = 0, touch boost 0 (when Disable kernel touch boost is off)|screen on: every saved value written back (locks kept)|keeper stops (and restores) when the switch is off, the module is disabled or removed",
  "wifi_keep": "keeper common/soff_watch.sh (shared with the screen-off profile, started when either is on): the Wi-Fi state is read once when the screen turns off (cmd wifi status) and is what you want|ip monitor link (a small child of the keeper, no CPU while idle) wakes the keeper when wlan changes; plus the 60 s timer (does not run in suspend)|while the screen is off, on every such wake-up (at most one check per 2 s; per 60 s without screen events): if you wanted it on, it is off now and still off 2 s later and airplane mode is off: svc wifi enable|3 re-enables within 10 min = the ROM keeps switching it off: pause 5 min|screen on: nothing is touched|no setting is changed, nothing to restore", "cpu_idle": "qcom_lpm sleep_disabled = N, lpm_levels sleep_disabled = 0|cpu*/cpuidle/state*/disable = 0 (only states that were disabled)",
  "f2fs_gc": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/f2gc.sh|device: /sys/fs/f2fs/<dev> of the F2FS mounted on /data (dev.mnt.blk.data, /proc/mounts), needs gc_urgent and unusable|start: screen off 10 min, last run at least 7 days ago, not paused, gc_urgent is 0, unusable (4 KB blocks) >= f2fs_gc_gb GB, battery temp under f2fs_gc_temp minus 5 C (35-45 C, default 40 C), and charging or at least 30% battery; battery low or too warm: looked at again every 5 min for 1 h, once per screen-off period|run: echo 1 > gc_urgent (default pace), a wake lock hypercool_gc that also expires by itself, checked every 10 s; stops when unusable is at or under min(1 GB, trigger/4), after 420 s, under 20% battery (not charging), at f2fs_gc_temp C (41-50, default 45), or when the screen turns on; then echo 0 > gc_urgent|fstrim /data after a finished run when f2fs_gc_trim is on, at most every 7 days|f2fs_gc_notify: after each run a notification (cmd notification post as the shell user, tag hc_f2gc) with the reclaimable space before and after and the time; also when the run was stopped|two finished runs in a row that cut unusable by less than 1% pause it for 7 days; state in f2fs_gc.state and f2fs_gc.meta; leftovers (gc_urgent, wake lock) are put back at boot, when the keeper stops and on uninstall",
@@ -1104,7 +1098,7 @@ textarea:disabled{opacity:.45}
   }
   var F_ICON = {
     cpu_cap: 'cpu', prime_park: 'park', gpu_cap: 'gpu', gpu_idle: 'power', walt_tune: 'gauge', input_boost_off: 'touch',
-    bg_cpuset: 'layers', blur_off: 'blur', charge_cool: 'bolt', charge_limit: 'batt80', charge_hold: 'batt80', cpu_idle: 'moon', soff_prof: 'moon', wifi_keep: 'signal', soff_radio: 'bed', f2fs_gc: 'disk', x_dexopt_auto: 'disk', ufs_pm: 'disk',
+    bg_cpuset: 'layers', blur_off: 'blur', charge_cool: 'bolt', charge_limit: 'batt80', cpu_idle: 'moon', soff_prof: 'moon', wifi_keep: 'signal', soff_radio: 'bed', f2fs_gc: 'disk', x_dexopt_auto: 'disk', ufs_pm: 'disk',
     vm_tune: 'mem', io_tune: 'pulse', debug_off: 'bug', debug_props: 'term', wakelock_block: 'lock', protect_apps: 'shield',
     app_bucket: 'apps', bg_block: 'ban', app_disable: 'warn', app_freezer: 'snow', doze_aggr: 'bed', devcfg_lock: 'sync', gms_doze: 'gms', scan_off: 'wifioff', loc_throttle: 'pulse',
     net_save: 'signal', standby: 'hour', stats_reduce: 'chart', tracking_off: 'eyeoff', debloat: 'trash', joyose_off: 'game',
@@ -1733,7 +1727,7 @@ textarea:disabled{opacity:.45}
   /* ------------------------------------------------------------ io */
   var ORDER = [
     ['Heat control (kernel)', ['cpu_cap', 'cpu_cap_lock', 'cpu_cap_little', 'cpu_cap_little_lock', 'prime_park', 'gpu_cap', 'gpu_cap_lock', 'gpu_idle', 'gpu_idle_timer', 'gpu_throttle', 'walt_tune', 'walt_hispeed_load',
-      'walt_up_rate', 'walt_sched_boost_off', 'walt_task_util', 'input_boost_off', 'bg_cpuset', 'bg_uclamp', 'bg_daemons', 'blur_off', 'charge_cool', 'charge_cool_level', 'charge_limit', 'charge_hold', 'charge_hold_pct', 'charge_hold_gap']],
+      'walt_up_rate', 'walt_sched_boost_off', 'walt_task_util', 'input_boost_off', 'bg_cpuset', 'bg_uclamp', 'bg_daemons', 'blur_off', 'charge_cool', 'charge_cool_level', 'charge_limit']],
     ['Battery drain (kernel)', ['soff_prof', 'soff_cpu', 'soff_gpu', 'soff_boost', 'wifi_keep', 'soff_radio', 'soff_radio_min', 'soff_radio_bt', 'cpu_idle', 'ufs_pm', 'vm_tune', 'vm_writeback', 'vm_stat_interval', 'vm_dirty_bg', 'vm_dirty', 'io_tune', 'debug_off',
       'debug_props', 'wakelock_block', 'wl_list']],
     ['Protected apps', ['protect_apps', 'protect_pkgs', 'app_bucket', 'bg_block', 'bg_block_pkgs', 'app_disable', 'app_disable_pkgs']],
@@ -2188,6 +2182,15 @@ textarea:disabled{opacity:.45}
   /* ------------------------------------------------------------ top battery use */
   var TD_KIND = { app: 'User app', system: 'System app', core: 'System service', hw: 'Hardware' };
   var td = { rows: [], unit: 'mAh', filter: 'all', src: '', since: '', total: 0 };
+  var TD_HW = { cpu: 'CPU', screen: 'Screen', wifi: 'Wi-Fi', mobile_radio: 'Mobile network', bluetooth: 'Bluetooth', camera: 'Camera', audio: 'Audio',
+    video: 'Video', flashlight: 'Flashlight', gnss: 'GPS (GNSS)', sensors: 'Sensors', wakelock: 'Wake locks', memory: 'Memory', phone: 'Phone calls',
+    ambient_display: 'Always-on display', idle: 'Idle (device awake, nothing running)', custom: 'Other' };
+  function tdHw(n) {
+    var k = String(n).toLowerCase().replace(/ /g, '_');
+    if (TD_HW[k]) return TD_HW[k];
+    n = String(n).replace(/_/g, ' ');
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  }
   function tdFmt(v) {
     if (td.unit === 's') {
       v = Math.round(+v);
@@ -2205,11 +2208,11 @@ textarea:disabled{opacity:.45}
     }).join('') + '</div>';
     if (td.src === 'wake') h += '<div class="hint" style="margin-bottom:8px">This ROM has no power estimate, so the list shows how long each app held the CPU awake (wake locks), not mAh.</div>';
     h += rows.length ? rows.map(function (r, i) {
-      return '<div class="tdr"><div class="t1"><span>' + (i + 1) + '. ' + esc(r.name) + '</span><span>' + esc(tdFmt(r.val)) + ' \u00b7 ' + esc(r.pct) + '%</span></div>' +
+      return '<div class="tdr"><div class="t1"><span>' + (i + 1) + '. ' + esc(r.kind === 'hw' ? tdHw(r.name) : r.name) + '</span><span>' + esc(tdFmt(r.val)) + ' \u00b7 ' + esc(r.pct) + '%</span></div>' +
         '<div class="t2">' + esc(TD_KIND[r.kind] || r.kind) + (r.uid && r.uid !== '-' ? ' \u00b7 uid ' + esc(r.uid) : '') + '</div>' +
         '<i style="width:' + Math.max(2, Math.round(+r.val / max * 100)) + '%"></i></div>';
-    }).join('') : '<div class="hint">Nothing in this group.</div>';
-    h += '<div class="hint">' + esc(td.since || 'Since the last charge') + '. Percent is the share of everything listed (hardware included). Numbers come from Android\u2019s own battery stats; apps in one shared uid show as the first package +N.</div>';
+    }).join('') : '<div class="hint">Nothing in this group.' + (td.src === 'power' && f !== 'hw' && !td.rows.some(function (r) { return r.kind !== 'hw'; }) ? ' Android printed no per-app rows on this ROM; send the bug report (it includes the raw dump).' : '') + '</div>';
+    h += '<div class="hint">' + esc(td.since || 'Since the last charge') + '. Percent is the share of the estimated total drain; hardware rows already include the apps\u2019 part of it. Numbers come from Android\u2019s own battery stats; apps in one shared uid show as the first package +N.</div>';
     return h;
   }
   function runTop() {
@@ -2347,7 +2350,7 @@ textarea:disabled{opacity:.45}
       ' echo "kernel=$(uname -r)"; echo "root=$( [ -x /data/adb/ksud ] && /data/adb/ksud -V; magisk -c 2>/dev/null; [ -x /data/adb/apd ] && echo APatch)";' +
       ' echo "== module"; cat $M/module.prop; for x in disable remove update; do [ -e $M/$x ] && echo "flag: $x"; done; echo "last boot: $(cat $D/last_boot 2>/dev/null)";' +
       ' echo "== status"; cat $D/status.conf;' +
-      ' echo "== keepers"; for k in soff_watch chg_watch charge_hold cache_keeper rr_watch cpu_watch bcal_watch; do p=$(cat $D/$k.pid 2>/dev/null); [ -n "$p" ] && echo "$k pid=$p $( [ -d /proc/$p ] && echo running || echo stopped)"; done; cat $D/soff_watch.state $D/rr_watch.state $D/compact.state $D/soff_radio.save $D/f2fs_gc.state $D/f2fs_gc.meta $D/f2fs_gc.save $D/dexopt_auto.meta $D/dexopt_auto.run $D/charge_hold.state $D/charge_hold.save $D/boot_tries $D/safe_mode 2>/dev/null; echo "== top battery use"; sh $M/common/topdrain.sh 10 2>&1 | head -n 16; echo "== job limit"; dumpsys jobscheduler 2>/dev/null | grep -E "^ *(min_ready_cpu_only_jobs_count|min_ready_non_active_jobs_count|max_cpu_only_job_batch_delay_ms|max_non_active_job_batch_delay_ms|conn_max_connectivity_job_batch_delay_ms)=";' +
+      ' echo "== keepers"; for k in soff_watch chg_watch cache_keeper rr_watch cpu_watch; do p=$(cat $D/$k.pid 2>/dev/null); [ -n "$p" ] && echo "$k pid=$p $( [ -d /proc/$p ] && echo running || echo stopped)"; done; cat $D/soff_watch.state $D/rr_watch.state $D/compact.state $D/soff_radio.save $D/f2fs_gc.state $D/f2fs_gc.meta $D/f2fs_gc.save $D/dexopt_auto.meta $D/dexopt_auto.run $D/boot_tries $D/safe_mode 2>/dev/null; echo "== top battery use"; sh $M/common/topdrain.sh 10 2>&1 | head -n 16; echo "== top battery use, raw dump"; sh $M/common/topdrain.sh raw 2>&1 | head -n 70; echo "== job limit"; dumpsys jobscheduler 2>/dev/null | grep -E "^ *(min_ready_cpu_only_jobs_count|min_ready_non_active_jobs_count|max_cpu_only_job_batch_delay_ms|max_non_active_job_batch_delay_ms|conn_max_connectivity_job_batch_delay_ms)=";' +
       ' echo "== config"; cat $D/config.conf;' +
       ' echo "== battery"; dumpsys battery 2>/dev/null;' +
       ' echo "== cache keep log"; cat $D/cache_keep.log 2>/dev/null;' +

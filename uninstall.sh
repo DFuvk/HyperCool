@@ -42,10 +42,6 @@ if [ -f "$HC_DATA/dexopt_auto.run" ]; then
   # shellcheck source=/dev/null
   [ -f "${0%/*}/common/dxauto.sh" ] && MODDIR=${0%/*} . "${0%/*}/common/dxauto.sh" && dxa_stop uninstall
 fi
-# stop the charge-hold keeper (it lets the charger input through again) and put the nodes back
-_hp=$(cat "$HC_DATA/charge_hold.pid" 2>/dev/null)
-case "$_hp" in ''|*[!0-9]*) ;; *) grep -q charge_hold "/proc/$_hp/cmdline" 2>/dev/null && kill "$_hp" 2>/dev/null ;; esac
-[ -f "${0%/*}/common/charge_hold.sh" ] && sh "${0%/*}/common/charge_hold.sh" restore
 # stop the battery calibration keeper
 _bq=$(cat "$HC_DATA/bcal_watch.pid" 2>/dev/null)
 case "$_bq" in ''|*[!0-9]*) ;; *) grep -q bcal_watch "/proc/$_bq/cmdline" 2>/dev/null && kill "$_bq" 2>/dev/null ;; esac

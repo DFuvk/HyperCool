@@ -65,7 +65,7 @@ f_bg_cpuset
 f_blur_off_verify
 f_charge_cool
 f_charge_limit
-f_charge_hold
+f_charge_hold_gone
 
 # ---------- kernel: drain ----------
 f_cpu_idle
@@ -167,7 +167,7 @@ _f=$(grep -c '=failed|' "$HC_STATUS")
 _o=$(grep -c '=off|' "$HC_STATUS")
 log "done: $_a applied, $_p partial, $_s skipped, $_f failed, $_o off"
 
-_desc="Heat and battery fix for Android - $(hc_soc_label) (one-shot at boot$({ on charge_limit || on charge_hold; } && echo ", charge keeper running")$({ on soff_prof || on wifi_keep || on x_compact || on soff_radio || on f2fs_gc || on x_dexopt_auto; } && echo ", screen-off keeper running")). Last boot: $_a applied, $_p partial, $_s unsupported, $_f failed, $_o off. Configure in WebUI. Telegram Channel: @ModuleArchives."
+_desc="Heat and battery fix for Android - $(hc_soc_label) (one-shot at boot$(on charge_limit && echo ", charge-limit keeper running")$({ on soff_prof || on wifi_keep || on x_compact || on soff_radio || on f2fs_gc || on x_dexopt_auto; } && echo ", screen-off keeper running")). Last boot: $_a applied, $_p partial, $_s unsupported, $_f failed, $_o off. Configure in WebUI. Telegram Channel: @ModuleArchives."
 sed -i "s#^description=.*#description=$_desc#" "$MODDIR/module.prop"
 
 # ---------- boot notification ----------

@@ -3,6 +3,7 @@
 # Copyright (C) 2026 Yudharn
 # HyperCool - top battery users (read-only, runs only when the WebUI asks)
 #   topdrain.sh [N]   N = rows (default 25)
+#   topdrain.sh raw   the power sections of the dump as printed (bug report)
 # Reads `dumpsys batterystats`: "Estimated power use (mAh)" (user apps, system apps, system uids, hardware).
 # No power section on this ROM: falls back to the partial wake lock times. Nothing is written.
 # Output (one item per line):
@@ -11,6 +12,7 @@
 #   diag=<line>            only with src=none
 export PATH=/system/bin:/system/xbin:/vendor/bin:/data/adb/ksu/bin:/data/adb/magisk:"$PATH"
 
+RAW=0; [ "$1" = raw ] && { RAW=1; set -- 25; }
 N=${1:-25}
 case "$N" in ''|*[!0-9]*) N=25 ;; esac
 [ "$N" -ge 5 ] && [ "$N" -le 60 ] || N=25
@@ -35,6 +37,11 @@ pkgmap | tr -d '\r' > "$W/map"
 
 $TMO dumpsys batterystats 2>/dev/null | tr -d '\r' > "$W/dump"
 [ -s "$W/dump" ] || { echo "src=none"; echo "diag=dumpsys batterystats printed nothing"; exit 0; }
+# raw: the first lines of every power section as the ROM prints them (for the bug report)
+if [ "$RAW" = 1 ]; then
+  grep -n -A40 'Estimated power use' "$W/dump" | head -n 130
+  exit 0
+fi
 
 # shared awk part: Android uid text -> numeric uid, then label / kind
 cat > "$W/lib.awk" <<'EOF'
@@ -81,6 +88,13 @@ function lab(uid, u,   app) {
 EOF
 
 # ---------------------------------------------------------------- 1: estimated power use
+# Android 14+ (BatteryUsageStats.dump):   Estimated power use (mAh):
+#                                           Capacity: 5000, Computed drain: 403, actual drain: 0-0
+#                                           Global
+#                                             cpu: 101.0 apps: 100.0 duration: ...
+#                                           UID u0a147: 25.2 fg: ... ( cpu=... )
+# Older Android:  Screen: 12.3 / Uid u0a123: 5.67 ( cpu=5.67 )     (case of "UID" does not matter)
+# "Estimated power use" appears once per period (since last charge, since last unplugged ...): the first one with per-app rows is used.
 cat > "$W/p.awk" <<'EOF'
 BEGIN { FS = " " }
 FILENAME == MAPF {
@@ -90,41 +104,75 @@ FILENAME == MAPF {
   else if ($3 == "system") pk[a] = "system"
   next
 }
-/Estimated power use \(mAh\)/ { sec = 1; seen = 0; next }
-sec {
-  if ($0 ~ /^[ \t]*$/) { if (seen) sec = 0; next }
-  if ($0 !~ /^[ \t]/) { sec = 0; next }
+function indent(x,   t) { t = x; sub(/[^ \t].*$/, "", t); return length(t) }
+/Estimated power use \(mAh\)/ {
+  bn++; sec = 1; hin = indent($0); delete hwseen; next
+}
+# per-app rows can sit outside the block of the device-level rows: keep the first one of every id from anywhere
+/^[ \t]*[Uu][Ii][Dd] [^ :]+: [0-9]+(\.[0-9]+)?/ {
   line = $0; sub(/^[ \t]+/, "", line)
-  if (match(line, /^Uid [^ :]+: [0-9]+(\.[0-9]+)?/)) {
-    t = substr(line, 5, RLENGTH - 4)
-    split(t, q, ": ")
-    id = q[1]; v = q[2] + 0
-    seen = 1
-    if (v <= 0) next
-    uid = numuid(id)
-    lab(uid, usr(id))
-    printf "%d|%.2f|%s|%s|%s\n", v * 100 + 0.5, v, K, L, (uid >= 0 ? uid : id)
+  match(line, /^[Uu][Ii][Dd] [^ :]+: [0-9]+(\.[0-9]+)?/)
+  split(substr(line, 5, RLENGTH - 4), q, ": ")
+  if (!(q[1] in anyu)) { anyu[q[1]] = q[2] + 0 }
+}
+sec {
+  if ($0 ~ /^[ \t]*$/) next
+  if (indent($0) <= hin) { sec = 0; next }
+  line = $0; sub(/^[ \t]+/, "", line)
+  if (match(line, /Computed drain: [0-9]+(\.[0-9]+)?/)) { cdb[bn] = substr(line, RSTART + 15, RLENGTH - 15) + 0 }
+  if (match(line, /^[Uu][Ii][Dd] [^ :]+: [0-9]+(\.[0-9]+)?/)) {
+    split(substr(line, 5, RLENGTH - 4), q, ": ")
+    nrow[bn]++; nu[bn]++
+    rid[bn, nrow[bn]] = q[1]; rv[bn, nrow[bn]] = q[2] + 0; rk[bn, nrow[bn]] = "u"
     next
   }
-  if (line ~ /^(Capacity|Computed drain|Over-counted|Unaccounted|Uid)/) next
-  if (match(line, /^[A-Za-z][A-Za-z0-9 \/_-]*: [0-9]+(\.[0-9]+)?/)) {
-    t = substr(line, 1, RLENGTH)
-    n = split(t, q, ": ")
-    name = q[1]; v = q[2] + 0
-    seen = 1
-    if (v <= 0) next
-    printf "%d|%.2f|hw|%s|-\n", v * 100 + 0.5, v, name
+  if (line ~ /^(Capacity|Computed|Over-counted|Unaccounted|User |Global)/) next
+  if (match(line, /^[A-Za-z_][A-Za-z0-9_ \/-]*: [0-9]+(\.[0-9]+)?/)) {
+    split(substr(line, 1, RLENGTH), q, ": ")
+    if (q[1] in hwseen) next
+    hwseen[q[1]] = 1
+    nrow[bn]++
+    nh[bn]++
+    rid[bn, nrow[bn]] = q[1]; rv[bn, nrow[bn]] = q[2] + 0; rk[bn, nrow[bn]] = "h"
   }
+}
+function emit(id, v, kind,   uid) {
+  if (v <= 0) return
+  if (kind == "h") { printf "%d|%.2f|hw|%s|-\n", v * 100 + 0.5, v, id; return }
+  uid = numuid(id)
+  lab(uid, usr(id))
+  printf "%d|%.2f|%s|%s|%s\n", v * 100 + 0.5, v, K, L, (uid >= 0 ? uid : id)
+}
+END {
+  # block with per-app rows, else the first block with rows
+  pick = 0
+  for (i = 1; i <= bn; i++) if (nu[i] > 0) { pick = i; break }
+  if (!pick) for (i = 1; i <= bn; i++) if (nrow[i] > 0) { pick = i; break }
+  for (j = 1; j <= nrow[pick]; j++) emit(rid[pick, j], rv[pick, j], rk[pick, j])
+  # no per-app rows in the picked block: the ones found elsewhere in the dump
+  if (!nu[pick]) for (id in anyu) emit(id, anyu[id], "u")
+  # the picked block has no device-level rows: take them from the first block that has some
+  if (!nh[pick]) for (i = 1; i <= bn; i++) if (nh[i] > 0) {
+    for (j = 1; j <= nrow[i]; j++) if (rk[i, j] == "h") emit(rid[i, j], rv[i, j], "h")
+    if (!cdb[pick]) cdb[pick] = cdb[i]
+    break
+  }
+  print cdb[pick] + 0 > CDF
 }
 EOF
 cat "$W/lib.awk" "$W/p.awk" > "$W/pp.awk"
-awk -v MAPF="$W/map" -f "$W/pp.awk" "$W/map" "$W/dump" > "$W/rows"
+awk -v MAPF="$W/map" -v CDF="$W/cd" -f "$W/pp.awk" "$W/map" "$W/dump" > "$W/rows"
 
 since=$(grep -m 1 'Time on battery:' "$W/dump" | sed 's/^[ \t]*//' | cut -c1-120)
 [ -n "$since" ] || since=$(grep -m 1 -i 'since last' "$W/dump" | sed 's/^[ \t]*//' | cut -c1-120)
 
 if [ -s "$W/rows" ]; then
-  tot=$(awk -F'|' '{ s += $2 } END { printf "%.2f", s }' "$W/rows")
+  # share of the computed drain; without it the device-level rows (cpu, screen ...), else everything listed
+  # total = the larger of Android's "Computed drain", the device-level rows and the biggest row (a share can never pass 100%;
+  # some ROMs print the computed drain in another number format)
+  tot=$(awk -F'|' -v C="$(cat "$W/cd" 2>/dev/null)" 'BEGIN { t = C + 0 }
+    $3 == "hw" { h += $2 } { if ($2 + 0 > m) m = $2 + 0; a += $2 }
+    END { if (h > t) t = h; if (m > t) t = m; if (t <= 0) t = a; printf "%.2f", t }' "$W/rows")
   echo "src=power"; echo "unit=mAh"; echo "since=$since"; echo "total=$tot"
   sort -t'|' -k1,1 -nr "$W/rows" | head -n "$N" | awk -F'|' -v T="$tot" '
     { p = (T > 0 ? $2 * 100 / T : 0); printf "R|%s|%.1f|%s|%s|%s\n", $2, p, $3, $4, $5; c++ }

@@ -793,70 +793,17 @@ f_charge_limit() {
   fi
 }
 
-# Hold the charge at a set level: the kernel's own end threshold when it has one, else a keeper that cuts the
-# charger input at the level (common/charge_hold.sh)
-hc_hold_pid() {
+# The "Hold charge at a set level" feature was removed: put back anything an older version left cut and drop its files
+f_charge_hold_gone() {
   _hp=$(cat "$HC_DATA/charge_hold.pid" 2>/dev/null)
-  case "$_hp" in ''|*[!0-9]*) return 1 ;; esac
-  grep -q charge_hold "/proc/$_hp/cmdline" 2>/dev/null && echo "$_hp"
-}
-f_charge_hold() {
-  if _hp=$(hc_hold_pid); then
-    kill "$_hp" 2>/dev/null
-    # it lets the charger input through again before it exits
-    _i=0; while [ "$_i" -lt 6 ] && [ -d "/proc/$_hp" ]; do sleep 1; _i=$((_i + 1)); done
+  case "$_hp" in ''|*[!0-9]*) ;; *) grep -q charge_hold "/proc/$_hp/cmdline" 2>/dev/null && { kill "$_hp" 2>/dev/null; sleep 2; } ;; esac
+  if [ -s "$HC_DATA/charge_hold.save" ]; then
+    while IFS='|' read -r _hn _hv; do
+      [ -n "$_hn" ] && [ -e "$_hn" ] && { chmod u+w "$_hn" 2>/dev/null; echo "$_hv" > "$_hn" 2>/dev/null; }
+    done < "$HC_DATA/charge_hold.save"
   fi
-  rm -f "$HC_DATA/charge_hold.pid"
-  # a cut or threshold left by an older run (reboot, killed keeper)
-  [ -f "$MODDIR/common/charge_hold.sh" ] && sh "$MODDIR/common/charge_hold.sh" restore
-  on charge_hold || { rm -f "$HC_DATA/charge_hold.state"; st charge_hold off; return; }
-  cnt_reset
-  if [ ! -f "$MODDIR/common/charge_hold.sh" ]; then st charge_hold skipped "charge_hold.sh missing"; return; fi
-  _chp=$(rng charge_hold_pct 80 50 99); [ "$_chp" = 0 ] && _chp=80
-  _chg=$(rng charge_hold_gap 3 1 15); [ "$_chg" = 0 ] && _chg=3
-  _chf=$(sh "$MODDIR/common/charge_hold.sh" find "$_chp")
-  case "$_chf" in
-    threshold\|*)
-      _chn=${_chf#threshold|}; _chs=${_chn#*|}; _chn=${_chn%%|*}
-      rm -f "$HC_DATA/charge_hold.state"
-      # the keeper writes the threshold and checks the first time the level is reached that the kernel really
-      # stops; when the node is ignored it is put back and the charger input is cut instead
-      if command -v nice >/dev/null 2>&1; then
-        nohup nice -n 19 sh "$MODDIR/common/charge_hold.sh" run "$_chp" "$_chg" "$_chn" "$_chs" >/dev/null 2>&1 &
-      else
-        nohup sh "$MODDIR/common/charge_hold.sh" run "$_chp" "$_chg" "$_chn" "$_chs" >/dev/null 2>&1 &
-      fi
-      _i=0; while [ "$_i" -lt 5 ] && ! hc_hold_pid >/dev/null; do sleep 1; _i=$((_i + 1)); done
-      if _hp=$(hc_hold_pid); then
-        st charge_hold applied "the kernel stops charging at ${_chp}% (${_chn#/sys/class/}, checked the first time the level is reached; if it does not stop, the charger input is cut instead); $([ "$_chs" != - ] && echo "charging starts again at $((_chp - _chg))%" || echo "this kernel has no start threshold, so it starts again when the level falls a little") (keeper pid $_hp, see charge_hold.state)"
-      else
-        # no keeper: still ask the kernel, but nothing can check it
-        printf '%s|%s\n' "$_chn" "$(cat "$_chn" 2>/dev/null)" > "$HC_DATA/charge_hold.save"
-        if ! wtry "$_chn" "$_chp"; then
-          rm -f "$HC_DATA/charge_hold.save"; st charge_hold failed "${_chn#/sys/class/} rejected the write"; return
-        fi
-        if [ "$_chs" != - ]; then
-          printf '%s|%s\n' "$_chs" "$(cat "$_chs" 2>/dev/null)" >> "$HC_DATA/charge_hold.save"
-          wtry "$_chs" "$((_chp - _chg))" || true
-        fi
-        st charge_hold applied "the kernel stops charging at ${_chp}% (${_chn#/sys/class/}, written directly: the keeper did not start, so the node is not checked)"
-      fi ;;
-    suspend\|*)
-      _chn=${_chf#suspend|}; _chn=${_chn%%|*}
-      rm -f "$HC_DATA/charge_hold.state"
-      if command -v nice >/dev/null 2>&1; then
-        nohup nice -n 19 sh "$MODDIR/common/charge_hold.sh" run "$_chp" "$_chg" >/dev/null 2>&1 &
-      else
-        nohup sh "$MODDIR/common/charge_hold.sh" run "$_chp" "$_chg" >/dev/null 2>&1 &
-      fi
-      _i=0; while [ "$_i" -lt 5 ] && ! hc_hold_pid >/dev/null; do sleep 1; _i=$((_i + 1)); done
-      if _hp=$(hc_hold_pid); then
-        st charge_hold applied "charging stopped at ${_chp}% and let through again at $((_chp - _chg))% (${_chn#/sys/class/}, keeper pid $_hp, checked at every battery level change; the node is tested the first time the limit is reached, see charge_hold.state)"
-      else
-        st charge_hold failed "keeper did not start"
-      fi ;;
-    *) st charge_hold skipped "no charge-control node on this kernel accepts a write (tried:${_chf#none|})" ;;
-  esac
+  rm -f "$HC_DATA"/charge_hold.* 2>/dev/null
+  return 0
 }
 
 # ================================================================ DRAIN (kernel)

@@ -1,5 +1,8 @@
 # Changelog
 
+> Current build: **v2.0 (200)**. The v2.1 and v2.1.1 changes below are not part of it: this v2.0 build has no
+> "Hold charge at a set level" (an older version's cut is put back at boot).
+
 ## v2.1.1 (211)
 
 - Fix: Xiaomi qti kernels (qcom-battery, e.g. POCO F5 / marble) do not take the battery input_suspend node reliably and expose no usable power_supply/battery cut node, so Hold charge at a set level kept charging past the level. The keeper now tries qcom-battery/charging_enabled = 0 (charge current 0, the phone runs from the charger) before input_suspend and lets go with 1 twice (this driver only restores the charge current on the second write)
