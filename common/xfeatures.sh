@@ -206,7 +206,6 @@ f_x_ram_opt() {
             /sys/kernel/low_free/low_free_enable \
             /sys/module/memplus_core/parameters/memory_plus_enabled \
             /proc/sys/vm/memory_plus \
-            /sys/module/perfmgr/parameters/perfmgr_enable \
             /sys/module/opchain/parameters/opchain_enable; do
     [ -e "$_n" ] && wn "$_n" 0
   done

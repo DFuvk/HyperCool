@@ -113,6 +113,9 @@ Google Sans font: SIL Open Font License (`webroot/GoogleSans-OFL.txt`).
 
 ## Changelog
 
+**v2.1.1**
+- Fixed: the RAM optimizer no longer disables Xiaomi's perfmgr (`perfmgr_enable`). It is a GPU/frame boost framework, not memory reclaim: it added no RAM, was not restored when switched off, and was the only perfmgr parameter HyperCool changed. The VM, LMK and other vendor reclaim writes stay.
+
 **v2.1**
 - New: WebUI redesign: dark violet palette, separate rounded cards, flat top bar, floating bottom navigation with a tonal active tab
 - New: Appearance in Tools: Dark theme (Standard, AMOLED, Light, Follow system) and Colors (System Dynamic from the wallpaper, HyperCool Violet, 9 color presets)

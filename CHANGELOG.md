@@ -1,6 +1,11 @@
 # Changelog
 
-> Current build: **v2.1 (210)**.
+> Current build: **v2.1.1 (211)**.
+
+## v2.1.1 (211)
+
+- Fixed: the RAM optimizer no longer disables Xiaomi's perfmgr (`/sys/module/perfmgr/parameters/perfmgr_enable`). perfmgr is a GPU/frame boost framework, not a memory-reclaim one: the write added no RAM, was not restored when the switch was turned off (only a reboot brought it back), and was the only perfmgr parameter HyperCool changed. The VM, LMK and other vendor reclaim writes stay.
+- Changed: the RAM optimizer details no longer list perfmgr under vendor reclaim frameworks.
 
 ## v2.1 (210)
 
