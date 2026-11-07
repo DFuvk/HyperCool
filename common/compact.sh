@@ -45,7 +45,8 @@ compact_run() {
     echo "$_nm" | grep -qE "$WL" && continue
     case "$PROT" in *",${_nm%%:*},"*) continue ;; esac
     _o=$(cmd activity compact some "$_nm" "$_u" </dev/null 2>&1)
-    case "$_o" in *"Finished compacting"*) _n=$((_n + 1)) ;; *) _f=$((_f + 1)) ;; esac
+    # AOSP prints "Finished some compaction for <pid>" (Android 13+); "Finished compacting" was the old guess
+    case "$_o" in *"Finished some compaction"*|*"Finished full compaction"*|*"Finished system compaction"*|*"Finished compacting"*) _n=$((_n + 1)) ;; *) _f=$((_f + 1)) ;; esac
   done
   sleep 2
   echo "runs=$_cruns last=$(date '+%Y-%m-%d %H:%M:%S') apps=$_n failed=$_f free_before_kb=${_b:-?} free_after_kb=$(memk MemAvailable)" > "$CSTATE"

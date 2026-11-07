@@ -17,6 +17,13 @@ loc_now() {
 bt_now() {
   case "$(settings get global bluetooth_on 2>/dev/null)" in 1) echo on ;; 0) echo off ;; *) echo ? ;; esac
 }
+# Android 13+ removed `svc bluetooth` (it moved to BluetoothShellCommand): use `cmd bluetooth_manager`
+# there, and keep `svc bluetooth` for older ROMs
+bt_set() {
+  cmd bluetooth_manager "$1" </dev/null >/dev/null 2>&1 && return 0
+  svc bluetooth "$1" </dev/null >/dev/null 2>&1
+  return 0
+}
 # 0 = leave Bluetooth alone: audio is playing, an active audio/headset device is connected, or the
 # Bluetooth dump is not in a format we know (unknown = leave alone)
 bt_busy() {
@@ -35,7 +42,7 @@ radio_off() {
     [ "$(loc_now)" = off ] && echo "loc|$_lm" >> "$RSAVE"
   fi
   if [ "$1" = 1 ] && [ "$(bt_now)" = on ] && ! bt_busy; then
-    svc bluetooth disable </dev/null >/dev/null 2>&1
+    bt_set disable
     echo "bt|" >> "$RSAVE"
   fi
 }
@@ -53,7 +60,7 @@ radio_restore() {
       bt)
         # do not fight airplane mode, and only turn on what is still off
         [ "$(settings get global airplane_mode_on 2>/dev/null)" = 1 ] && continue
-        [ "$(bt_now)" = off ] && svc bluetooth enable </dev/null >/dev/null 2>&1 ;;
+        [ "$(bt_now)" = off ] && bt_set enable ;;
     esac
   done < "$RSAVE"
   : > "$RSAVE"

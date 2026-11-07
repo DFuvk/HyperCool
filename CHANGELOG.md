@@ -18,6 +18,8 @@
 
 ## v2.0 (200)
 
+- Fix: Compact background apps counted every compaction as failed because it looked for the wrong output text ("Finished compacting"); Android prints "Finished some compaction for <pid>". The state file now shows the real count
+- Fix: Location and Bluetooth off during long screen-off: `svc bluetooth` no longer exists on Android 13+, so Bluetooth was never switched off. It now uses `cmd bluetooth_manager` first, with `svc bluetooth` as the fallback for older ROMs
 - Fix: Keep Wi-Fi on while the screen is off could turn Wi-Fi back on while the screen was on (a screen event replayed at start, or a panel brightness node that stays 0). It now asks the power service and only acts when the screen is really off; the screen-on state clears the intent
 - New: Auto clean app cache every 1 to 7 days (was daily only)
 - New: Keep cache of chosen apps (skipped by the auto clean and Clean now; good for games so they do not load shaders again)
