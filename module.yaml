@@ -1,0 +1,20 @@
+# KernelSU Modules catalog metadata (modules.kernelsu.org).
+# Display only: version, versionCode and the download come from module.prop inside the release ZIP.
+schemaVersion: 1
+id: hypercool
+name: HyperCool - Heat & Battery Fix
+summary: Cuts overheating and battery drain on Qualcomm and MediaTek phones, with a built-in WebUI to choose what runs.
+description: README.md
+license: GPL-3.0-or-later
+homepage: https://github.com/yudharn/HyperCool
+support: https://github.com/yudharn/HyperCool/issues
+tags: [battery, performance, thermal, webui]
+icon: icon.png
+authors:
+  - name: Yudharn
+    url: https://github.com/yudharn
+compatibility:
+  androidMinApi: 30
+  architectures: [arm64-v8a]
+release:
+  assetPattern: "HyperCool_*.zip"

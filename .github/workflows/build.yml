@@ -127,8 +127,25 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.ver.outputs.version }}
         run: |
           set -euo pipefail
-          gh release create "$GITHUB_REF_NAME" "$ZIP" \
-            --title "HyperCool ${{ steps.ver.outputs.version }}" \
-            --generate-notes
+          # Release notes double as the changelog on modules.kernelsu.org.
+          notes=$(mktemp)
+          awk -v ver="$VERSION" '
+            index($0, "## " ver) == 1 {
+              rest = substr($0, 4 + length(ver))
+              if (rest == "" || rest ~ /^[ (]/) { on = 1; next }
+            }
+            on && /^## / { exit }
+            on { print }
+          ' CHANGELOG.md > "$notes"
+          if [ -s "$notes" ]; then
+            gh release create "$GITHUB_REF_NAME" "$ZIP" \
+              --title "HyperCool $VERSION" \
+              --notes-file "$notes"
+          else
+            gh release create "$GITHUB_REF_NAME" "$ZIP" \
+              --title "HyperCool $VERSION" \
+              --generate-notes
+          fi
