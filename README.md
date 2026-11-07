@@ -115,6 +115,11 @@ Google Sans font: SIL Open Font License (`webroot/GoogleSans-OFL.txt`).
 
 ## Changelog
 
+**v2.0.1**
+- Fix: Keep Wi-Fi on while the screen is off no longer turns Wi-Fi back on while the screen is on (a screen event replayed at start, or a panel brightness node that stays 0). It only acts when the power service says the screen is really off
+- Fix: Compact background apps now recognises Android's real output ("Finished some compaction") and reports the done/failed count correctly
+- Fix: Location and Bluetooth off during long screen-off now uses `cmd bluetooth_manager` on Android 13+, where `svc bluetooth` no longer exists
+
 **v2.0**
 - New: Auto clean app cache every 1 to 7 days (was daily only)
 - New: Keep cache of chosen apps (skipped by the auto clean and Clean now; good for games so they do not load shaders again)
