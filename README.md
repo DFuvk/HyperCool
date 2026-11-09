@@ -29,6 +29,12 @@ small keepers (charge limit, charge hold, screen-off keeper that also serves Kee
 </p>
 <p align="center">
   <img src="docs/screenshots/google-services.png" alt="Google services and telemetry" width="220" />
+  <img src="docs/screenshots/storage.png" alt="Storage" width="220" />
+  <img src="docs/screenshots/app-cache.png" alt="App cache and optimize apps" width="220" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/appearance.png" alt="Appearance and configuration" width="220" />
+  <img src="docs/screenshots/appearance-status.png" alt="Appearance and configuration" width="220" />
 </p>
 
 ## Features
