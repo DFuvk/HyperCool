@@ -773,8 +773,12 @@ hc_watch_stop() {
   rm -f "$HC_DATA/chg_watch.pid"
 }
 f_charge_limit() {
-  # remember whether HyperCool itself set the flag (keeper ran or wrote its state)
+  # remember whether HyperCool itself set the flag: the persistent marker below
+  # (written as soon as we set it), the keeper's state, or a running keeper.
+  # The marker matters because the keeper only writes its state on the first
+  # plug-in; without it a reboot before that would leave the 80% cap stuck.
   _ihad=0
+  [ -f "$HC_DATA/chg_watch.set" ] && _ihad=1
   [ -f "$HC_DATA/chg_watch.state" ] && _ihad=1
   hc_watch_pid >/dev/null 2>&1 && _ihad=1
   hc_watch_stop
@@ -785,7 +789,7 @@ f_charge_limit() {
         [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
       done
     fi
-    rm -f "$HC_DATA/chg_watch.state"
+    rm -f "$HC_DATA/chg_watch.set" "$HC_DATA/chg_watch.state"
     st charge_limit off
     return
   fi
@@ -801,6 +805,9 @@ f_charge_limit() {
     { echo 1 > "$_nc"; } 2>/dev/null || { st charge_limit failed "${_nc#/sys/class/} rejected the write"; return; }
   fi
   rm -f "$HC_DATA/chg_watch.state"
+  # HyperCool has now set the flag: remember it, so turning the feature off
+  # later releases it even if the keeper never wrote its state (not plugged in)
+  echo "$_nc" > "$HC_DATA/chg_watch.set"
   if command -v nice >/dev/null 2>&1; then
     nohup nice -n 19 sh "$MODDIR/common/chg_watch.sh" "$_nc" >/dev/null 2>&1 &
   else
@@ -1023,9 +1030,17 @@ valid_pkg() { case "$1" in ''|*[!A-Za-z0-9._]*) return 1 ;; esac; return 0; }
 prune_pkgs() {
   _pl=",$2,"
   [ -f "$HC_ROMBAK" ] || return 0
+  # bg_block runs after protect_apps: a package that is now protected must not
+  # have its block values restored here, or that would undo the protection.
+  # (The records stay and are restored later if the app is unprotected.)
+  _skip=""
+  if [ "$1" = bg_block ]; then _skip=",$(cfg protect_pkgs ""),"; fi
   grep "^$1|" "$HC_ROMBAK" | cut -d'|' -f4 | sort -u | while read -r _p; do
     [ "$_p" = "-" ] && continue
-    case "$_pl" in *",$_p,"*) ;; *) restore_feature "$1" "$_p"; log "$1: reverted $_p" ;; esac
+    case "$_pl" in *",$_p,"*) ;; *)
+      case "$_skip" in *",$_p,"*) continue ;; esac
+      restore_feature "$1" "$_p"; log "$1: reverted $_p" ;;
+    esac
   done
 }
 
