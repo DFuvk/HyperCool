@@ -1136,7 +1136,7 @@ f_app_bucket() {
   if [ "$_lvl" = 0 ]; then restore_feature app_bucket; st app_bucket off; return; fi
   case "$_lvl" in 1) _b=rare ;; *) _b=restricted ;; esac
   _sdk=$(getprop ro.build.version.sdk)
-  [ "$_b" = restricted ] && [ "${_sdk:-0}" -lt 30 ] && _b=rare
+  [ "$_b" = restricted ] && [ "${_sdk:-0}" -lt 31 ] && _b=rare
   HC_PROTECTED="$(hc_default_apps)$(hc_bound_apps)$(on protect_apps && cfg protect_pkgs ""),$HC_BGB_NEVER"
   case "$_b" in rare) _bn=40 ;; *) _bn=45 ;; esac
   _bgb=""; on bg_block && _bgb=$(cfg bg_block_pkgs "")
@@ -1231,8 +1231,8 @@ f_bg_block() {
       _om=$(hc_opmode "$_cur")
       cmd appops set "$_p" 10008 ignore </dev/null >/dev/null 2>&1 && recv bg_block appop 10008 "$_p" "$_om" ;;
     esac
-    # 4) Restricted standby bucket (Android 11+), Rare on older
-    if [ "${_sdk:-0}" -ge 30 ]; then _b=restricted; else _b=rare; fi
+    # 4) Restricted standby bucket (Android 12+; Rare on older - RESTRICTED exists only since API 31)
+    if [ "${_sdk:-0}" -ge 31 ]; then _b=restricted; else _b=rare; fi
     # app_bucket may have moved it already: give that back first so the real original is recorded
     has_rec app_bucket bucket - "$_p" && restore_feature app_bucket "$_p"
     _ob=$(hc_bucket_num "$(am get-standby-bucket "$_p" </dev/null 2>/dev/null)")

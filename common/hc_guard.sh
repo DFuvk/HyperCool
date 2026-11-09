@@ -18,9 +18,12 @@ if [ ! -d "$MOD" ] || [ -f "$MOD/remove" ]; then
   exit 0
 fi
 [ -f "$MOD/disable" ] || exit 0
-for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
-  [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
-done
+# release the 80% charge cap only when HyperCool set it (marker / keeper state)
+if [ -f "$D/chg_watch.set" ] || [ -f "$D/chg_watch.state" ]; then
+  for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
+    [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
+  done
+fi
 if [ -s "$D/backup/rom.bak" ] && [ -f "$D/restore.sh" ]; then
   sh "$D/restore.sh" --all --wait-boot >/dev/null 2>&1
   echo "$(date '+%Y-%m-%d %H:%M:%S') module disabled: ROM changes restored by the guard" >> "$D/boot.log"
