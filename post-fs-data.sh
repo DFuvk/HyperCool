@@ -121,7 +121,9 @@ fi
 if on blur_off; then
   hc_props "$HC_BLUR_PROPS" >/dev/null
 fi
-# marker for service.sh: this stage ran to the end (service.sh deletes it once seen)
-touch "$HC_DATA/.pfd_ran"
+# marker for service.sh: this stage ran to the end. The content is this boot's boot_id, so a
+# leftover marker from an earlier boot (service was rebooted before it could consume it) is
+# recognized as stale even though this script never gets to run again in that boot
+cat /proc/sys/kernel/random/boot_id > "$HC_DATA/.pfd_ran" 2>/dev/null
 
 exit 0

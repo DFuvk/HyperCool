@@ -8,8 +8,18 @@ MODDIR=${0%/*}
 
 mkdir -p "$HC_DATA" "$HC_BAKDIR"
 [ -f "$HC_CFG" ] || cp -f "$MODDIR/common/default.conf" "$HC_CFG"
+# post-fs-data writes this boot's boot_id into .pfd_ran when it completes. A marker without this
+# boot's id means the root manager skipped that stage: the boot_config.conf snapshot is from the
+# previous boot, so take a fresh one from the saved config (a WebUI save then applies this boot)
+_pfd_ok=""
+[ "$(cat "$HC_DATA/.pfd_ran" 2>/dev/null)" = "$(cat /proc/sys/kernel/random/boot_id 2>/dev/null)" ] && _pfd_ok=1
+if [ -n "$_pfd_ok" ]; then
+  rm -f "$HC_DATA/.pfd_ran"
+else
+  cp -f "$HC_CFG" "$HC_BOOTCFG"
+  log "post-fs-data stage was skipped this boot (root manager): using the saved config directly"
+fi
 # apply the snapshot taken at post-fs-data, so a WebUI save during boot waits for the next boot
-[ -f "$HC_BOOTCFG" ] || cp -f "$HC_CFG" "$HC_BOOTCFG"
 HC_CFG=$HC_BOOTCFG
 
 # persist.* props set in post-fs-data can be overwritten when init loads stored persistent props
@@ -51,13 +61,11 @@ if [ -f "$HC_PFD_STATUS" ]; then cp -f "$HC_PFD_STATUS" "$HC_STATUS"; else : > "
 # shellcheck disable=SC2034
 HC_STATUS_OUT=$HC_STATUS
 
-# post-fs-data drops .pfd_ran when it completes and this script deletes it once seen: no marker
-# means the root manager skipped that stage this boot. Its prop features were re-applied above
-# (persist), but log.tag was not — set it too and make the statuses describe this boot honestly.
-if [ -f "$MODDIR/disable" ]; then
-  : # safe mode or switched off: leave the ROM alone
-elif [ -f "$HC_DATA/.pfd_ran" ]; then
-  rm -f "$HC_DATA/.pfd_ran"
+# post-fs-data was skipped this boot (boot_id check at the top): its prop features were
+# re-applied above (persist), but log.tag was not — set it too and make the statuses describe
+# this boot honestly instead of the stale "applied" lines copied from the previous boot.
+if [ -f "$MODDIR/disable" ] || [ -n "${_pfd_ok:-}" ]; then
+  : # switched off / safe mode, or post-fs-data ran: status_pfd.conf is from this boot
 else
   log "post-fs-data stage was skipped this boot (root manager): re-applying its features from service"
   sed -i '/^log_reduce=/d;/^debug_props=/d;/^x_props=/d' "$HC_STATUS"
