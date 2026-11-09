@@ -1206,6 +1206,9 @@ f_bg_block() {
     # protect_apps may have this app: give its values back first, so the block
     # below records the real original and the later protect prune finds nothing
     restore_feature protect_apps "$_p"
+    # the protect restore may have removed a Doze whitelist entry: refresh the
+    # snapshot, or the block below would record that entry as the "original"
+    _wlout=$(dumpsys deviceidle whitelist </dev/null 2>/dev/null)
     # 1) user battery-optimization whitelist entry (system entries are left alone)
     if echo "$_wlout" | grep -q "^user,$_p,"; then
       dumpsys deviceidle whitelist -"$_p" </dev/null >/dev/null 2>&1 && rec bg_block uwl - "$_p"
