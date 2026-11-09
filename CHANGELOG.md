@@ -1,6 +1,15 @@
 # Changelog
 
-> Current build: **v2.2.1 (221)**.
+> Current build: **v2.2.2 (222)**.
+
+## v2.2.2 (222)
+
+- Restore: Freeze safe GMS components records are no longer dropped as "package gone". The host package of the component is now checked, so pm enable runs and the components are re-enabled.
+- Restore: apps that were in the Exempted standby bucket (5) are put back in Exempted on Android 12+ (Active on older), instead of Active.
+- Standby bucket: Restricted is now used only on Android 12+ (API 31). Android 11 uses Rare, so the write no longer fails silently.
+- Charge limit: uninstall and the disable guard only reset night_charging when HyperCool set it. A value set by the ROM is left alone.
+- Standby bucket: word forms returned by am get-standby-bucket (e.g. "exempted") are now mapped to numbers, so the original bucket is recorded correctly and Exempted apps are not moved to Rare/Restricted.
+- Boot: when the root manager skips the post-fs-data stage, service.sh now detects it (per-boot id marker), re-applies log.tag, debug/x props, reports honest statuses, and uses the latest saved config instead of the previous boot's snapshot.
 
 ## v2.2.1 (221)
 
