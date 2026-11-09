@@ -10,6 +10,18 @@ small keepers (charge limit, charge hold, screen-off keeper that also serves Kee
 
 `Every feature has its own ON/OFF switch in the WebUI, changes apply once at boot, and turning a feature off (or uninstalling) puts the original values back`
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/home.png" alt="Home" width="220" />
+  <img src="docs/screenshots/heat-control.png" alt="Heat control" width="220" />
+  <img src="docs/screenshots/battery-drain.png" alt="Battery drain (kernel)" width="220" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/protected-apps.png" alt="Protected and blocked apps" width="220" />
+  <img src="docs/screenshots/battery-calibration.png" alt="Battery calibration" width="220" />
+</p>
+
 ## Features
 
 **Heat control**
