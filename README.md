@@ -20,6 +20,15 @@ small keepers (charge limit, charge hold, screen-off keeper that also serves Kee
 <p align="center">
   <img src="docs/screenshots/protected-apps.png" alt="Protected and blocked apps" width="220" />
   <img src="docs/screenshots/battery-calibration.png" alt="Battery calibration" width="220" />
+  <img src="docs/screenshots/long-battery.png" alt="Long battery" width="220" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/advanced.png" alt="Advanced and experimental" width="220" />
+  <img src="docs/screenshots/extra-kernel-tuning.png" alt="Extra kernel tuning" width="220" />
+  <img src="docs/screenshots/ram-management.png" alt="RAM management" width="220" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/google-services.png" alt="Google services and telemetry" width="220" />
 </p>
 
 ## Features
