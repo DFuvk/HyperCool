@@ -8,6 +8,8 @@ Focused on battery life, not peak performance.
 Everything is set from the WebUI and applied once at the next boot. Nothing keeps running except
 small keepers (charge limit, charge hold, screen-off keeper that also serves Keep Wi-Fi on, Compact background apps, Location and Bluetooth off, F2FS garbage collection and auto app optimization, auto cache clean, CPU keeper, adaptive refresh rate, battery calibration), and only if you turn them on.
 
+Every feature has its own ON/OFF switch in the WebUI, changes apply once at boot, and turning a feature off (or uninstalling) puts the original values back.
+
 ## Features
 
 **Heat control**
