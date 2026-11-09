@@ -12,30 +12,75 @@ small keepers (charge limit, charge hold, screen-off keeper that also serves Kee
 
 ## Screenshots
 
-<p align="center">
-  <img src="docs/screenshots/home.png" alt="Home" width="220" />
-  <img src="docs/screenshots/heat-control.png" alt="Heat control" width="220" />
-  <img src="docs/screenshots/battery-drain.png" alt="Battery drain (kernel)" width="220" />
-</p>
-<p align="center">
-  <img src="docs/screenshots/protected-apps.png" alt="Protected and blocked apps" width="220" />
-  <img src="docs/screenshots/battery-calibration.png" alt="Battery calibration" width="220" />
-  <img src="docs/screenshots/long-battery.png" alt="Long battery" width="220" />
-</p>
-<p align="center">
-  <img src="docs/screenshots/advanced.png" alt="Advanced and experimental" width="220" />
-  <img src="docs/screenshots/extra-kernel-tuning.png" alt="Extra kernel tuning" width="220" />
-  <img src="docs/screenshots/ram-management.png" alt="RAM management" width="220" />
-</p>
-<p align="center">
-  <img src="docs/screenshots/google-services.png" alt="Google services and telemetry" width="220" />
-  <img src="docs/screenshots/storage.png" alt="Storage" width="220" />
-  <img src="docs/screenshots/app-cache.png" alt="App cache and optimize apps" width="220" />
-</p>
-<p align="center">
-  <img src="docs/screenshots/appearance.png" alt="Appearance and configuration" width="220" />
-  <img src="docs/screenshots/appearance-status.png" alt="Appearance and configuration" width="220" />
-</p>
+<table align="center">
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/home.png" alt="Home" width="200" /><br />
+      <b>Home</b>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/heat-control.png" alt="Heat control" width="200" /><br />
+      <b>Heat control</b>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/battery-drain.png" alt="Battery drain (kernel)" width="200" /><br />
+      <b>Battery drain (kernel)</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/protected-apps.png" alt="Protected and blocked apps" width="200" /><br />
+      <b>Protected apps</b>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/battery-calibration.png" alt="Battery calibration" width="200" /><br />
+      <b>Battery calibration</b>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/long-battery.png" alt="Long battery" width="200" /><br />
+      <b>Long battery</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/advanced.png" alt="Advanced and experimental" width="200" /><br />
+      <b>Advanced</b>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/extra-kernel-tuning.png" alt="Extra kernel tuning" width="200" /><br />
+      <b>Extra kernel tuning</b>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/ram-management.png" alt="RAM management" width="200" /><br />
+      <b>RAM management</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/google-services.png" alt="Google services and telemetry" width="200" /><br />
+      <b>Google services</b>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/storage.png" alt="Storage" width="200" /><br />
+      <b>Storage</b>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/app-cache.png" alt="App cache and optimize apps" width="200" /><br />
+      <b>App cache</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/appearance.png" alt="Appearance and configuration" width="200" /><br />
+      <b>Appearance</b>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/appearance-status.png" alt="Appearance and configuration" width="200" /><br />
+      <b>Tools</b>
+    </td>
+    <td></td>
+  </tr>
+</table>
 
 ## Features
 
