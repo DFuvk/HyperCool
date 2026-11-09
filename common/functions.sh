@@ -773,12 +773,18 @@ hc_watch_stop() {
   rm -f "$HC_DATA/chg_watch.pid"
 }
 f_charge_limit() {
+  # remember whether HyperCool itself set the flag (keeper ran or wrote its state)
+  _ihad=0
+  [ -f "$HC_DATA/chg_watch.state" ] && _ihad=1
+  hc_watch_pid >/dev/null 2>&1 && _ihad=1
   hc_watch_stop
   if ! on charge_limit; then
-    # release a cap already written by an earlier boot before stopping the keeper
-    for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
-      [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
-    done
+    # only release a cap HyperCool set; leave a value set by someone else alone
+    if [ "$_ihad" = 1 ]; then
+      for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
+        [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
+      done
+    fi
     rm -f "$HC_DATA/chg_watch.state"
     st charge_limit off
     return
@@ -1124,7 +1130,7 @@ f_app_bucket() {
   case "$_lvl" in 1) _b=rare ;; *) _b=restricted ;; esac
   _sdk=$(getprop ro.build.version.sdk)
   [ "$_b" = restricted ] && [ "${_sdk:-0}" -lt 30 ] && _b=rare
-  HC_PROTECTED="$(hc_default_apps)$(hc_bound_apps)$(on protect_apps && cfg protect_pkgs ""),android,com.android.systemui,com.android.phone,com.google.android.gms"
+  HC_PROTECTED="$(hc_default_apps)$(hc_bound_apps)$(on protect_apps && cfg protect_pkgs ""),$HC_BGB_NEVER"
   case "$_b" in rare) _bn=40 ;; *) _bn=45 ;; esac
   _bgb=""; on bg_block && _bgb=$(cfg bg_block_pkgs "")
   _all=$(am get-standby-bucket </dev/null 2>/dev/null)
