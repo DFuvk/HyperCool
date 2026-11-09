@@ -1,6 +1,11 @@
 # Changelog
 
-> Current build: **v2.2.2 (222)**.
+> Current build: **v2.2.3 (223)**.
+
+## v2.2.3 (223)
+
+- Restore: standby bucket records saved as 5 (EXEMPTED) are restored as Active again. `am set-standby-bucket` never accepted "exempted" (only ac/wo/fr/ra/re/ne or a number, and the server rejects values below Active), so every value-5 record failed, was kept, and blocked --purge forever while the uninstall guard retried it on every boot. As Active the restore succeeds (the server simply ignores it while the app stays exempted), so the record is dropped and uninstall purge proceeds.
+- Boot: when the root manager re-runs post-fs-data while the module is flashing (system already up), it now exits immediately. The re-run used to wipe boot.log, inflate the boot-try counter towards a false SAFE MODE, and consume the pending battery-calibration delete. Real boots are unaffected.
 
 ## v2.2.2 (222)
 
