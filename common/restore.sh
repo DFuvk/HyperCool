@@ -38,8 +38,12 @@ _hc_undo() {
       case "$4" in allow|ignore|deny|default|foreground|errored) _m=$4 ;; *) _m=default ;; esac
       cmd appops set "$3" "$2" "$_m" </dev/null >/dev/null 2>&1 ;;
     bucket)
-      # value = bucket before HyperCool changed it (10/20/30/40/45); anything else -> active
-      case "$4" in 10|20|30|40|45) _sb=$4 ;; *) _sb=active ;; esac
+      # value = bucket before HyperCool changed it (5/10/20/30/40/45); anything else -> active
+      case "$4" in
+        10|20|30|40|45) _sb=$4 ;;
+        5) [ "$(getprop ro.build.version.sdk)" -ge 31 ] 2>/dev/null && _sb=exempted || _sb=active ;;
+        *) _sb=active ;;
+      esac
       am set-standby-bucket "$3" "$_sb" </dev/null >/dev/null 2>&1 ;;
     inactive)
       # value = idle state before HyperCool changed it
@@ -56,7 +60,11 @@ _hc_undo() {
 _hc_pkg_gone() {
   case "$1" in pkg|appop|bucket|inactive|wl|uwl|syswl) ;; *) return 1 ;; esac
   [ -n "$(pm path android </dev/null 2>/dev/null)" ] || return 1
-  [ -z "$(pm path "$2" </dev/null 2>/dev/null)" ]
+  # a "pkg" record can also be a component (package/full.class.Name, x_gms_freeze):
+  # "pm path" only answers for packages, so ask for the host package of the component
+  _gp=$2
+  case "$1" in pkg) case "$_gp" in */*) _gp=${_gp%%/*} ;; esac ;; esac
+  [ -z "$(pm path "$_gp" </dev/null 2>/dev/null)" ]
 }
 
 # Restore every record whose feature matches $1 ("__all__" = everything)

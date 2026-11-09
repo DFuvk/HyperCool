@@ -18,13 +18,16 @@ for _d in /data/user/*/* /data/user_de/*/* /data/media/*/Android/data/*; do
   rmdir "$_d/cache" 2>/dev/null
   [ -e "$_d/cache" ] || mv "$_d/.hc_keep_cache" "$_d/cache" 2>/dev/null
 done
-# stop the charge-limit keeper and give the night charging flag back to the ROM
-_wp=$(cat "$HC_DATA/chg_watch.pid" 2>/dev/null)
-case "$_wp" in ''|*[!0-9]*) ;; *) grep -q chg_watch "/proc/$_wp/cmdline" 2>/dev/null && kill "$_wp" 2>/dev/null
-  _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_wp" ]; do sleep 1; _i=$((_i + 1)); done ;; esac
-for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
-  [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
-done
+# stop the charge-limit keeper and give the night charging flag back to the ROM,
+# but only when HyperCool set it (marker / keeper state): a flag set by the ROM itself stays
+if [ -f "$HC_DATA/chg_watch.set" ] || [ -f "$HC_DATA/chg_watch.state" ]; then
+  _wp=$(cat "$HC_DATA/chg_watch.pid" 2>/dev/null)
+  case "$_wp" in ''|*[!0-9]*) ;; *) grep -q chg_watch "/proc/$_wp/cmdline" 2>/dev/null && kill "$_wp" 2>/dev/null
+    _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_wp" ]; do sleep 1; _i=$((_i + 1)); done ;; esac
+  for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
+    [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
+  done
+fi
 # stop the screen-off profile keeper (it writes the saved values back when it stops)
 _sp=$(cat "$HC_DATA/soff_watch.pid" 2>/dev/null)
 case "$_sp" in ''|*[!0-9]*) ;; *) grep -q soff_watch "/proc/$_sp/cmdline" 2>/dev/null && kill "$_sp" 2>/dev/null
