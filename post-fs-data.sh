@@ -121,5 +121,7 @@ fi
 if on blur_off; then
   hc_props "$HC_BLUR_PROPS" >/dev/null
 fi
+# marker for service.sh: this stage ran to the end (service.sh deletes it once seen)
+touch "$HC_DATA/.pfd_ran"
 
 exit 0
