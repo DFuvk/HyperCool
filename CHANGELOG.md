@@ -60,3 +60,88 @@
 - New: Auto optimize apps (More > Storage, off by default): once a week, after the screen has been off 10 min, all apps (system apps included) are compiled in the background with the same script as the Optimize apps card: mode of your choice (speed-profile by default, or speed / everything), one app at a time, never a force recompile (apps that are already optimized are skipped). No charger needed (40% battery when not charging); starts under 40 C, stops at 45 C, under 15% battery, under 1 GB free storage or when the screen turns on (the apps now compiling finish). A run you start by hand counts as this week's run and is never stopped by it. Notification with the result (can be turned off). Runs in the screen-off keeper.
 - New: Top battery use (Home): shows which apps and system parts used the most battery since the last charge, with filters for user apps, system apps and hardware. Read only; uses `dumpsys batterystats` (mAh estimate) and falls back to wake lock time when the ROM has no estimate.
 - Change: Home shows Battery health in mAh (full-charge capacity, with the % of design capacity) instead of the battery level, and the device name is bigger, bold, with a capital codename (POCO F5 (Marble)).
+
+## v1.9 (190)
+
+- New: Adaptive refresh rate (high rate only while touching / pressing a button, low rate 2 s after the last touch; screen changes stay at the low rate, HyperOS supported)
+- New: Limit background location (1 / 2 / 4 h for apps in the background)
+- New: Boot notification when HyperCool has finished applying
+- New: Bug report in Tools (device info, last boot result, settings and boot log in one file)
+- New: Runtime power for idle devices (USB / I2C / SPI power down when idle, touch / audio / charger chips skipped, default off)
+- New: Custom quick preset (save your own settings, load them with one tap)
+- New: Battery calibration on Home (guided full cycle with notifications, Charge limit pauses, optional batterystats.bin delete)
+- New: Cache clean notification (after the auto clean and after Clean now, can be turned off)
+- WebUI: swipe left/right to change tabs, Support moved to Tools, smaller Battery check text
+- Idle drain counts from the last unplug (like other battery apps) and resets while charging
+- Refresh rate options list only the rates your screen supports
+- Idle drain shows after a 1% drop with the screen off (was 2% and 1 h)
+- Quick presets no longer change the notification switches
+- Removed: Multi-Gen LRU option
+
+## v1.8 (180)
+
+- New: ZRAM size (2-8 GB or custom up to 12 GB), compression algorithm, priority -2
+- New: Dim screen on Battery Saver (90-60% brightness, Android's own Battery Saver setting)
+- New: Smart Pixels switch for ROMs that have it (crDroid, Resurrection Remix...)
+- Screen-off profile keeper waits for screen events instead of checking every 2-3 s; AOD now counts as screen off
+- Balanced system defaults: touch/GPU boosts off (Qualcomm and MediaTek), new option to unlock bus/DDR limits (default off)
+- New: feature search next to the module status
+- Fix: ZRAM swapoff on ROMs that list zram as /dev/block/zram0
+- Fix: ZRAM sizes above 2 GB
+- ZRAM is set right after boot and checked again later in case the ROM changes it; works even when zram is already in use
+- Fix: Screen-off profile could put back a temporary thermal CPU limit after the screen turned on
+- Fix: screen-off keeper ran dumpsys every 2-3 s on phones without a backlight node (now every 10 s, only when screen events are missing)
+- Fix: haptics/vibration stopped working on some devices (vibrator HAL no longer moved to the background group)
+- Fix: Battery Saver no longer turns vibration off (silent mode, haptics); new switch in Stronger Battery Saver if you want it off
+- Fix: Idle drain read too low on some ROMs; now uses the % drained with the screen off (or 1% screen-off steps), like other battery apps
+- Description: "Device: Qualcomm | MediaTek", shorter text
+- Shorter WebUI texts, README rewritten
+- License: GPL-3.0-or-later
+
+## v1.7 (170)
+
+- New: Disable apps
+- New: Adaptive screen-off power profile
+- New: GPU frequency cap with your own GPU table and lock
+- New: Balanced system defaults, common kernel tuning, keep EAS on
+- New: Idle drain and Battery check on Home
+- Background apps on little cores can also move log daemons
+- Calmer CPU governor: WALT task util 80/65
+- Analytics & ad packages now a fixed list only
+- Cache clean time in 24h format
+
+## v1.6 (160)
+
+- MediaTek support for the kernel features
+- Lock option for the big-core cap
+- Support links, Telegram in About
+- Disable guard: ROM changes restored when the module is disabled
+
+## v1.5 (150)
+
+- Kernel power-saving switches, lighter background memory work
+- Real chip name in the installer
+- Live check for the big-core cap
+
+## v1.4 (140)
+
+- Block apps in background
+- Import backup (file or paste)
+- Presets for every feature, safer defaults
+
+## v1.3 (130)
+
+- Auto clean app cache (daily) with App cache card
+
+## v1.2 (120)
+
+- Bug fixes: More lists on mksh, GMS Doze off by default, safer RAM and log options, uninstall fixes
+
+## v1.1 (110)
+
+- New More tab with extra kernel, RAM, GMS and logging options
+- Clean RAM now, clean junk files now
+
+## v1.0 (100)
+
+- First release
