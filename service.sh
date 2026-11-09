@@ -157,8 +157,8 @@ cp -f "$MODDIR/common/restore.sh" "$HC_DATA/restore.sh"
 mkdir -p /data/adb/service.d
 cp -f "$MODDIR/common/hc_guard.sh" /data/adb/service.d/.hypercool_guard.sh && chmod 0755 /data/adb/service.d/.hypercool_guard.sh
 date '+%Y-%m-%d %H:%M:%S' > "$HC_DATA/last_boot"
-# slow boot (boot_completed came after the wait above): count it as good now
-[ "$(getprop sys.boot_completed)" = "1" ] && rm -f "$HC_DATA/boot_tries"
+# reaching the end of the apply is a good boot, even if boot_completed was slow
+rm -f "$HC_DATA/boot_tries"
 
 _a=$(grep -c '=applied|' "$HC_STATUS")
 _p=$(grep -c '=partial|' "$HC_STATUS")

@@ -20,13 +20,15 @@ for _d in /data/user/*/* /data/user_de/*/* /data/media/*/Android/data/*; do
 done
 # stop the charge-limit keeper and give the night charging flag back to the ROM
 _wp=$(cat "$HC_DATA/chg_watch.pid" 2>/dev/null)
-case "$_wp" in ''|*[!0-9]*) ;; *) grep -q chg_watch "/proc/$_wp/cmdline" 2>/dev/null && kill "$_wp" 2>/dev/null ;; esac
+case "$_wp" in ''|*[!0-9]*) ;; *) grep -q chg_watch "/proc/$_wp/cmdline" 2>/dev/null && kill "$_wp" 2>/dev/null
+  _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_wp" ]; do sleep 1; _i=$((_i + 1)); done ;; esac
 for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
   [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
 done
 # stop the screen-off profile keeper (it writes the saved values back when it stops)
 _sp=$(cat "$HC_DATA/soff_watch.pid" 2>/dev/null)
-case "$_sp" in ''|*[!0-9]*) ;; *) grep -q soff_watch "/proc/$_sp/cmdline" 2>/dev/null && kill "$_sp" 2>/dev/null ;; esac
+case "$_sp" in ''|*[!0-9]*) ;; *) grep -q soff_watch "/proc/$_sp/cmdline" 2>/dev/null && kill "$_sp" 2>/dev/null
+  _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_sp" ]; do sleep 1; _i=$((_i + 1)); done ;; esac
 # Location / Bluetooth the keeper switched off, if it was killed without a clean stop
 if [ -s "$HC_DATA/soff_radio.save" ]; then
   # shellcheck source=/dev/null
@@ -45,15 +47,17 @@ fi
 # stop the battery calibration keeper
 _bq=$(cat "$HC_DATA/bcal_watch.pid" 2>/dev/null)
 case "$_bq" in ''|*[!0-9]*) ;; *) grep -q bcal_watch "/proc/$_bq/cmdline" 2>/dev/null && kill "$_bq" 2>/dev/null ;; esac
-# stop the touch-only refresh rate keeper
+# stop the touch-only refresh rate keeper; wait for its trap to finish before restore
 _rq=$(cat "$HC_DATA/rr_watch.pid" 2>/dev/null)
-case "$_rq" in ''|*[!0-9]*) ;; *) grep -q rr_watch "/proc/$_rq/cmdline" 2>/dev/null && kill "$_rq" 2>/dev/null ;; esac
+case "$_rq" in ''|*[!0-9]*) ;; *) grep -q rr_watch "/proc/$_rq/cmdline" 2>/dev/null && kill "$_rq" 2>/dev/null
+  _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_rq" ]; do sleep 1; _i=$((_i + 1)); done ;; esac
 # forced deep Doze left behind by that keeper
 [ -f "$HC_DATA/doze_forced" ] && dumpsys deviceidle unforce >/dev/null 2>&1
-# the guard is not needed any more (restore below does the cleanup)
-rm -f /data/adb/service.d/.hypercool_guard.sh
+# Keep the guard until restore succeeds. If the background restore fails,
+# the guard retries on the next boot instead of losing the backup records.
 if [ -f "$HC_DATA/restore.sh" ]; then
-  nohup sh "$HC_DATA/restore.sh" --all --wait-boot --purge >/dev/null 2>&1 &
+  nohup sh -c 'sh /data/adb/hypercool/restore.sh --all --wait-boot --purge && rm -f /data/adb/service.d/.hypercool_guard.sh' >/dev/null 2>&1 &
 else
+  rm -f /data/adb/service.d/.hypercool_guard.sh
   rm -rf "$HC_DATA"
 fi

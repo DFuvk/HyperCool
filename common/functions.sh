@@ -145,6 +145,10 @@ f_cpu_cap() {
   [ "$_pct" -ge 100 ] && { st cpu_cap off "100% = no cap"; return; }
   cnt_reset
   _little=$(hc_little_policy)
+  _np=0
+  for _p in /sys/devices/system/cpu/cpufreq/policy*; do
+    [ -d "$_p" ] && _np=$((_np + 1))
+  done
   _det=""; _lk=0; _ci=-1
   _lock=$(cfg cpu_cap_lock 1)
   # MediaTek: the PPM user limit is honoured by the MTK power/perf stack
@@ -152,7 +156,8 @@ f_cpu_cap() {
   for _p in /sys/devices/system/cpu/cpufreq/policy*; do
     [ -d "$_p" ] || continue
     _ci=$((_ci + 1))
-    [ "$_p" = "$_little" ] && continue
+    # a single-policy kernel has no separate little cluster to skip
+    [ "$_np" -gt 1 ] && [ "$_p" = "$_little" ] && continue
     _max=$(rd "$_p/cpuinfo_max_freq"); [ -n "$_max" ] || continue
     _tgt=$((_max * _pct / 100))
     _sel=0
@@ -761,12 +766,23 @@ hc_watch_pid() {
   grep -q chg_watch "/proc/$_wp/cmdline" 2>/dev/null && echo "$_wp"
 }
 hc_watch_stop() {
-  _wp=$(hc_watch_pid) && kill "$_wp" 2>/dev/null
+  _wp=$(hc_watch_pid) && {
+    kill "$_wp" 2>/dev/null
+    _i=0; while [ "$_i" -lt 6 ] && [ -d "/proc/$_wp" ]; do sleep 1; _i=$((_i + 1)); done
+  }
   rm -f "$HC_DATA/chg_watch.pid"
 }
 f_charge_limit() {
   hc_watch_stop
-  on charge_limit || { rm -f "$HC_DATA/chg_watch.state"; st charge_limit off; return; }
+  if ! on charge_limit; then
+    # release a cap already written by an earlier boot before stopping the keeper
+    for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
+      [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
+    done
+    rm -f "$HC_DATA/chg_watch.state"
+    st charge_limit off
+    return
+  fi
   cnt_reset
   _nc=""
   for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
@@ -1076,9 +1092,17 @@ f_protect_apps() {
         recv protect_apps appop 10008 "$_p" "$_om"; _as=$((_as + 1))
       fi ;;
     esac
-    # 4) keep in the ACTIVE standby bucket for this boot
-    am set-inactive "$_p" false </dev/null >/dev/null 2>&1
-    am set-standby-bucket "$_p" active </dev/null >/dev/null 2>&1
+    # 4) keep in the ACTIVE standby bucket for this boot; record the old state
+    _ob=$(am get-standby-bucket "$_p" </dev/null 2>/dev/null | tr -d '[:space:]')
+    case "$_ob" in ''|*[!0-9]*) _ob="" ;; esac
+    _oi=$(am get-inactive "$_p" </dev/null 2>/dev/null | sed -n 's/.*Idle=//p' | head -n 1)
+    case "$_oi" in true|false) ;; *) _oi="" ;; esac
+    if am set-inactive "$_p" false </dev/null >/dev/null 2>&1; then
+      [ "$_oi" = true ] && recv protect_apps inactive - "$_p" true
+    fi
+    if am set-standby-bucket "$_p" active </dev/null >/dev/null 2>&1; then
+      [ -n "$_ob" ] && [ "$_ob" != 10 ] && recv protect_apps bucket - "$_p" "$_ob"
+    fi
     case "$(cmd appops get "$_p" RUN_ANY_IN_BACKGROUND </dev/null 2>/dev/null)" in
       *allow*) _n=$((_n + 1)); cnt_ok ;;
       *) cnt_fail; log "  protect_apps: $_p background permission not confirmed" ;;
@@ -1100,7 +1124,7 @@ f_app_bucket() {
   case "$_lvl" in 1) _b=rare ;; *) _b=restricted ;; esac
   _sdk=$(getprop ro.build.version.sdk)
   [ "$_b" = restricted ] && [ "${_sdk:-0}" -lt 30 ] && _b=rare
-  HC_PROTECTED="$(hc_default_apps)$(on protect_apps && cfg protect_pkgs ""),android,com.android.systemui,com.android.phone,com.google.android.gms"
+  HC_PROTECTED="$(hc_default_apps)$(hc_bound_apps)$(on protect_apps && cfg protect_pkgs ""),android,com.android.systemui,com.android.phone,com.google.android.gms"
   case "$_b" in rare) _bn=40 ;; *) _bn=45 ;; esac
   _bgb=""; on bg_block && _bgb=$(cfg bg_block_pkgs "")
   _all=$(am get-standby-bucket </dev/null 2>/dev/null)
@@ -1276,11 +1300,20 @@ f_gms_doze_verify() {
     return
   fi
   _mounted=none
-  _gen=$(find "$MODDIR/system" -name '*.xml' 2>/dev/null | head -n 1)
+  _gen=$(find "$MODDIR/system" "$MODDIR/product" "$MODDIR/system_ext" -name '*.xml' 2>/dev/null | head -n 1)
   if [ -n "$_gen" ]; then
-    _rel=${_gen#"$MODDIR"/system}
-    case "$_rel" in /product/*|/system_ext/*) _live=$_rel ;; *) _live=/system$_rel ;; esac
-    if grep -q "allow-in-power-save package=\"$_g\"" "$_live" 2>/dev/null; then _mounted=no; else _mounted=yes; fi
+    case "$_gen" in
+      "$MODDIR"/system/*) _rel=${_gen#"$MODDIR"/system}; _live=/system$_rel ;;
+      "$MODDIR"/product/*) _rel=${_gen#"$MODDIR"/product}; _live=/product$_rel ;;
+      "$MODDIR"/system_ext/*) _rel=${_gen#"$MODDIR"/system_ext}; _live=/system_ext$_rel ;;
+      *) _live="" ;;
+    esac
+    if [ -n "$_live" ] && [ -f "$_live" ] && \
+       ! grep -q "allow-in-power-save package=\"$_g\"" "$_live" 2>/dev/null; then
+      _mounted=yes
+    else
+      _mounted=no
+    fi
   fi
   # Removal from the SYSTEM whitelist
   _wlo=$(dumpsys deviceidle whitelist </dev/null 2>/dev/null)
