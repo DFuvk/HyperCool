@@ -1106,8 +1106,8 @@ f_protect_apps() {
       fi ;;
     esac
     # 4) keep in the ACTIVE standby bucket for this boot; record the old state
-    _ob=$(am get-standby-bucket "$_p" </dev/null 2>/dev/null | tr -d '[:space:]')
-    case "$_ob" in ''|*[!0-9]*) _ob="" ;; esac
+    #    (hc_bucket_num maps word forms like "exempted"/"rare" to numbers)
+    _ob=$(hc_bucket_num "$(am get-standby-bucket "$_p" </dev/null 2>/dev/null)")
     _oi=$(am get-inactive "$_p" </dev/null 2>/dev/null | sed -n 's/.*Idle=//p' | head -n 1)
     case "$_oi" in true|false) ;; *) _oi="" ;; esac
     if am set-inactive "$_p" false </dev/null >/dev/null 2>&1; then
@@ -1153,7 +1153,7 @@ f_app_bucket() {
     case ",$_bgb," in *",$_p,"*) has_rec app_bucket bucket - "$_p" && restore_feature app_bucket "$_p"; _sk=$((_sk + 1)); _nsb=$((_nsb + 1)); continue ;; esac
     _cur=$(echo "$_all" | sed -n "s/^$_p: *//p" | head -n 1 | tr -d '[:space:]')
     # 5 exempted, 10 active: leave alone; already at target: nothing to do
-    case "$_cur" in 5|10|active|ACTIVE) _sk=$((_sk + 1)); _nsa=$((_nsa + 1)); continue ;; esac
+    case "$_cur" in 5|10|active|ACTIVE|exempted|EXEMPTED) _sk=$((_sk + 1)); _nsa=$((_nsa + 1)); continue ;; esac
     # already there (set by Android or by you): not recorded, so turning off leaves it alone
     if [ "$_cur" = "$_bn" ]; then _nal=$((_nal + 1)); cnt_ok; continue; fi
     if am set-standby-bucket "$_p" "$_b" </dev/null >/dev/null 2>&1; then
@@ -1172,7 +1172,7 @@ hc_bucket_num() {
   _bv=$(echo "$1" | tr -d '[:space:]'); _bv=${_bv##*:}
   case "$_bv" in
     active|ACTIVE) echo 10 ;; working_set|WORKING_SET) echo 20 ;; frequent|FREQUENT) echo 30 ;;
-    rare|RARE) echo 40 ;; restricted|RESTRICTED) echo 45 ;;
+    rare|RARE) echo 40 ;; restricted|RESTRICTED) echo 45 ;; exempted|EXEMPTED) echo 5 ;;
     ''|*[!0-9]*) echo "" ;; *) echo "$_bv" ;;
   esac
 }
