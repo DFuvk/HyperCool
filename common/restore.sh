@@ -39,9 +39,13 @@ _hc_undo() {
       cmd appops set "$3" "$2" "$_m" </dev/null >/dev/null 2>&1 ;;
     bucket)
       # value = bucket before HyperCool changed it (5/10/20/30/40/45); anything else -> active
+      # AOSP's "am set-standby-bucket" only accepts ac/wo/fr/ra/re/ne or a number
+      # (bucketNameToBucketValue), so bucket 5 (EXEMPTED) cannot be restored by name,
+      # and the server rejects values below ACTIVE(10) too. Restore 5 as active: when
+      # the app is still exempted the server ignores the set with rc=0, so the record
+      # is dropped and --purge can run (v2.2.1 behaviour).
       case "$4" in
         10|20|30|40|45) _sb=$4 ;;
-        5) [ "$(getprop ro.build.version.sdk)" -ge 31 ] 2>/dev/null && _sb=exempted || _sb=active ;;
         *) _sb=active ;;
       esac
       am set-standby-bucket "$3" "$_sb" </dev/null >/dev/null 2>&1 ;;
