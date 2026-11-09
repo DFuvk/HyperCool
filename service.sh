@@ -75,11 +75,10 @@ f_io_tune
 f_debug_off
 f_wakelock_block
 
-# ---------- ROM: protected apps first, then restrictions ----------
-# protect runs before block so that moving an app from Protected to Blocked in
-# one apply is not undone by the protect prune-restore afterwards
-f_protect_apps
+# ---------- ROM: blocked apps first (a moved app's protect record is restored
+# by f_bg_block itself), then protected apps ----------
 f_bg_block
+f_protect_apps
 f_app_bucket
 f_app_disable
 

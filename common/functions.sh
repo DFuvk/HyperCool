@@ -1030,17 +1030,9 @@ valid_pkg() { case "$1" in ''|*[!A-Za-z0-9._]*) return 1 ;; esac; return 0; }
 prune_pkgs() {
   _pl=",$2,"
   [ -f "$HC_ROMBAK" ] || return 0
-  # bg_block runs after protect_apps: a package that is now protected must not
-  # have its block values restored here, or that would undo the protection.
-  # (The records stay and are restored later if the app is unprotected.)
-  _skip=""
-  if [ "$1" = bg_block ]; then _skip=",$(cfg protect_pkgs ""),"; fi
   grep "^$1|" "$HC_ROMBAK" | cut -d'|' -f4 | sort -u | while read -r _p; do
     [ "$_p" = "-" ] && continue
-    case "$_pl" in *",$_p,"*) ;; *)
-      case "$_skip" in *",$_p,"*) continue ;; esac
-      restore_feature "$1" "$_p"; log "$1: reverted $_p" ;;
-    esac
+    case "$_pl" in *",$_p,"*) ;; *) restore_feature "$1" "$_p"; log "$1: reverted $_p" ;; esac
   done
 }
 
@@ -1211,6 +1203,9 @@ f_bg_block() {
     if hc_is_protected "$_p"; then
       restore_feature bg_block "$_p"; _sk=$((_sk + 1)); continue
     fi
+    # protect_apps may have this app: give its values back first, so the block
+    # below records the real original and the later protect prune finds nothing
+    restore_feature protect_apps "$_p"
     # 1) user battery-optimization whitelist entry (system entries are left alone)
     if echo "$_wlout" | grep -q "^user,$_p,"; then
       dumpsys deviceidle whitelist -"$_p" </dev/null >/dev/null 2>&1 && rec bg_block uwl - "$_p"
