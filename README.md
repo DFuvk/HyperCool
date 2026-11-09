@@ -72,7 +72,7 @@ small keepers (charge limit, charge hold, screen-off keeper that also serves Kee
   <tr>
     <td align="center" valign="top">
       <img src="docs/screenshots/appearance.png" alt="Appearance and configuration" width="200" /><br />
-      <b>Appearance</b>
+      <b>Experimental</b>
     </td>
     <td align="center" valign="top">
       <img src="docs/screenshots/appearance-status.png" alt="Appearance and configuration" width="200" /><br />
