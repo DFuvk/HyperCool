@@ -78,7 +78,10 @@ small keepers (charge limit, charge hold, screen-off keeper that also serves Kee
       <img src="docs/screenshots/appearance-status.png" alt="Appearance and configuration" width="200" /><br />
       <b>Tools</b>
     </td>
-    <td></td>
+    <td align="center" valign="top">
+      <img src="docs/screenshots/extra-power-saving.png" alt="Extra power saving" width="200" /><br />
+      <b>Extra power saving</b>
+    </td>
   </tr>
 </table>
 
