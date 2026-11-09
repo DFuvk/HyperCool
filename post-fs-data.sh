@@ -7,6 +7,15 @@ MODDIR=${0%/*}
 
 mkdir -p "$HC_DATA" "$HC_BAKDIR"
 [ -f "$HC_CFG" ] || cp -f "$MODDIR/common/default.conf" "$HC_CFG"
+
+# KernelSU re-runs this script when a zip is flashed (system already up): every job here is
+# meant for the next boot only. Doing it now would truncate the running boot's log, count
+# the flash as a boot try and burn a pending battery-stats deletion - so: nothing to do.
+if [ "$(getprop sys.boot_completed)" = "1" ]; then
+  log "module files updated while the system is up: post-fs-data work waits for the next reboot"
+  exit 0
+fi
+
 # snapshot: this whole boot applies the config as it is right now
 cp -f "$HC_CFG" "$HC_BOOTCFG"
 HC_CFG=$HC_BOOTCFG
