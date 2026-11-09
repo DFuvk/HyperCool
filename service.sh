@@ -51,6 +51,48 @@ if [ -f "$HC_PFD_STATUS" ]; then cp -f "$HC_PFD_STATUS" "$HC_STATUS"; else : > "
 # shellcheck disable=SC2034
 HC_STATUS_OUT=$HC_STATUS
 
+# post-fs-data drops .pfd_ran when it completes and this script deletes it once seen: no marker
+# means the root manager skipped that stage this boot. Its prop features were re-applied above
+# (persist), but log.tag was not — set it too and make the statuses describe this boot honestly.
+if [ -f "$MODDIR/disable" ]; then
+  : # safe mode or switched off: leave the ROM alone
+elif [ -f "$HC_DATA/.pfd_ran" ]; then
+  rm -f "$HC_DATA/.pfd_ran"
+else
+  log "post-fs-data stage was skipped this boot (root manager): re-applying its features from service"
+  sed -i '/^log_reduce=/d;/^debug_props=/d;/^x_props=/d' "$HC_STATUS"
+  if on log_reduce; then
+    if resetprop -n log.tag W >/dev/null 2>&1; then
+      st log_reduce applied "only Warning+ logs written (service fallback)"
+    else
+      st log_reduce failed "resetprop not available or refused log.tag"
+    fi
+  else
+    st log_reduce off
+  fi
+  if on debug_props; then
+    _c=$(hc_props "$HC_DEBUG_PROPS")
+    if [ "${_c:-0}" -gt 0 ]; then st debug_props applied "$_c debug/trace props set for this boot (service fallback)"
+    else st debug_props failed "no prop accepted (resetprop missing or refused)"; fi
+  else
+    st debug_props off
+  fi
+  if on x_props; then
+    _c=$(apply_props_file "$MODDIR/common/x_props.txt")
+    if [ "${_c:-0}" -gt 0 ]; then st x_props applied "$_c extra logging props set for this boot (service fallback)"
+    else st x_props failed "no prop accepted (resetprop missing or refused)"; fi
+  else
+    st x_props off
+  fi
+  # SurfaceFlinger reads its timers when it starts: they could not be set before it started,
+  # so let rr_adapt report honestly (0 props set by post-fs-data)
+  if on rr_adapt; then
+    echo 0 > "$HC_DATA/.rr_props"
+  else
+    rm -f "$HC_DATA/.rr_props"
+  fi
+fi
+
 # ---------- kernel: heat ----------
 hc_keep_reset
 f_cpu_cap
