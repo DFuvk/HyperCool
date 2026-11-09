@@ -65,22 +65,22 @@ snap() {
   echo "$_s"
 }
 
-little_max() {
-  _lm=999999999
+little_policy() {
+  _lm=999999999; _lp=""
   for _p in /sys/devices/system/cpu/cpufreq/policy*; do
     _m=$(cat "$_p/cpuinfo_max_freq" 2>/dev/null); [ -n "$_m" ] || continue
-    [ "$_m" -lt "$_lm" ] && _lm=$_m
+    if [ "$_m" -lt "$_lm" ]; then _lm=$_m; _lp=$_p; fi
   done
-  echo "$_lm"
+  echo "$_lp"
 }
 
 apply_off() {
   : > "$SAVE"
   _al=""
-  _lm=$(little_max)
+  _lp=$(little_policy)
   for _p in /sys/devices/system/cpu/cpufreq/policy*; do
     _m=$(cat "$_p/cpuinfo_max_freq" 2>/dev/null); [ -n "$_m" ] || continue
-    [ "$_m" = "$_lm" ] && continue
+    [ "$_p" = "$_lp" ] && continue
     _s=$(snap "$_p" $((_m * PCT / 100)))
     # put back the Big-core cap or the full range: scaling_max_freq reads the limit after thermal,
     # so the value read now may be a temporary thermal limit

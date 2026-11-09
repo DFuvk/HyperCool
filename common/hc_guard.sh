@@ -4,10 +4,16 @@
 # HyperCool guard (installed to /data/adb/service.d by HyperCool)
 MOD=/data/adb/modules/hypercool
 D=/data/adb/hypercool
-if [ ! -d "$MOD" ]; then
+if [ ! -d "$MOD" ] || [ -f "$MOD/remove" ]; then
   # uninstall.sh normally restores everything; give it time, then clean up whatever is left
   sleep 180
-  [ -f "$D/restore.sh" ] && sh "$D/restore.sh" --all --wait-boot --purge >/dev/null 2>&1
+  # a reinstall during the grace period must keep its fresh data and guard
+  if [ -d "$MOD" ] && [ ! -f "$MOD/remove" ]; then
+    exit 0
+  fi
+  if [ -f "$D/restore.sh" ]; then
+    sh "$D/restore.sh" --all --wait-boot --purge >/dev/null 2>&1 || exit 0
+  fi
   rm -f "$0"
   exit 0
 fi

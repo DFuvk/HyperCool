@@ -406,7 +406,10 @@ hc_cache_pid() {
   grep -q cache_clean "/proc/$_cp/cmdline" 2>/dev/null && echo "$_cp"
 }
 f_x_cache_auto() {
-  _cp=$(hc_cache_pid) && kill "$_cp" 2>/dev/null
+  if _cp=$(hc_cache_pid); then
+    kill "$_cp" 2>/dev/null
+    _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_cp" ]; do sleep 1; _i=$((_i + 1)); done
+  fi
   rm -f "$HC_DATA/cache_keeper.pid"
   on x_cache_auto || { st x_cache_auto off; return; }
   _mn=$(num x_cache_min 0)
@@ -552,16 +555,17 @@ f_x_job_limit() {
     set_d x_job_limit jobscheduler "$_k" "$_v"
     _want="$_want $_k=$_v"
   done
-  # JobScheduler takes DeviceConfig changes a moment later: wait up to 6 s for the live values
-  _ok=""; _t=0
+  # JobScheduler takes DeviceConfig changes a moment later: wait up to 6 s for all live values
+  _ok=0; _t=0; _need=$(printf '%s\n' $_want | grep -c .)
   while [ "$_t" -lt 6 ]; do
     sleep 1
     _now=$(hc_js_read)
-    for _w in $_want; do echo "$_now" | grep -qx "$_w" && { _ok=1; break; }; done
-    [ -n "$_ok" ] && break
+    _got=0
+    for _w in $_want; do echo "$_now" | grep -qx "$_w" && _got=$((_got + 1)); done
+    [ "$_got" -ge "$_need" ] && { _ok=1; break; }
     _t=$((_t + 1))
   done
-  if [ -z "$_ok" ]; then
+  if [ "$_ok" = 0 ]; then
     restore_feature x_job_limit
     log "  x_job_limit: JobScheduler did not take the values, put back"
     st x_job_limit skipped "JobScheduler did not take the values (put back to stock)"

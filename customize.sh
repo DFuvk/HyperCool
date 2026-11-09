@@ -68,7 +68,7 @@ if [ -f "$HC_DATA/config.conf" ]; then
   fi
   # make sure the last line ends with a newline before appending missing keys
   [ -s "$HC_DATA/config.conf" ] && [ -n "$(tail -c1 "$HC_DATA/config.conf")" ] && echo >> "$HC_DATA/config.conf"
-  grep -E '^[a-z_]+=' "$MODPATH/common/default.conf" | while IFS='=' read -r k v; do
+  grep -E '^[a-z0-9_]+=' "$MODPATH/common/default.conf" | while IFS='=' read -r k v; do
     grep -q "^$k=" "$HC_DATA/config.conf" || echo "$k=$v" >> "$HC_DATA/config.conf"
   done
 else

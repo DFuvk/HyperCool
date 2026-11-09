@@ -1,6 +1,22 @@
 # Changelog
 
-> Current build: **v2.1.1 (211)**.
+> Current build: **v2.1.2 (212)**.
+
+## v2.1.2 (212)
+
+- Fixed: a restore that fails no longer loses the backup record. The original ROM value is kept for a retry, and uninstall only purges the backup after every restore succeeds
+- Fixed: uninstall keeps the guard until restore succeeds; if the background restore fails or is interrupted, the guard retries on the next boot. A reinstall during the guard's 180 s grace period is left alone
+- Fixed: App bucket now protects accessibility services, notification listeners and always-on VPN apps, the same apps Block background apps already protects
+- Fixed: Protected apps records and restores the standby bucket and inactive state when the switch is turned off
+- Fixed: turning Charge limit off writes `night_charging=0` before stopping the keeper, and the keeper stop waits for the process to exit
+- Fixed: Big-core CPU cap now works on kernels that expose only one cpufreq policy
+- Fixed: JobScheduler batching is reported applied only when every wanted key took its value; a partial write is restored
+- Fixed: the screen-off CPU cap no longer skips every cluster when two clusters share the same maximum frequency
+- Fixed: the GMS Doze sysconfig overlay uses the module root `product` and `system_ext` directories, so the override is mounted on KernelSU/Magisk
+- Fixed: existing configs gain keys containing digits (the F2FS GC settings) on upgrade; the WebUI save count matches
+- Fixed: battery temperature parsers reject malformed values such as `4-5`
+- Fixed: safe mode counts a boot that reaches the end of the apply as good, even when boot_completed was slow
+- Changed: banner artwork updated
 
 ## v2.1.1 (211)
 

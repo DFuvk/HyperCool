@@ -497,7 +497,7 @@ textarea:disabled{opacity:.45}
   <div class="grow">
     <h1>HyperCool</h1>
     <div class="by">Heat &amp; Battery Fix</div>
-    <div class="hchips"><span class="hchip" data-verlong>Version 2.1</span><span class="hchip">By Yudharn</span></div>
+    <div class="hchips"><span class="hchip" data-verlong>Version 2.1.2</span><span class="hchip">By Yudharn</span></div>
   </div>
   <div class="tr">
     <div class="state idle" id="mstate"><i></i><span>Loading</span></div>
@@ -642,7 +642,7 @@ textarea:disabled{opacity:.45}
 
     <h2 class="sh">About</h2>
     <div class="group">
-      <div class="about"><img class="abanner" src="banner.jpg" alt="HyperCool banner" onerror="this.remove()"><b>HyperCool <span data-ver>v2.1</span></b>
+      <div class="about"><img class="abanner" src="banner.jpg" alt="HyperCool banner" onerror="this.remove()"><b>HyperCool <span data-ver>v2.1.2</span></b>
         <p>By Yudharn</p>
         <p>HyperCool for Qualcomm and MediaTek, all ROMs. Cuts overheating and battery drain for longer battery life (Focused on battery life, not peak performance).</p>
         <p>Runs once at boot. Features your phone doesn't support are skipped.</p>
@@ -2014,12 +2014,12 @@ textarea:disabled{opacity:.45}
     var lines = buildConfig().replace(/\n$/, '').split('\n').map(function (l) {
       return "'" + l.replace(/'/g, '') + "'";
     });
-    var nkeys = buildConfig().split('\n').filter(function (l) { return /^[a-z_]+=/.test(l); }).length;
+    var nkeys = buildConfig().split('\n').filter(function (l) { return /^[a-z0-9_]+=/.test(l); }).length;
     var D = DATA;
     var cmd =
       'mkdir -p ' + D + ' || { echo "cannot create ' + D + '" >&2; exit 2; }; ' +
       'printf "%s\\n" ' + lines.join(' ') + ' > ' + D + '/.cfg.tmp || { echo "write failed" >&2; exit 3; }; ' +
-      'n=$(grep -c "^[a-z_]*=" ' + D + '/.cfg.tmp); ' +
+      'n=$(grep -c "^[a-z0-9_]*=" ' + D + '/.cfg.tmp); ' +
       '[ "$n" = "' + nkeys + '" ] || { echo "incomplete write ($n of ' + nkeys + ' keys)" >&2; rm -f ' + D + '/.cfg.tmp; exit 4; }; ' +
       'mv -f ' + D + '/.cfg.tmp ' + D + '/config.conf || { echo "rename failed" >&2; exit 5; }; ' +
       'chmod 644 ' + D + '/config.conf; echo SAVED';
@@ -2957,7 +2957,7 @@ textarea:disabled{opacity:.45}
   function openRestore() {
     if (!HAS_KSU) { snack('Preview mode'); return; }
     exec(BK_FIND + 'echo "DIR|$B"; for f in $(ls -1t "$B"/hypercool_*.conf 2>/dev/null); do ' +
-      'echo "F|$f|$(grep -c "^[a-z_]*=" "$f")|$(grep -c "^cal_" "$f")"; done').then(function (r) {
+      'echo "F|$f|$(grep -c "^[a-z0-9_]*=" "$f")|$(grep -c "^cal_" "$f")"; done').then(function (r) {
       var dir = '', rows = [];
       String(r.stdout || '').split('\n').forEach(function (l) {
         var p = l.split('|');

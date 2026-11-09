@@ -50,7 +50,8 @@ dxa_pw() {
 # battery temperature in tenths of a degree; unknown = too warm
 dxa_temp() {
   _dxt=$(cat "$HC_PS/battery/temp" 2>/dev/null)
-  case "$_dxt" in ''|*[!0-9-]*) echo 999; return ;; esac
+  case "$_dxt" in ''|-) echo 999; return ;; esac
+  case "${_dxt#-}" in *[!0-9]*) echo 999; return ;; esac
   echo "$_dxt"
 }
 # a finished run of all apps (any mode but reset) counts as this week's run, also one started by hand

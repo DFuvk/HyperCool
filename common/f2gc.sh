@@ -103,7 +103,8 @@ gcf_pw() {
 # battery temperature in tenths of a degree; 999 when unknown (unknown = treated as too warm)
 gcf_temp() {
   _gt=$(cat "$HC_PS/battery/temp" 2>/dev/null)
-  case "$_gt" in ''|*[!0-9-]*) echo 999; return ;; esac
+  case "$_gt" in ''|-) echo 999; return ;; esac
+  case "${_gt#-}" in *[!0-9]*) echo 999; return ;; esac
   echo "$_gt"
 }
 gm_get() { sed -n "s/^$1=//p" "$GCMETA" 2>/dev/null | tail -n 1 | tr -d '\r'; }

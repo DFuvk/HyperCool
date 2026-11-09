@@ -26,7 +26,7 @@ _bt=$((_bt + 1))
 echo "$_bt" > "$_bf"
 if [ "$_bt" -ge 3 ]; then
   rm -f "$_bf"
-  rm -rf "$MODDIR/system"
+  rm -rf "$MODDIR/system" "$MODDIR/product" "$MODDIR/system_ext"
   touch "$MODDIR/disable"
   _sd=$(date '+%Y-%m-%d %H:%M:%S')
   echo "$_sd" > "$HC_DATA/safe_mode"
@@ -36,7 +36,7 @@ if [ "$_bt" -ge 3 ]; then
 fi
 
 # ---------- GMS Doze: rebuild sysconfig overlay each boot ----------
-rm -rf "$MODDIR/system"
+rm -rf "$MODDIR/system" "$MODDIR/product" "$MODDIR/system_ext"
 if on gms_doze; then
   _n=0
   for _d in /system/etc/sysconfig /product/etc/sysconfig /system_ext/etc/sysconfig; do
@@ -44,20 +44,20 @@ if on gms_doze; then
     for _x in "$_d"/*.xml; do
       [ -f "$_x" ] || continue
       grep -q 'allow-in-power-save package="com.google.android.gms"' "$_x" || continue
-      case "$_d" in
-        /system/*) _t="$MODDIR$_d" ;;
-        *) _t="$MODDIR/system$_d" ;;
-      esac
+      # module root mirrors the real partition: /product -> $MODDIR/product,
+      # /system_ext -> $MODDIR/system_ext (not $MODDIR/system/product/...)
+      _t="$MODDIR$_d"
       mkdir -p "$_t"
       grep -v 'allow-in-power-save package="com.google.android.gms"' "$_x" > "$_t/${_x##*/}"
       _n=$((_n + 1))
     done
   done
-  if [ -d "$MODDIR/system" ]; then
-    find "$MODDIR/system" -type d -exec chmod 755 {} + 2>/dev/null
-    find "$MODDIR/system" -type f -exec chmod 644 {} + 2>/dev/null
-    chcon -R u:object_r:system_file:s0 "$MODDIR/system" 2>/dev/null
-  fi
+  for _r in "$MODDIR/system" "$MODDIR/product" "$MODDIR/system_ext"; do
+    [ -d "$_r" ] || continue
+    find "$_r" -type d -exec chmod 755 {} + 2>/dev/null
+    find "$_r" -type f -exec chmod 644 {} + 2>/dev/null
+    chcon -R u:object_r:system_file:s0 "$_r" 2>/dev/null
+  done
   if [ "$_n" -gt 0 ]; then
     st gms_doze applied "GMS removed from Doze whitelist ($_n sysconfig file(s))"
   else
