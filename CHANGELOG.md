@@ -1,8 +1,8 @@
 # Changelog
 
-> Current build: **v2.1.2 (212)**.
+> Current build: **v2.2 (220)**.
 
-## v2.1.2 (212)
+## v2.2 (220)
 
 - Fixed: a restore that fails no longer loses the backup record. The original ROM value is kept for a retry, and uninstall only purges the backup after every restore succeeds
 - Fixed: uninstall keeps the guard until restore succeeds; if the background restore fails or is interrupted, the guard retries on the next boot. A reinstall during the guard's 180 s grace period is left alone
