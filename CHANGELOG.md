@@ -1,6 +1,13 @@
 # Changelog
 
-> Current build: **v2.2 (220)**.
+> Current build: **v2.2.1 (221)**.
+
+## v2.2.1 (221)
+
+- Restore: records for packages that are no longer installed are dropped, so uninstall purge no longer retries forever. Skipped while PackageManager is not ready, so no record is lost.
+- Charge limit off: only resets night_charging when HyperCool set it; the ROM's own value is left alone.
+- App bucket: now skips the same protected apps as Block background apps.
+- Protected <-> Blocked: moving an app between the lists in one apply no longer undoes the change.
 
 ## v2.2 (220)
 
