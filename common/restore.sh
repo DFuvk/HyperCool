@@ -49,9 +49,13 @@ _hc_undo() {
 
 # 0 when the record is bound to a package that is no longer installed:
 # there is nothing left to undo, so the record can be dropped instead of
-# failing every future restore and blocking --purge forever
+# failing every future restore and blocking --purge forever.
+# But first make sure PackageManager is actually alive: when pm is not ready
+# "pm path" is empty for every package, and dropping records then would lose
+# the ROM originals without a trace. In that case fail (keep the record).
 _hc_pkg_gone() {
   case "$1" in pkg|appop|bucket|inactive|wl|uwl|syswl) ;; *) return 1 ;; esac
+  [ -n "$(pm path android </dev/null 2>/dev/null)" ] || return 1
   [ -z "$(pm path "$2" </dev/null 2>/dev/null)" ]
 }
 
