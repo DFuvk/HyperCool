@@ -47,7 +47,8 @@ f_x_sched() {
     case "$_g" in */sugov_ext) on_mtk_ok || continue ;; esac
     # slower ramp-up only
     [ -f "$_g/up_rate_limit_us" ] && ! on walt_tune && wn "$_g/up_rate_limit_us" 5000
-    [ -f "$_g/hispeed_load" ] && wn "$_g/hispeed_load" 99
+    # walt_tune also owns hispeed_load on schedutil/sugov_ext; do not overwrite its value.
+    [ -f "$_g/hispeed_load" ] && ! on walt_tune && wn "$_g/hispeed_load" 99
   done
   for _g in /sys/devices/system/cpu/cpufreq/policy*/interactive \
             /sys/devices/system/cpu/cpu*/cpufreq/interactive; do
@@ -524,7 +525,7 @@ f_x_zram() {
 }
 
 # x_job_limit - JobScheduler waits for more jobs / longer so background work runs in fewer, bigger batches
-# Only keys this Android lists in "dumpsys jobscheduler" are written; they are read back before saying applied.
+# Only keys this Android lists in "dumpsys jobscheduler" are written; a partial readback is kept and reported.
 HC_JS_KEYS="min_ready_cpu_only_jobs_count min_ready_non_active_jobs_count max_cpu_only_job_batch_delay_ms max_non_active_job_batch_delay_ms conn_max_connectivity_job_batch_delay_ms"
 hc_js_read() { # -> key=value lines of HC_JS_KEYS from the live JobScheduler constants
   dumpsys jobscheduler </dev/null 2>/dev/null | sed -n 's/^ *\([a-z_]*\)=\([0-9][0-9]*\).*/\1=\2/p' | grep -E "^($(echo $HC_JS_KEYS | tr ' ' '|'))="
@@ -555,20 +556,33 @@ f_x_job_limit() {
     set_d x_job_limit jobscheduler "$_k" "$_v"
     _want="$_want $_k=$_v"
   done
-  # JobScheduler takes DeviceConfig changes a moment later: wait up to 6 s for all live values
-  _ok=0; _t=0; _need=$(printf '%s\n' $_want | grep -c .)
+  # JobScheduler takes DeviceConfig changes a moment later: wait up to 6 s. Keep whatever
+  # took effect and report partial instead of rolling back every key when one does not take.
+  _t=0; _need=$(printf '%s\n' $_want | grep -c .)
+  _got=0; _bad=""
   while [ "$_t" -lt 6 ]; do
     sleep 1
     _now=$(hc_js_read)
-    _got=0
-    for _w in $_want; do echo "$_now" | grep -qx "$_w" && _got=$((_got + 1)); done
-    [ "$_got" -ge "$_need" ] && { _ok=1; break; }
+    _got=0; _bad=""
+    for _w in $_want; do
+      if echo "$_now" | grep -qx "$_w"; then
+        _got=$((_got + 1))
+      else
+        _bad="$_bad ${_w%%=*}"
+      fi
+    done
+    [ "$_need" -gt 0 ] && [ "$_got" -ge "$_need" ] && break
     _t=$((_t + 1))
   done
-  if [ "$_ok" = 0 ]; then
+  if [ "$_got" -eq 0 ]; then
     restore_feature x_job_limit
-    log "  x_job_limit: JobScheduler did not take the values, put back"
+    log "  x_job_limit: JobScheduler did not take any value, put back"
     st x_job_limit skipped "JobScheduler did not take the values (put back to stock)"
+    return
+  fi
+  if [ "$_got" -lt "$_need" ]; then
+    log "  x_job_limit: $_got/$_need values took, left unchanged:$_bad"
+    st x_job_limit partial "$_got/$_need JobScheduler settings applied ($_jname); the rest stayed unchanged"
     return
   fi
   fin x_job_limit "background jobs batched ($_jname)"
