@@ -57,13 +57,20 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 
 /* section headers */
-.sh{font-size:20px;font-weight:600;margin:24px 8px 2px;color:var(--on);letter-spacing:-.2px}
+.sh{font-size:20px;font-weight:600;margin:28px 8px 8px;color:var(--on);letter-spacing:-.2px}
 .ssub{margin:2px 8px 12px;font-size:13px;color:var(--dim)}
 
 /* grouped list (Material You) */
 .group{display:flex;flex-direction:column;gap:12px}
 .group+.group{margin-top:24px}
 .group>*{background:var(--surf);border-radius:var(--r-card)}
+.home-actions{gap:0;margin-top:24px;background:var(--surf);border-radius:var(--r-card);overflow:hidden}
+.home-actions>*{background:transparent;border-radius:0}
+.home-actions .item+.item{border-top:1px solid var(--line)}
+.home-actions .row{padding:12px 14px;min-height:64px}
+.home-actions .txt{cursor:default}
+.home-actions .btn{padding:8px 14px;font-size:13.5px;flex:none}
+.home-actions+.ccard{margin-top:24px}
 
 .item .row{display:flex;align-items:center;gap:10px;padding:14px 12px 14px 12px;min-height:64px}
 .ic{width:22px;height:22px;border-radius:0;background:none;color:var(--on2);display:grid;place-items:center;flex:none}
@@ -71,8 +78,6 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 .txt{flex:1;min-width:0;cursor:pointer}
 .ttl{font-size:15.5px;font-weight:600;line-height:1.3}
 .desc{font-size:13px;color:var(--on2);margin-top:2px;line-height:1.4}
-/* collapsed feature: 2-line summary; the full text appears when the item is opened */
-.item[id^="it-"]:not(.open) .desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 .tag{display:inline-flex;align-items:center;font-size:13px;font-weight:500;line-height:1;padding:4px 8px;border-radius:6px;background:var(--surf3);color:var(--on2)}
 .t-kernel{background:rgba(var(--c-kernel),var(--ta));color:rgb(var(--c-kernel))}
@@ -90,6 +95,7 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 .ssub.dz{color:var(--dz);opacity:.85}
 .dzg .ic{background:none;color:var(--dz)}
 .dzg .ttl{color:var(--dz)}
+.danger-row .ttl{color:var(--bad)}
 .dzg .sw input:checked+.track{background:var(--dz);border-color:var(--dz)}
 .dzg .sw input:checked+.track .thumb{background:#fff}
 .dzg .sw input:checked+.track .thumb .on{stroke:var(--dz)}
@@ -106,21 +112,19 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 .ctl{flex:none;display:flex;align-items:center}
 
 /* switch with check / cross like Material 3 */
-.sw{position:relative;display:inline-block;width:52px;height:32px;flex:none;cursor:pointer}
+.sw{position:relative;display:inline-block;width:52px;height:44px;flex:none;cursor:pointer}
 .sw input{position:absolute;opacity:0;width:0;height:0}
-.sw .track{position:absolute;inset:0;border-radius:16px;border:2px solid var(--outline);background:var(--surf2);transition:.18s}
-.sw .thumb{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--outline);display:grid;place-items:center;transition:.18s}
-.sw .thumb svg{width:14px;height:14px;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
-.sw .thumb .on{display:none;stroke:var(--pri)} .sw .thumb .off{stroke:var(--surf2)}
+.sw .track{position:absolute;left:0;right:0;top:6px;height:32px;border-radius:16px;border:2px solid var(--outline);background:transparent;transition:.18s}
+.sw .thumb{position:absolute;top:7px;left:6px;width:18px;height:18px;border-radius:50%;background:var(--outline);display:grid;place-items:center;transition:.18s}
+.sw .thumb svg{display:none}
 .sw input:checked+.track{background:var(--pri);border-color:var(--pri)}
-.sw input:checked+.track .thumb{left:22px;width:24px;height:24px;top:2px;background:var(--onpri)}
-.sw input:checked+.track .thumb .on{display:block} .sw input:checked+.track .thumb .off{display:none}
+.sw input:checked+.track .thumb{left:22px;top:2px;width:24px;height:24px;background:var(--onpri)}
 .sw input:disabled+.track{opacity:.4}
 
 /* select pill */
-.pill{position:relative}
+.pill{position:relative;max-width:100%;min-width:0}
 .pill select{appearance:none;-webkit-appearance:none;background:var(--surf3);color:var(--on);border:0;border-radius:var(--r-input);
-  padding:9px 30px 9px 14px;font-size:14px;font-weight:500;max-width:150px;text-overflow:ellipsis}
+  padding:9px 30px 9px 14px;font-size:14px;font-weight:500;max-width:100%;text-overflow:ellipsis}
 .pill:after{content:"";position:absolute;right:12px;top:50%;width:7px;height:7px;border-right:2px solid var(--on2);
   border-bottom:2px solid var(--on2);transform:translateY(-70%) rotate(45deg);pointer-events:none}
 
@@ -128,6 +132,7 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 .more{padding:0 14px 16px 62px}
 .stdet{font-size:13px;color:var(--on2);background:var(--surf2);border-radius:var(--r-input);padding:8px 12px;margin-bottom:10px;word-break:break-word;white-space:pre-line}
 .src{font-size:13px;color:var(--dim);margin-bottom:8px}
+.xdesc{font-size:13px;color:var(--on2);line-height:1.5;margin:0 0 10px;overflow-wrap:anywhere}
 .stdet:empty{display:none}
 .sub-row{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap}
 .sub-row label{font-size:13px;color:var(--on2);flex:1;min-width:150px}
@@ -138,17 +143,17 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
   padding:9px 10px;font-size:15px;text-align:right}
 .num input:focus,textarea:focus,.pill select:focus{outline:2px solid var(--pri);outline-offset:1px}
 .num span{font-size:13px;color:var(--on2);min-width:26px}
-.sub-row .pill select{max-width:220px}
+.sub-row .pill select{max-width:100%}
 .selrow{padding:0 14px 14px 62px;margin-top:-4px}
-.pill.wide{display:inline-block;max-width:100%}
-.pill.wide select{max-width:100%;min-width:170px;padding:9px 34px 9px 14px;font-size:14px}
+.pill.wide{display:block;max-width:100%}
+.pill.wide select{width:100%;max-width:100%;min-width:0;padding:9px 34px 9px 14px;font-size:14px}
 textarea{width:100%;margin-top:10px;background:transparent;color:var(--on);border:1.5px solid var(--outline);border-radius:var(--r-input);
   padding:10px 12px;font:13px/1.45 ui-monospace,monospace;min-height:80px;resize:vertical}
 textarea:disabled{opacity:.45}
 .hint{font-size:13px;color:var(--dim)}
 .linkbtn{background:var(--pricont);color:var(--onpricont);border:0;border-radius:var(--r-btn);padding:8px 14px;font-size:13.5px;font-weight:500;cursor:pointer}
 .linkbtn:disabled{opacity:.45}
-.xh{font-size:13px;font-weight:600;color:var(--dim);margin:14px 0 6px}
+.xh{font-size:13px;font-weight:600;color:var(--dim);margin:28px 0 8px}
 .xlist{margin:0;padding:10px 12px 10px 28px;background:var(--surf2);border-radius:var(--r-input);font:13px/1.55 ui-monospace,monospace;color:var(--on2)}
 .xlist li{margin:2px 0;word-break:break-word}
 
@@ -156,13 +161,14 @@ textarea:disabled{opacity:.45}
 .hero{background:var(--surf);border-radius:var(--r-card);padding:20px;margin-top:14px}
 .dev{font-size:26px;font-weight:600;line-height:1.1;color:var(--on);overflow-wrap:anywhere}
 .devsub{font-size:13.5px;color:var(--on2);margin-top:3px;word-break:break-word}
-.stats{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;margin-top:16px}
-.stat{background:var(--surf2);border-radius:16px;padding:12px}
-.stat b{display:block;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
-.stat.main b{font-size:28px;line-height:1.05}
-.stat span{font-size:13px;color:var(--on2)}
+.stats{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:0;margin-top:18px}
+.stat{display:grid;grid-template-rows:38px auto;align-content:start;min-width:0;padding:0 0 0 16px;border-left:1px solid var(--line)}
+.stat:first-child{padding-left:0;border-left:0}
+.stat b{display:flex;align-items:flex-end;min-height:38px;font-size:22px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.stat.main b{font-size:34px}
+.stat span{font-size:13px;color:var(--on2);white-space:nowrap;margin-top:4px}
 .stat b{white-space:nowrap}
-.stat b small{font-size:13px;font-weight:400;color:var(--on2)}
+.stat b small{font-size:13px;font-weight:400;color:var(--on2);margin-left:2px}
 .summary{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:14px}
 .idle{margin-top:14px;font-size:13px;line-height:1.45;color:var(--on2)}
 .idle b{color:var(--on);font-weight:500}
@@ -211,10 +217,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   background:var(--surf3);border:1px solid var(--line);border-radius:var(--r-card);padding:10px 10px 10px 18px;display:flex;align-items:center;gap:8px}
 .abar[hidden]{display:none}
 .dirty{flex:1;font-size:14px;color:var(--warn);min-width:0}
-.btn{border:0;border-radius:var(--r-btn);padding:11px 16px;font-size:14.5px;font-weight:500;cursor:pointer;white-space:nowrap}
+.btn{border:0;border-radius:var(--r-btn);padding:11px 16px;font-size:14.5px;font-weight:500;cursor:pointer;white-space:nowrap;max-width:100%}
 .btn.tonal{background:var(--surf2);color:var(--on)}
 .btn.fill{background:var(--pri);color:var(--onpri)}
-.psave{margin-top:10px;padding:8px 14px;font-size:13px}
+.btn.danger{background:var(--dzc);color:var(--ondzc)}
+.psave{margin-top:10px;padding:8px 14px;font-size:13px;max-width:100%;white-space:normal;text-align:left}
 .btn:disabled{opacity:.45}
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:19;padding:0 16px calc(14px + env(safe-area-inset-bottom));pointer-events:none}
 .navin{pointer-events:auto;max-width:600px;margin:0 auto;background:var(--surf);border:1px solid var(--line);border-radius:36px;padding:8px;display:flex;
@@ -229,6 +236,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* appearance */
 .apr .ic{background:none;color:var(--on2)}
 .apr .txt .desc{margin-top:1px}
+#ap-dark .vdiv,#ap-dark .ctl{display:none}
 .swatch{width:30px;height:30px;border-radius:50%;flex:none;margin-right:6px;border:2px solid var(--dim);background:linear-gradient(135deg,#1a73e8 0 34%,#d93025 34% 67%,#f9ab00 67%)}
 .aprow{display:flex;align-items:center;gap:12px;padding:10px 4px;border-radius:16px;cursor:pointer}
 .aprow:active{background:var(--surf3)}
@@ -293,7 +301,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .ccard table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
 .ccard td{padding:7px 0;border-top:1px solid var(--line);color:var(--on2)}
 .ccard td+td{text-align:right;color:var(--on);font-weight:500}
-.ccard .btn{margin-top:12px;width:100%}
+.ccard .btn{margin-top:12px;width:100%;max-width:100%}
 .dxrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:14px;color:var(--on)}
 .dxrow:first-of-type{border-top:0;margin-top:2px}
 .dxbar{height:10px;border-radius:5px;background:var(--surf3);overflow:hidden;margin-top:14px}
@@ -321,22 +329,32 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .tb{flex-wrap:wrap}
   .tb .logo{display:none}
   .tr{flex-direction:row;align-items:center;width:100%;justify-content:space-between}
-  .stats{grid-template-columns:1fr 1fr}
   .stat{min-width:0}
-  .stat.main{grid-column:span 2}
-  .stat b{font-size:15px}
-  .stat.main b{font-size:22px}
   .nav{padding-left:8px;padding-right:8px}
   .navin{padding:6px}
-  .tab span{display:none!important}
-  .tab.active{flex:1}
   .tab svg{width:22px;height:22px}
   .abar{flex-wrap:wrap;padding:10px}
+  .abar .btn{flex:1 1 auto;min-width:0;white-space:normal}
   .dirty{flex-basis:100%}
   .btn{font-size:13px;padding:9px 12px}
   .dlg h3{padding:18px 18px 6px;font-size:20px}
   .dlg .body{padding:4px 18px 10px}
   .dlg .acts{padding:10px 14px 14px}
+  .dxrow{flex-wrap:wrap}
+  .dxrow .pill{max-width:100%}
+  .dxbtns .btn{min-width:0;white-space:normal}
+}
+@media (max-width:340px){
+  .tab span{display:none!important}
+  .tab.active{flex:1}
+  .item .row{flex-wrap:wrap}
+  .item .row .ctl{flex:1 1 100%;justify-content:flex-end}
+  .item .row>.chev{margin-left:auto}
+  .home-actions .row .btn{flex:none;white-space:normal;text-align:right}
+  .more,.sub-row.inl,.selrow{padding-left:14px}
+  .sub-row label{min-width:0}
+  .num{max-width:100%}
+  .num input{width:72px;min-width:0}
 }
 @media (max-width:300px){
   body{padding-bottom:260px}
@@ -344,10 +362,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .tb h1{font-size:24px}
   .tb .by{font-size:13px}
   .dev{font-size:22px}
-  .stats{grid-template-columns:1fr}
-  .stat.main{grid-column:auto}
-  .stat b{font-size:16px}
-  .stat.main b{font-size:24px}
+  .stats{grid-template-columns:1fr;gap:12px}
+  .stat{grid-template-rows:34px auto;padding:12px 0 0;border-left:0;border-top:1px solid var(--line)}
+  .stat:first-child{padding-top:0;border-top:0}
+  .stat b{min-height:34px;font-size:22px}
+  .stat.main b{font-size:34px}
 }
 </style>
 <script>
@@ -569,9 +588,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         <button class="iconbtn" id="refresh" aria-label="Refresh readings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-2.8-6.3l2.8 2.8"/><path d="M20.5 3.5v5h-5"/></svg></button>
       </div>
       <div class="stats">
-        <div class="stat main"><b id="btemp">&ndash;</b><span>Battery temp</span></div>
+        <div class="stat main"><b id="btemp">&ndash;</b><span>Temp</span></div>
         <div class="stat"><b id="idrain">&ndash;</b><span>Idle drain</span></div>
-        <div class="stat"><b id="bcap">&ndash;</b><span id="bstat">Battery health</span></div>
+        <div class="stat"><b id="bcap">&ndash;</b><span id="bstat">Health</span></div>
       </div>
       <div class="idle" id="idle">Reading screen-off battery use&hellip;</div>
       <div class="summary" id="summary"></div>
@@ -579,18 +598,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       <div class="demo" id="demo" hidden>Preview only. Open this page from the KernelSU manager to change settings.</div>
     </div>
 
-    <div class="ccard bcheck">
-      <div class="cbig">Battery check</div><div class="clbl">Health, cycle count, capacity and live readings from the kernel and Android</div>
-      <button class="btn fill" id="bc-run">Run</button>
+    <div class="group home-actions">
+      <div class="item"><div class="row">
+        <div class="txt"><div class="ttl">Battery check</div><div class="desc">Health, cycle count, capacity and live kernel readings</div></div>
+        <button class="btn tonal" id="bc-run">Check battery</button>
+      </div></div>
+      <div class="item"><div class="row">
+        <div class="txt"><div class="ttl">Top battery use</div><div class="desc">Apps, system apps and hardware since the last charge</div></div>
+        <button class="btn tonal" id="td-run">Show usage</button>
+      </div></div>
     </div>
 
-    <div class="ccard bcheck">
-      <div class="cbig">Top battery use</div><div class="clbl">Apps, system apps and hardware that used the most battery since the last charge (read only)</div>
-      <button class="btn fill" id="td-run">Show</button>
-    </div>
-
-    <div class="ccard bcheck bcal">
-      <div class="cbig">Battery calibration</div><div class="clbl">One full cycle so the battery gauge learns the real capacity and the % is accurate again. Every 1&ndash;3 months is enough</div>
+    <div class="ccard bcal">
+      <div class="cbig">Battery calibration</div><div class="clbl">One full cycle so the gauge learns the real capacity. Every 1&ndash;3 months is enough</div>
       <div class="bcst" id="bcal-st">Not started.</div>
       <ol id="bcal-steps"><li>Use the phone until the battery is at 5%</li><li>Charge to 100% without unplugging</li><li>Keep it plugged in until charging finishes (at most 1 h)</li></ol>
       <div class="sub-row" id="bcal-delrow"></div>
@@ -621,7 +641,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         <tr><td>Time</td><td id="cc-time">&ndash;</td></tr>
         <tr><td>Next auto clean</td><td id="cc-next">&ndash;</td></tr>
       </table>
-      <button class="btn fill" id="cc-run">Clean cache</button>
+      <button class="btn tonal" id="cc-run">Clean cache</button>
     </div>
 
     <h2 class="sh">Optimize apps (dex2oat)</h2>
@@ -680,7 +700,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     <div class="group">
       <div class="item press" id="t-log"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div><div class="txt"><div class="ttl">View boot log</div><div class="desc">What was applied, skipped or rejected on the last boot</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
       <div class="item press" id="t-report"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div><div class="txt"><div class="ttl">Create bug report</div><div class="desc">Saves device info, last boot result, settings and the boot log to Download/HyperCool, to send when you report a problem</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
-      <div class="item press" id="t-revert"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></div><div class="txt"><div class="ttl">Revert system changes now</div><div class="desc">Puts everything back now and turns the ROM options off</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
+      <div class="item press danger-row" id="t-revert"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></div><div class="txt"><div class="ttl">Revert system changes now</div><div class="desc">Puts everything back now and turns the ROM options off</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
       <div class="item press" id="t-reboot"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg></div><div class="txt"><div class="ttl">Restart</div><div class="desc">Restart to apply your saved options</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
     </div>
 
@@ -761,7 +781,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   var CFG_VER = '3';
   var ENV = 'export PATH=/system/bin:/system/xbin:/vendor/bin:/data/adb/ksu/bin:/data/adb/ap/bin:/data/adb/magisk:$PATH; ';
   var HAS_KSU = (typeof window.ksu !== 'undefined' && window.ksu && typeof window.ksu.exec === 'function');
-  var PREVIEW_MSG = 'Preview only. Open this page from the KernelSU manager to change settings.';
 
   /* constants */
   var DOZE_AGGRESSIVE = 'light_after_inactive_to=15000,light_pre_idle_to=30000,light_idle_to=900000,light_max_idle_to=1800000,inactive_to=60000,sensing_to=0,locating_to=0,motion_inactive_to=0,idle_after_inactive_to=0,idle_pending_to=60000,quick_doze_delay_to=15000,idle_to=3600000,max_idle_to=21600000';
@@ -804,78 +823,94 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     // heat
     { k: 'cpu_cap', s: 'heat', src: 'kernel', risk: 'safe', type: 'value', def: '95', unit: '%', min: 40, max: 99,
       t: 'Big-core frequency cap',
-      d: 'Limits the big and prime cores to a % of their max clock, little cores are left alone. On MediaTek the PPM limit is set too. Turn on Lock so the ROM can\'t raise it again.',
+      d: 'Caps big and prime cores at a chosen share of their top clock.',
+      x: 'Limits the big and prime cores to a % of their max clock, little cores are left alone. On MediaTek the PPM limit is set too. Turn on Lock so the ROM can\'t raise it again.',
       o: [['0', 'Off'], ['95', 'Light 95%'], ['88', 'Balanced 88%'], ['80', 'Strong 80%']],
       fields: [{ k: 'cpu_cap_lock', label: 'Lock the cap so the ROM cannot raise it', def: '1', bool: true, inline: true }] },
     { k: 'cpu_cap_little', s: 'heat', src: 'kernel', risk: 'moderate', type: 'value', def: '0', unit: '%', min: 50, max: 99,
       t: 'Little-core frequency cap',
-      d: 'Limits the little cores to a % of their max clock. UI and background work run there, so a strong cap can make the phone feel slow. Turn on Lock so the ROM can\'t raise it again.',
+      d: 'Lowers little cores, which handle UI and background work.',
+      x: 'Limits the little cores to a % of their max clock. UI and background work run there, so a strong cap can make the phone feel slow. Turn on Lock so the ROM can\'t raise it again.',
       o: [['0', 'Off'], ['90', 'Light 90%'], ['80', 'Balanced 80%'], ['70', 'Strong 70%']],
       fields: [{ k: 'cpu_cap_little_lock', label: 'Lock the cap so the ROM cannot raise it', def: '1', bool: true, inline: true }] },
     { k: 'prime_park', s: 'heat', src: 'kernel', risk: 'exp', type: 'toggle', def: '0',
       t: 'Park prime core',
-      d: 'Parks the fastest cluster with core_ctl. Big drop in heat, but games lose peak speed. Qualcomm only. If core_ctl is off for that cluster, it is switched on until the next reboot and put back if the core is not really parked.' },
+      d: 'Parks the fastest CPU cluster to cut heat and peak speed.',
+      x: 'Parks the fastest cluster with core_ctl. Big drop in heat, but games lose peak speed. Qualcomm only. If core_ctl is off for that cluster, it is switched on until the next reboot and put back if the core is not really parked.' },
     { k: 'gpu_cap', s: 'heat', src: 'kernel', risk: 'moderate', type: 'level', def: '0',
       t: 'GPU frequency cap',
-      d: 'Limits the max GPU clock. The list comes from your own GPU table and only the upper half is offered, so the UI stays smooth. GPU thermal throttling is set in GPU power collapse.',
+      d: 'Lowers the GPU ceiling; only the upper half of your table is offered.',
+      x: 'Limits the max GPU clock. The list comes from your own GPU table and only the upper half is offered, so the UI stays smooth. GPU thermal throttling is set in GPU power collapse.',
       o: [['0', 'Off'], ['1', 'One step below max'], ['2', 'Two steps below max'], ['3', 'Three steps below max']],
       fields: [{ k: 'gpu_cap_lock', label: 'Lock the cap so the ROM cannot raise it', def: '1', bool: true, inline: true }] },
     { k: 'gpu_idle', s: 'heat', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'GPU power collapse',
-      d: 'Lets the GPU sleep between frames. Adreno: no forced clocks, bus split on, shorter idle timer. Mali: power policy coarse_demand.',
+      d: 'Lets the GPU idle between frames with lower clocks and a shorter timer.',
+      x: 'Lets the GPU sleep between frames. Adreno: no forced clocks, bus split on, shorter idle timer. Mali: power policy coarse_demand.',
       fields: [{ k: 'gpu_idle_timer', label: 'GPU idle timer', def: '64', min: 20, max: 200, unit: 'ms', zero: true },
                { k: 'gpu_throttle', label: 'GPU thermal throttling (Adreno)', def: '1', sel: [['1', 'On (recommended, cooler)'], ['0', 'Off (full GPU speed, more heat)']] }] },
     { k: 'walt_tune', s: 'heat', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Calmer CPU governor',
-      d: 'Turns off predictive load and RTG boosts and slows the ramp-up a bit, so clocks spike less. Works on WALT, schedutil and MediaTek sugov_ext.',
+      d: 'Tones down predictive boosts and slows CPU ramp-up.',
+      x: 'Turns off predictive load and RTG boosts and slows the ramp-up a bit, so clocks spike less. Works on WALT, schedutil and MediaTek sugov_ext.',
       fields: [{ k: 'walt_hispeed_load', label: 'Ramp-up load (hispeed_load)', def: '95', min: 50, max: 100, unit: '%', zero: true },
                { k: 'walt_up_rate', label: 'Ramp-up rate (up_rate_limit)', def: '1000', min: 100, max: 20000, unit: 'µs', zero: true },
                { k: 'walt_sched_boost_off', label: 'Also force sched_boost = 0 and conservative PL (WALT)', def: '1', bool: true },
                { k: 'walt_task_util', label: 'Fewer small tasks boosted or grouped onto big cores (WALT task util 80 / 65)', def: '1', bool: true }] },
     { k: 'input_boost_off', s: 'heat', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Disable kernel touch boost',
-      d: 'No CPU boost on every touch. Saves power while scrolling, the UI can feel a bit less snappy.' },
+      d: 'Skips the CPU boost on each touch, which saves power while scrolling.',
+      x: 'No CPU boost on every touch. Saves power while scrolling, the UI can feel a bit less snappy.' },
     { k: 'bg_cpuset', s: 'heat', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Background apps on little cores',
-      d: 'Background apps only run on the little cores. Optional: move log daemons and light HALs there too. Sensors, vibration, Wi-Fi, GPS, Bluetooth and display are never moved.',
+      d: 'Keeps background apps on little cores, away from the big ones.',
+      x: 'Background apps only run on the little cores. Optional: move log daemons and light HALs there too. Sensors, vibration, Wi-Fi, GPS, Bluetooth and display are never moved.',
       fields: [{ k: 'bg_uclamp', label: 'Background CPU limit (uclamp.max)', def: '30', min: 10, max: 99, unit: '%', zero: true },
                { k: 'bg_daemons', label: 'Also move logging / diagnostic daemons and light HALs to the background group', def: '1', bool: true }] },
     { k: 'blur_off', s: 'heat', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Disable UI blur',
-      d: 'Turns off window blur, plus the HyperOS/MIUI blur in control center, recents and folders. Blur costs GPU on every frame.' },
+      d: 'Turns off window blur in the UI and Xiaomi control center.',
+      x: 'Turns off window blur, plus the HyperOS/MIUI blur in control center, recents and folders. Blur costs GPU on every frame.' },
     { k: 'charge_cool', s: 'heat', src: 'kernel', risk: 'exp', type: 'value', def: '0', unit: 'mA', min: 500, max: 12000,
       t: 'Cooler charging (current limit)',
-      d: 'Limits charging current through the charger thermal level. Pick a level or type mA. Run Calibrate once, every phone is different.',
+      d: 'Limits charge current through a thermal level or your own mA value.',
+      x: 'Limits charging current through the charger thermal level. Pick a level or type mA. Run Calibrate once, every phone is different.',
       fields: [{ k: 'charge_cool_level', label: 'Charger level (overrides the mA value)', def: '0', levelsel: true }],
       o: [['0', 'Off'], ['5000', '5000 mA'], ['3000', '3000 mA'], ['2000', '2000 mA'], ['1500', '1500 mA']] },
     { k: 'charge_limit', s: 'heat', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0', only: 'XIAOMI',
       t: 'Charge limit ~80% (night charging)',
-      d: 'Stops charging around 80% with Xiaomi night_charging. A small keeper sets it again after every replug (every 15 s, no wakelock). Xiaomi kernels only.' },
+      d: 'Stops charging near 80% on Xiaomi kernels and rechecks after replug.',
+      x: 'Stops charging around 80% with Xiaomi night_charging. A small keeper sets it again after every replug (every 15 s, no wakelock). Xiaomi kernels only.' },
 
     // kernel drain
     { k: 'soff_prof', s: 'kdrain', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Adaptive screen-off power profile',
-      d: 'While the screen is off: big cores limited, GPU at its lowest clock, boosts off. Wi-Fi, data, alarms and notifications are not touched. Everything goes back when the screen turns on. One small keeper, no wakelock.',
+      d: 'Drops big-core clocks and GPU speed while the screen is off.',
+      x: 'While the screen is off: big cores limited, GPU at its lowest clock, boosts off. Wi-Fi, data, alarms and notifications are not touched. Everything goes back when the screen turns on. One small keeper, no wakelock.',
       fields: [{ k: 'soff_cpu', label: 'Big-core limit while the screen is off', def: '60', min: 30, max: 90, unit: '%' },
                { k: 'soff_gpu', label: 'Hold the GPU at its lowest clock', def: '1', bool: true },
                { k: 'soff_boost', label: 'Turn scheduler and touch boosts off', def: '1', bool: true }] },
     { k: 'wifi_keep', s: 'kdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Keep Wi-Fi on while the screen is off',
-      d: 'Turns Wi-Fi back on if the ROM switches it off while the screen is off, so WhatsApp and Telegram keep getting notifications. Wi-Fi you switch off yourself stays off, and airplane mode is respected. Uses a little more battery.' },
+      d: 'Re-enables Wi-Fi that the ROM turned off during screen-off.',
+      x: 'Turns Wi-Fi back on if the ROM switches it off while the screen is off, so WhatsApp and Telegram keep getting notifications. Wi-Fi you switch off yourself stays off, and airplane mode is respected. Uses a little more battery.' },
     { k: 'soff_radio', s: 'kdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Location and Bluetooth off during long screen-off',
-      d: 'Switches Location (and optionally Bluetooth) off after a long screen-off and back on when the screen turns on. Fewer GPS and Bluetooth wake-ups. While off, location alarms, Find My Device and navigation get no position. Bluetooth stays on while audio plays or an audio device is connected.',
+      d: 'Cuts location and Bluetooth after long screen-off, then restores both.',
+      x: 'Switches Location (and optionally Bluetooth) off after a long screen-off and back on when the screen turns on. Fewer GPS and Bluetooth wake-ups. While off, location alarms, Find My Device and navigation get no position. Bluetooth stays on while audio plays or an audio device is connected.',
       fields: [{ k: 'soff_radio_min', label: 'Wait after the screen goes off', def: '15', min: 5, max: 120, unit: 'min' },
                { k: 'soff_radio_bt', label: 'Also turn Bluetooth off', def: '0', bool: true }] },
     { k: 'cpu_idle', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Ensure deep CPU sleep',
-      d: 'Makes sure deep CPU sleep states are allowed. It only turns sleep states back on, never off.' },
+      d: 'Allows deep CPU sleep states and never disables one.',
+      x: 'Makes sure deep CPU sleep states are allowed. It only turns sleep states back on, never off.' },
     { k: 'ufs_pm', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'UFS storage power saving',
       d: 'Turns on UFS clock gating, clock scaling and hibern8, so storage sleeps between requests.' },
     { k: 'vm_tune', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Fewer memory writeback wakeups',
-      d: 'Flushes cached data to storage less often, so CPU and storage wake up less in standby. 0 keeps stock.',
+      d: 'Writes cached data back less often, so standby wakeups drop.',
+      x: 'Flushes cached data to storage less often, so CPU and storage wake up less in standby. 0 keeps stock.',
       fields: [{ k: 'vm_writeback', label: 'Writeback interval', def: '3000', min: 500, max: 6000, unit: 'cs', zero: true },
                { k: 'vm_stat_interval', label: 'Memory stat interval', def: '10', min: 1, max: 60, unit: 's', zero: true },
                { k: 'vm_dirty_bg', label: 'Background writeback threshold (dirty_background_ratio)', def: '10', min: 1, max: 50, unit: '%', zero: true },
@@ -885,73 +920,89 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       d: 'Turns off I/O stats and entropy sampling on storage. Less CPU work per read and write.' },
     { k: 'debug_off', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Silence kernel debug',
-      d: 'Turns off kernel console logs, ftrace, schedstats, NMI watchdog, ramdumps and driver debug masks until the next reboot.' },
+      d: 'Silences kernel logs, ftrace, watchdog and driver debug output.',
+      x: 'Turns off kernel console logs, ftrace, schedstats, NMI watchdog, ramdumps and driver debug masks until the next reboot.' },
     { k: 'debug_props', s: 'kdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Disable debug and trace props',
-      d: 'Turns off debug, log and trace props (vendor logs, IMS debug, Perfetto, atrace, StrictMode). Nothing is saved.' },
+      d: 'Turns off debug and trace props, with nothing written to storage.',
+      x: 'Turns off debug, log and trace props (vendor logs, IMS debug, Perfetto, atrace, StrictMode). Nothing is saved.' },
     { k: 'wakelock_block', s: 'kdrain', src: 'kernel', risk: 'exp', type: 'toggle', def: '0',
       t: 'Kernel wakelock blocker',
-      d: 'Blocks the kernel wakelocks in the list. Needs a kernel with the Boeffla blocker. Wakelocks used for calls, SMS, data and push are always skipped.',
+      d: 'Blocks listed kernel wakelocks, keeping calls and push untouched.',
+      x: 'Blocks the kernel wakelocks in the list. Needs a kernel with the Boeffla blocker. Wakelocks used for calls, SMS, data and push are always skipped.',
       text: { k: 'wl_list', label: 'Wakelocks to block (separated by ;)', filter: /[^A-Za-z0-9._;:@-]/g } },
 
     // protected apps
     { k: 'protect_apps', s: 'protect', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Keep important apps alive',
-      d: 'Apps in this list keep running in the background: Doze whitelist, autostart and Active bucket. Set them to No restrictions in your ROM battery settings too.',
+      d: 'Keeps listed apps alive through Doze, autostart and bucket rules.',
+      x: 'Apps in this list keep running in the background: Doze whitelist, autostart and Active bucket. Set them to No restrictions in your ROM battery settings too.',
       text: { k: 'protect_pkgs', label: 'Protected packages (comma separated)', filter: /[^A-Za-z0-9._,]/g, apps: true } },
     { k: 'app_bucket', s: 'protect', src: 'rom', risk: 'moderate', type: 'level', def: '0',
       t: 'Restrict other user apps',
-      d: 'At boot, other user apps go to the Rare or Restricted bucket: fewer background jobs, alarms and network. Opening an app moves it back up.',
+      d: 'Pushes other user apps into Rare or Restricted in the background.',
+      x: 'At boot, other user apps go to the Rare or Restricted bucket: fewer background jobs, alarms and network. Opening an app moves it back up.',
       o: [['0', 'Off'], ['1', 'Rare'], ['2', 'Restricted']] },
     { k: 'bg_block', s: 'protect', src: 'rom', risk: 'moderate', type: 'toggle', def: '1',
       t: 'Block background apps',
-      d: 'The opposite of protected apps: picked apps can\'t run in the background and are force-stopped at boot. They work normally while open, but notifications may not arrive. Core apps are always skipped.',
+      d: 'Stops chosen apps from running in the background or at boot.',
+      x: 'The opposite of protected apps: picked apps can\'t run in the background and are force-stopped at boot. They work normally while open, but notifications may not arrive. Core apps are always skipped.',
       text: { k: 'bg_block_pkgs', label: 'Blocked packages (comma separated)', filter: /[^A-Za-z0-9._,]/g, apps: true, sys: true } },
     { k: 'app_disable', s: 'protect', src: 'rom', risk: 'exp', type: 'toggle', def: '0',
       t: 'Disable apps',
-      d: 'Disables the apps you pick, system apps included. A wrong app can break calls, data or Wi-Fi, or cause a bootloop. Critical apps are skipped. Turning this off enables them again.',
+      d: 'Disables chosen apps, including system ones, until you turn it off.',
+      x: 'Disables the apps you pick, system apps included. A wrong app can break calls, data or Wi-Fi, or cause a bootloop. Critical apps are skipped. Turning this off enables them again.',
       text: { k: 'app_disable_pkgs', label: 'Packages to disable (comma separated)', filter: /[^A-Za-z0-9._,]/g, apps: true, sys: true } },
 
     // system drain
     { k: 'app_freezer', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '1',
       t: 'Cached app freezer',
-      d: 'Freezes cached apps so they use no CPU until you open them. Turn it off if notifications from unprotected apps arrive late.' },
+      d: 'Freezes cached apps until opened, so they use no CPU in between.',
+      x: 'Freezes cached apps so they use no CPU until you open them. Turn it off if notifications from unprotected apps arrive late.' },
     { k: 'doze_aggr', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'level', def: '2',
       t: 'Aggressive Doze',
-      d: 'How fast and how deep the phone sleeps after the screen turns off. Higher levels skip the motion check, so it also sleeps in your pocket. Custom uses your own values.',
+      d: 'Makes Doze start sooner and sleep deeper after screen-off.',
+      x: 'How fast and how deep the phone sleeps after the screen turns off. Higher levels skip the motion check, so it also sleeps in your pocket. Custom uses your own values.',
       o: [['0', 'Off'], ['1', 'Moderate (10 min)'], ['2', 'Aggressive (1 min)'], ['3', 'Maximum (30 s)'], ['4', 'Custom…']],
       text: { k: 'doze_custom', label: 'Doze timing (device_idle, key=ms)', filter: /[^A-Za-z0-9_=.,]/g, showWhen: '4', def: DOZE_AGGRESSIVE } },
     { k: 'devcfg_lock', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Keep values (pause flag sync)',
-      d: 'Stops Google server flags from overwriting the Doze, freezer and stats values. All server flag updates are paused while this is on.' },
+      d: 'Pauses Google server flags that overwrite Doze and freezer values.',
+      x: 'Stops Google server flags from overwriting the Doze, freezer and stats values. All server flag updates are paused while this is on.' },
     { k: 'gms_doze', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'GMS Doze',
-      d: 'Removes Google Play services from the Doze whitelist. Saves battery, but push messages (WhatsApp, Telegram, Gmail) can arrive late in deep sleep. Leave it off if you need instant notifications.' },
+      d: 'Removes Play services from the Doze whitelist to save battery.',
+      x: 'Removes Google Play services from the Doze whitelist. Saves battery, but push messages (WhatsApp, Telegram, Gmail) can arrive late in deep sleep. Leave it off if you need instant notifications.' },
     { k: 'scan_off', s: 'rdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Stop background Wi-Fi/Bluetooth scanning',
       d: 'Turns off Wi-Fi and Bluetooth scanning for location and throttles Wi-Fi scans from apps.' },
     { k: 'loc_throttle', s: 'rdrain', src: 'rom', risk: 'safe', type: 'level', def: '0',
       t: 'Limit background location',
-      d: 'Background apps get a location fix less often, so GPS and network location wake up less. Maps and navigation on screen are not affected. Find-my-phone, weather and family-locator apps update less often in the background.',
+      d: 'Asks for background location less often while navigation stays live.',
+      x: 'Background apps get a location fix less often, so GPS and network location wake up less. Maps and navigation on screen are not affected. Find-my-phone, weather and family-locator apps update less often in the background.',
       o: [['0', 'Off (Android default, every 30 min)'], ['1', 'Every 1 h'], ['2', 'Every 2 h'], ['3', 'Every 4 h']] },
     { k: 'net_save', s: 'rdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Network standby saving',
       d: 'Turns off Mobile data always active, network recommendations and Wi-Fi auto turn-on.' },
     { k: 'standby', s: 'rdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Enforce App Standby',
-      d: 'Makes sure App Standby, adaptive battery and auto app restriction are on. Some ROMs ship them off.' },
+      d: 'Keeps App Standby, adaptive battery and auto restriction switched on.',
+      x: 'Makes sure App Standby, adaptive battery and auto app restriction are on. Some ROMs ship them off.' },
     { k: 'stats_reduce', s: 'rdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Reduce system stats collection',
-      d: 'Collects fewer system stats: slower battery stats, binder/looper stats and jank monitor off. The battery usage screen gets a bit less detailed.' },
+      d: 'Collects fewer battery, binder and jank stats to cut system work.',
+      x: 'Collects fewer system stats: slower battery stats, binder/looper stats and jank monitor off. The battery usage screen gets a bit less detailed.' },
     { k: 'tracking_off', s: 'rdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Telemetry switches off',
       d: 'Turns off Android and Google telemetry switches and turns on limit ad tracking.' },
     { k: 'debloat', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '1',
       t: 'Disable analytics and ad packages',
-      d: 'Disables Xiaomi analytics, MSA ads, the bug report uploader and the Facebook stub services. Use Disable apps for anything else.' },
+      d: 'Disables Xiaomi analytics, MSA ads and the bug report uploader.',
+      x: 'Disables Xiaomi analytics, MSA ads, the bug report uploader and the Facebook stub services. Use Disable apps for anything else.' },
     { k: 'joyose_off', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0', only: 'XIAOMI',
       t: 'Disable Joyose',
-      d: 'Disables Joyose (Xiaomi cloud game and thermal profiles, wakes up often). Game Turbo profiles may change.' },
+      d: 'Stops Joyose, Xiaomi\'s cloud game and thermal profile service.',
+      x: 'Disables Joyose (Xiaomi cloud game and thermal profiles, wakes up often). Game Turbo profiles may change.' },
     { k: 'log_reduce', s: 'rdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Reduce system logging',
       d: 'Only warnings and errors go to logcat. Keep it off while debugging.' },
@@ -959,7 +1010,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     // saver
     { k: 'saver_policy', s: 'saver', src: 'rom', risk: 'safe', type: 'level', def: '1',
       t: 'Stronger Battery Saver',
-      d: 'Stronger rules while Battery Saver is on. Extreme also turns off animations and location with the screen off and dims the screen 20%. Vibration and haptics stay on unless turned off below.',
+      d: 'Adds stricter Battery Saver rules, with an Extreme option.',
+      x: 'Stronger rules while Battery Saver is on. Extreme also turns off animations and location with the screen off and dims the screen 20%. Vibration and haptics stay on unless turned off below.',
       o: [['0', 'Off'], ['1', 'Balanced'], ['2', 'Extreme'], ['3', 'Custom…']],
       fields: [{ k: 'saver_vib', label: 'Also turn vibration and haptics off while Battery Saver is on', def: '0', bool: true }],
       text: { k: 'saver_constants', label: 'Battery Saver settings (battery_saver_constants, key=value)', filter: /[^A-Za-z0-9_=.,-]/g, showWhen: '3', def: SAVER_DEFAULT } },
@@ -969,11 +1021,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       o: [['0', 'Don’t change'], ['15', '15%'], ['20', '20%'], ['30', '30%']] },
     { k: 'saver_dim', s: 'saver', src: 'rom', risk: 'safe', type: 'level', def: '0',
       t: 'Dim screen on Battery Saver',
-      d: 'Lowers screen brightness while Battery Saver is on and restores it when it turns off. Saves the most on AMOLED. Works with or without Stronger Battery Saver; some ROMs may ignore it.',
+      d: 'Dims the screen while Battery Saver is on, which helps AMOLED most.',
+      x: 'Lowers screen brightness while Battery Saver is on and restores it when it turns off. Saves the most on AMOLED. Works with or without Stronger Battery Saver; some ROMs may ignore it.',
       o: [['0', 'Off'], ['1', 'Light (90%)'], ['2', 'Medium (80%)'], ['3', 'Strong (70%)'], ['4', 'Max (60%)']] },
     { k: 'smart_px', s: 'saver', src: 'rom', risk: 'safe', type: 'level', def: '0',
       t: 'Smart Pixels (ROM feature)',
-      d: 'Turns off part of the AMOLED pixels in a fine black grid to save power. Only on ROMs with Smart Pixels (crDroid, Resurrection Remix and similar); skipped on HyperOS and stock ROMs. Pattern and size are set in the ROM settings.',
+      d: 'Turns off part of the AMOLED grid on ROMs that support Smart Pixels.',
+      x: 'Turns off part of the AMOLED pixels in a fine black grid to save power. Only on ROMs with Smart Pixels (crDroid, Resurrection Remix and similar); skipped on HyperOS and stock ROMs. Pattern and size are set in the ROM settings.',
       o: [['0', 'Off'], ['1', 'On Battery Saver'], ['2', 'Always']] },
     { k: 'refresh_rate', s: 'saver', src: 'rom', risk: 'moderate', type: 'value', def: '0', unit: 'Hz', min: 30, max: 165,
       t: 'Peak refresh rate',
@@ -981,7 +1035,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       o: [['0', 'Don’t change'], ['60', '60 Hz'], ['90', '90 Hz'], ['120', '120 Hz']] },
     { k: 'rr_adapt', s: 'saver', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Adaptive refresh rate',
-      d: 'High refresh rate only while you touch the screen or press a button. The low rate comes back 2 s after the last touch, so screen changes (status bar, notifications) stay at the low rate. Saves battery. Replaces Peak refresh rate while on.',
+      d: 'Drops to a low refresh rate when you stop touching the screen.',
+      x: 'High refresh rate only while you touch the screen or press a button. The low rate comes back 2 s after the last touch, so screen changes (status bar, notifications) stay at the low rate. Saves battery. Replaces Peak refresh rate while on.',
       fields: [{ k: 'rr_active', label: 'Active refresh rate (when you touch the screen or press a button)', def: '120', sel: [['90', 'Medium (90 Hz)'], ['120', 'High (120 Hz)'], ['144', 'Very high (144 Hz)']] },
                { k: 'rr_idle', label: 'Idle refresh rate (when you are not using the phone)', def: '60', sel: [['30', 'Lowest (30 Hz)'], ['48', 'Very low (48 Hz)'], ['60', 'Low (60 Hz)'], ['90', 'Medium (90 Hz)']] },] },
     { k: 'anim_scale', s: 'saver', src: 'rom', risk: 'safe', type: 'value', def: '0', unit: '%', min: 10, max: 100,
@@ -996,47 +1051,58 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       o: [['20', '20 s'], ['30', '30 s'], ['45', '45 s'], ['60', '60 s']] },
     { k: 'boot_notify', s: 'adv', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Boot notification',
-      d: 'Shows a notification when HyperCool has finished applying at boot, with how many features were applied.' },
+      d: 'Notifies you when boot settings are applied, with the feature count.',
+      x: 'Shows a notification when HyperCool has finished applying at boot, with how many features were applied.' },
 
     // more: extra kernel tuning
     { k: 'x_sched', s: 'xk', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Scheduler and governor tuning',
-      d: 'Tasks stay on one core longer and schedutil ramps up less. For CFS/schedutil kernels; on WALT most of it is skipped, use Calmer CPU governor there.' },
+      d: 'Keeps tasks on one core longer and softens schedutil ramp-up.',
+      x: 'Tasks stay on one core longer and schedutil ramps up less. For CFS/schedutil kernels; on WALT most of it is skipped, use Calmer CPU governor there.' },
     { k: 'x_kquiet', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Silence leftover kernel logging',
-      d: 'Turns off more kernel logs that Silence kernel debug doesn\'t cover: EDAC, BPF printk, ramdumps, OOM dumps, F2FS iostat.' },
+      d: 'Silences extra kernel logs such as EDAC, BPF, OOM and F2FS.',
+      x: 'Turns off more kernel logs that Silence kernel debug doesn\'t cover: EDAC, BPF printk, ramdumps, OOM dumps, F2FS iostat.' },
     { k: 'x_net', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Network stack tuning',
       d: 'No TCP slow start after idle, no TCP metrics saving, TCP Fast Open on.' },
     { k: 'x_io', s: 'xk', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Extra block I/O tuning',
-      d: 'Keeps request merging on and completes I/O on the same CPU group. Storage latency can change a little.' },
+      d: 'Keeps request merging and finishes I/O on the same CPU group.',
+      x: 'Keeps request merging on and completes I/O on the same CPU group. Storage latency can change a little.' },
     { k: 'x_xiaomi_fw', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1', only: 'XIAOMI',
       t: 'Disable MiGT / Metis boost frameworks',
-      d: 'Turns off MiGT and Metis, Xiaomi kernel frameworks that push clocks up when apps launch. Game Turbo boost may change. HyperOS/MIUI only.' },
+      d: 'Disables Xiaomi MiGT and Metis, which raise clocks on app launch.',
+      x: 'Turns off MiGT and Metis, Xiaomi kernel frameworks that push clocks up when apps launch. Game Turbo boost may change. HyperOS/MIUI only.' },
     { k: 'x_balanced', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Balanced system defaults',
-      d: 'Resets leftover performance tweaks to normal: no top-app boost, normal storage queue, bus and DRAM not forced high, MediaTek power limits on, GPU and touch boosts off. CPU and GPU limits stay with the caps.',
+      d: 'Resets leftover performance tweaks to normal without touching caps.',
+      x: 'Resets leftover performance tweaks to normal: no top-app boost, normal storage queue, bus and DRAM not forced high, MediaTek power limits on, GPU and touch boosts off. CPU and GPU limits stay with the caps.',
       fields: [{ k: 'x_bal_bus', label: 'Qualcomm: also unlock other bus voters (cpu-lat, cpu-bw, llccbw, cpubw), mostly older Snapdragon', def: '0', bool: true }] },
     { k: 'x_kcommon', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Common kernel and network tuning',
-      d: 'Common small tweaks: less scheduler and I/O accounting, no swap read-ahead, vmstat every 15 s and the best TCP congestion control (BBR if available).' },
+      d: 'Adds small scheduler, VM and TCP tweaks, including BBR when present.',
+      x: 'Common small tweaks: less scheduler and I/O accounting, no swap read-ahead, vmstat every 15 s and the best TCP congestion control (BBR if available).' },
 
     // more: RAM management
     { k: 'x_ram_opt', s: 'xram', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'RAM optimizer',
-      d: 'VM and LMK tuning for less memory pressure. zram is not touched here. Values come back when off (lmkd props after a reboot).',
+      d: 'Tunes VM and LMK for less memory pressure, leaving zram alone.',
+      x: 'VM and LMK tuning for less memory pressure. zram is not touched here. Values come back when off (lmkd props after a reboot).',
       fields: [{ k: 'x_ram_level', label: 'Level', def: '1', sel: [['1', 'Moderate (balanced)'], ['2', 'Maximum (most free RAM, apps reload more often = uses a bit more battery)']] }] },
     { k: 'x_multitask', s: 'xram', src: 'rom', risk: 'moderate', type: 'level', def: '0',
       t: 'Multitasking profile',
-      d: 'Sets how many apps stay cached in the background. Balanced keeps the ROM default, Performance keeps more (faster switching, more RAM), Low RAM keeps fewer (more free RAM, apps reload more often).',
+      d: 'Sets how many background apps stay cached for faster switching.',
+      x: 'Sets how many apps stay cached in the background. Balanced keeps the ROM default, Performance keeps more (faster switching, more RAM), Low RAM keeps fewer (more free RAM, apps reload more often).',
       o: [['0', 'Off'], ['1', 'Balanced (ROM default)'], ['2', 'Performance (more apps kept)'], ['3', 'Low RAM (more free RAM)']] },
     { k: 'x_compact', s: 'xram', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Compact background apps',
-      d: 'About 90 s after the screen goes off, when free RAM is under 30%, Android compacts the memory of background apps (they are not closed). Frees RAM but uses some CPU, apps can open a little slower afterwards, and it does not save battery. Unsupported on ROMs without the compact command.' },
+      d: 'Compacts background app memory when RAM runs low after screen-off.',
+      x: 'About 90 s after the screen goes off, when free RAM is under 30%, Android compacts the memory of background apps (they are not closed). Frees RAM but uses some CPU, apps can open a little slower afterwards, and it does not save battery. Unsupported on ROMs without the compact command.' },
     { k: 'x_zram', s: 'xram', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'ZRAM size and compression',
-      d: 'Rebuilds zram with the size and algorithm you pick, priority -2. lz4 is the lightest on CPU. The ROM zram is back after a reboot when off.',
+      d: 'Rebuilds zram with your chosen size and compression algorithm.',
+      x: 'Rebuilds zram with the size and algorithm you pick, priority -2. lz4 is the lightest on CPU. The ROM zram is back after a reboot when off.',
       fields: [{ k: 'x_zram_size', label: 'Size', def: '4', sel: [['2', '2 GB'], ['3', '3 GB'], ['4', '4 GB'], ['5', '5 GB'], ['6', '6 GB'], ['7', '7 GB'], ['8', '8 GB'], ['0', 'Custom…']] },
                { k: 'x_zram_custom', label: 'Custom size in GB', min: 1, max: 12, def: '4', when: ['x_zram_size', '0'] },
                { k: 'x_zram_alg', label: 'Compression algorithm', def: 'lz4', sel: [['keep', 'Keep ROM default'], ['lz4', 'lz4'], ['zstd', 'zstd'], ['lzo-rle', 'lzo-rle']] }] },
@@ -1044,61 +1110,75 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     // more: Google services and telemetry
     { k: 'x_gms_freeze', s: 'xgoogle', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Freeze GMS ads and tracking services (safe list)',
-      d: 'Disables GMS components that are only for ads, analytics and reporting. Push, location, sign-in and Play Store keep working.' },
+      d: 'Disables GMS ad, analytics and reporting parts, keeping push intact.',
+      x: 'Disables GMS components that are only for ads, analytics and reporting. Push, location, sign-in and Play Store keep working.' },
     { k: 'x_track', s: 'xgoogle', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Extended telemetry block',
-      d: 'More telemetry off: Play Store logging, Clearcut, bug report in the power menu, slower GMS check-in.' },
+      d: 'Cuts more telemetry, including Play logging and GMS check-ins.',
+      x: 'More telemetry off: Play Store logging, Clearcut, bug report in the power menu, slower GMS check-in.' },
 
     // more: logging & diagnostics
     { k: 'x_log_nuke', s: 'xlog', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Deep log cleanup at boot',
-      d: 'Stops leftover log daemons at boot, clears and shrinks the log buffers and turns off framework tracing. Keep it off while collecting bug reports.' },
+      d: 'Stops leftover log daemons and shrinks log buffers at boot.',
+      x: 'Stops leftover log daemons at boot, clears and shrinks the log buffers and turns off framework tracing. Keep it off while collecting bug reports.' },
     { k: 'x_diag', s: 'xlog', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Silence vendor diagnostics',
-      d: 'Stops charge_logger and misight, turns off looper stats, ANR debugging and vendor diagnostic logs.' },
+      d: 'Quiets vendor loggers and turns off ANR and looper diagnostics.',
+      x: 'Stops charge_logger and misight, turns off looper stats, ANR debugging and vendor diagnostic logs.' },
     { k: 'x_props', s: 'xlog', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Extra logging props off',
-      d: 'Turns off more logging props (SurfaceFlinger/HWC debug, codec logs, OEM dumps). Runtime only.' },
+      d: 'Turns off extra SurfaceFlinger, codec and OEM logging props.',
+      x: 'Turns off more logging props (SurfaceFlinger/HWC debug, codec logs, OEM dumps). Runtime only.' },
     { k: 'x_cache_auto', s: 'xstore', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Auto clean app cache',
-      d: 'Clears app caches every 1 to 7 days with pm trim-caches, same as Settings > Storage. App data is never touched. A small keeper checks every 15 min while the phone is awake.',
+      d: 'Clears app cache every 1 to 7 days without touching app data.',
+      x: 'Clears app caches every 1 to 7 days with pm trim-caches, same as Settings > Storage. App data is never touched. A small keeper checks every 15 min while the phone is awake.',
       fields: [{ k: 'x_cache_days', label: 'Clean every', def: '1', sel: [['1', '1 day'], ['2', '2 days'], ['3', '3 days'], ['4', '4 days'], ['5', '5 days'], ['6', '6 days'], ['7', '7 days (weekly)']] },
                { k: 'x_cache_min', label: 'Optional: only when total app cache is at least (0 = always)', def: '0', min: 50, max: 20000, unit: 'MB', zero: true }] },
     { k: 'x_cache_keep', s: 'xstore', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Keep cache of chosen apps',
-      d: 'Apps in this list keep their cache: the auto clean and Clean now skip them. Good for games that keep shaders in the cache (a cleaned cache means a slow first launch and stutter). With a list, the cache folders of other apps are emptied directly instead of with pm trim-caches.',
+      d: 'Saves the cache of chosen apps from auto and manual cleaning.',
+      x: 'Apps in this list keep their cache: the auto clean and Clean now skip them. Good for games that keep shaders in the cache (a cleaned cache means a slow first launch and stutter). With a list, the cache folders of other apps are emptied directly instead of with pm trim-caches.',
       text: { k: 'x_cache_keep_pkgs', label: 'Packages that keep their cache (comma separated)', filter: /[^A-Za-z0-9._,]/g, apps: true } },
     { k: 'x_cache_notify', s: 'xstore', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Cache clean notification',
-      d: 'Shows a notification with how much cache was freed, after each auto clean and after Clean now.' },
+      d: 'Shows how much cache was freed after each automatic or manual clean.',
+      x: 'Shows a notification with how much cache was freed, after each auto clean and after Clean now.' },
     { k: 'f2fs_gc', s: 'xstore', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'F2FS garbage collection',
-      d: 'Frees storage space that only garbage collection can give back (the kernel "unusable" value). When it passes your limit, it runs for up to 7 minutes after the screen has been off for 10 minutes, at most once a week. No charger needed, but without one the battery must be at least 30%. Stops when the screen turns on, the battery drops under 20% or reaches the stop temperature. Uses extra flash writes and some heat. Needs /data on F2FS, otherwise skipped.',
+      d: 'Reclaims F2FS space after screen-off when storage garbage builds up.',
+      x: 'Frees storage space that only garbage collection can give back (the kernel "unusable" value). When it passes your limit, it runs for up to 7 minutes after the screen has been off for 10 minutes, at most once a week. No charger needed, but without one the battery must be at least 30%. Stops when the screen turns on, the battery drops under 20% or reaches the stop temperature. Uses extra flash writes and some heat. Needs /data on F2FS, otherwise skipped.',
       fields: [{ k: 'f2fs_gc_gb', label: 'Start when reclaimable space is at least', def: '4', min: 1, max: 15, unit: 'GB' },
                { k: 'f2fs_gc_trim', label: 'Also run fstrim after it (weekly)', def: '1', bool: true },
                { k: 'f2fs_gc_temp', label: 'Stop when the battery reaches', def: '45', min: 41, max: 50, unit: '\u00b0C' },
                { k: 'f2fs_gc_notify', label: 'Notification with the result', def: '1', bool: true }] },
     { k: 'x_dexopt_auto', s: 'xstore', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Auto optimize apps (dex2oat)',
-      d: 'Compiles apps in the background once a week, after the screen has been off 10 minutes. One app at a time, never forced, so apps already optimized are skipped. Starts under 40\u00b0C and on the charger or at 40% battery or more. Stops at 45\u00b0C, under 15% battery or when the screen turns on. Uses some battery and heat while it runs.',
+      d: 'Compiles apps weekly in the background, one at a time, without force.',
+      x: 'Compiles apps in the background once a week, after the screen has been off 10 minutes. One app at a time, never forced, so apps already optimized are skipped. Starts under 40°C and on the charger or at 40% battery or more. Stops at 45°C, under 15% battery or when the screen turns on. Uses some battery and heat while it runs.',
       fields: [{ k: 'x_dexopt_mode', label: 'Compile mode', def: '1', sel: [['1', 'Speed-profile (recommended, light)'], ['2', 'Speed (more storage and time)'], ['3', 'Everything (heaviest, most storage)']] },
                { k: 'x_dexopt_notify', label: 'Notification with the result', def: '1', bool: true }] },
     { k: 'x_kpower', s: 'xpower', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Kernel power-saving switches',
-      d: 'Power-efficient workqueues on, plus the battery_saver module if your kernel has it. Kernel work runs on an awake core instead of waking an idle one.' },
+      d: 'Uses efficient workqueues and the kernel battery_saver module.',
+      x: 'Power-efficient workqueues on, plus the battery_saver module if your kernel has it. Kernel work runs on an awake core instead of waking an idle one.' },
     { k: 'x_vm_lite', s: 'xpower', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Lighter background memory work',
       d: 'No swap read-ahead and no background compaction. Fewer CPU wakeups.' },
     { k: 'x_eas', s: 'xpower', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Keep Energy Aware Scheduler on',
-      d: 'Makes sure Energy Aware Scheduling is on, so light tasks stay on the little cores. Some ROMs turn it off.' },
+      d: 'Keeps Energy Aware Scheduling on so light tasks stay on little cores.',
+      x: 'Makes sure Energy Aware Scheduling is on, so light tasks stay on the little cores. Some ROMs turn it off.' },
     { k: 'x_job_limit', s: 'xpower', src: 'rom', risk: 'safe', type: 'level', def: '0',
       t: 'Fewer background jobs',
-      d: 'Makes Android wait and batch background jobs (sync, uploads, updates), up to 1-2 hours, so they run together: fewer wake-ups, less CPU and heat. Background sync can arrive later; chat and push notifications are normally not affected. Unsupported on ROMs without these settings. Original values come back when off.',
+      d: 'Batches background jobs so sync and updates wake the phone less.',
+      x: 'Makes Android wait and batch background jobs (sync, uploads, updates), up to 1-2 hours, so they run together: fewer wake-ups, less CPU and heat. Background sync can arrive later; chat and push notifications are normally not affected. Unsupported on ROMs without these settings. Original values come back when off.',
       o: [['0', 'Off'], ['1', 'Balanced (waits up to 1 h)'], ['2', 'Strong (waits up to 2 h)']] },
     { k: 'x_rpm', s: 'xpower', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Runtime power for idle devices',
-      d: 'Lets the kernel power down idle USB, I2C and SPI devices. Touch, audio, NFC, fingerprint and charger chips are left alone. Turn it off if a USB device or sensor stops working.' }
+      d: 'Powers down idle USB, I2C and SPI devices while leaving sensors alone.',
+      x: 'Lets the kernel power down idle USB, I2C and SPI devices. Touch, audio, NFC, fingerprint and charger chips are left alone. Turn it off if a USB device or sensor stops working.' }
   ];
 
   var CHANGES = {
@@ -1310,7 +1390,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     a.innerHTML = '';
     actions.forEach(function (x) {
       var b = document.createElement('button');
-      b.className = 'btn ' + (x.primary ? 'fill' : 'tonal');
+      b.className = 'btn ' + (x.danger ? 'danger' : x.primary ? 'fill' : 'tonal');
       b.textContent = x.label;
       b.onclick = function () { closeModal(); if (x.fn) x.fn(); };
       a.appendChild(b);
@@ -1498,6 +1578,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         });
         html += '<div class="more" id="more-' + f.k + '" hidden>' +
           '<div class="src">' + (f.src === 'kernel' ? 'Kernel' : 'System') + (f.only ? ' \u00b7 ' + esc(f.only) + ' only' : '') + '</div>' +
+          (f.x ? '<div class="xdesc">' + esc(f.x) + '</div>' : '') +
           '<div class="stdet" id="det-' + f.k + '"></div>';
         if (f.type === 'value') {
           html += '<div class="sub-row" id="cv-' + f.k + '"><label>Custom value (' + f.min + '–' + f.max + ' ' + esc(f.unit) +
@@ -1948,7 +2029,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       [{ label: 'Cancel' }, { label: 'Save', primary: true, fn: saveCustom }]);
   }
   function saveCustom() {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     var keys = [];
     F.forEach(function (f) {
       keys.push(f.k);
@@ -2051,7 +2132,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     $('pk-search').value = '';
     $('pk-list').innerHTML = '<div class="hint">Reading installed apps…</div>';
     $('picker').classList.add('show');
-    if (!HAS_KSU) { $('pk-list').innerHTML = '<div class="hint">' + PREVIEW_MSG + '</div>'; return; }
+    if (!HAS_KSU) { $('pk-list').innerHTML = '<div class="hint">App list needs the KernelSU manager.</div>'; return; }
     loadApps(f.custom ? true : !!f.text.sys).then(function (apps) {
       // keep entries from the list that are not installed, so nothing is lost silently
       Object.keys(pk.sel).forEach(function (x) {
@@ -2132,7 +2213,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   // HyperOS could return an empty file silently). Values never contain a single
   // quote because every field is filtered, and quotes are stripped here anyway.
   function save() {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return Promise.resolve(false); }
+    if (!HAS_KSU) return Promise.resolve(false);
     var lines = buildConfig().replace(/\n$/, '').split('\n').map(function (l) {
       return "'" + l.replace(/'/g, '') + "'";
     });
@@ -2239,7 +2320,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         if (info.ver) document.querySelectorAll('[data-ver]').forEach(function (v) { v.textContent = info.ver; });
         if (info.ver) document.querySelectorAll('[data-verlong]').forEach(function (v) { v.textContent = 'v' + info.ver.replace(/^v/i, '') + ' \u00b7 Yudharn'; });
       } else {
-        $('dev').textContent = 'Preview';
+        $('dev').textContent = 'Not connected';
         $('devsub').textContent = '';
         $('demo').hidden = false;
       }
@@ -2282,7 +2363,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     var full = mAh(s.bfull), des = mAh(s.bdes), soh = +s.bsoh;
     var pct = full && des ? Math.round(full / des * 100) : (soh > 0 && soh <= 100 ? Math.round(soh) : 0);
     $('bcap').innerHTML = full ? Math.round(full) + '<small>\u2009mAh</small>' : '\u2013';
-    $('bstat').textContent = pct ? 'Battery health ' + pct + '%' : 'Battery health';
+    $('bstat').textContent = pct ? 'Health ' + pct + '%' : 'Health';
     $('bcap').style.color = pct && pct < 80 ? 'var(--warn)' : '';
     $('btemp').style.color = (!isNaN(bt) && bt >= 420) ? 'var(--bad)' : (!isNaN(bt) && bt >= 380 ? 'var(--warn)' : '');
   }
@@ -2362,6 +2443,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   }
   function showDrain(o) {
     var el = $('idle');
+    if (!HAS_KSU) {
+      $('idrain').textContent = '\u2013';
+      $('idrain').style.color = '';
+      el.textContent = 'Readings need the KernelSU manager.';
+      return;
+    }
     var intro = '<b>Idle drain</b> is how fast the battery drops with the screen off, from Android battery stats. Under 1% per hour is good. ';
     if (o && o.src === 'steps') {
       var sr = o.rate;
@@ -2385,8 +2472,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     }
     if (!o || o.pct === null || (o.pct < 1 && o.hours < 1)) {
       $('idrain').textContent = '\u2013';
-      el.innerHTML = intro + (!HAS_KSU ? PREVIEW_MSG : 'Shows after the battery drops 1% with the screen off' +
-        (o && o.hours > 0 ? ' (' + Math.round(o.hours * 60) + ' min screen off so far).' : '.'));
+      el.innerHTML = intro + 'Shows after the battery drops 1% with the screen off' +
+        (o && o.hours > 0 ? ' (' + Math.round(o.hours * 60) + ' min screen off so far).' : '.');
       $('idrain').style.color = '';
       return;
     }
@@ -2492,7 +2579,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   }
   $('bcal-delrow').innerHTML = '<label>Also delete batterystats.bin at the next reboot (clears the battery usage history in Settings)</label>' + swHtml('bcal-del', 'Delete batterystats.bin at the next reboot');
   $('bcal-btn').onclick = function () {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     if ($('bcal-btn').dataset.act) {
       modal('Cancel battery calibration?', '<p>Charge limit works again right away. You can start a new calibration any time.</p>',
         [{ label: 'Keep going' }, { label: 'Cancel calibration', primary: true, fn: bcalCancel }]);
@@ -2564,11 +2651,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         [{ label: 'Close' }, { label: 'Try again', primary: true, fn: runBattery }]);
     }).then(function () {
       $('bc-run').disabled = false;
-      $('bc-run').textContent = 'Run';
+      $('bc-run').textContent = 'Check battery';
     });
   }
   $('bc-run').onclick = function () {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     runBattery();
   };
 
@@ -2642,11 +2729,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         [{ label: 'Close' }, { label: 'Try again', primary: true, fn: runTop }]);
     }).then(function () {
       $('td-run').disabled = false;
-      $('td-run').textContent = 'Show';
+      $('td-run').textContent = 'Show usage';
     });
   }
   $('td-run').onclick = function () {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     runTop();
   };
 
@@ -2699,7 +2786,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   }
   document.addEventListener('click', function (e) {
     if (!e.target || !e.target.closest || !e.target.closest('#cal-btn')) return;
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     modal('Calibrate charge levels?',
       'Keep the fast charger plugged in and the WebUI open. Every charger level is tested for about 20 seconds ' +
       '(5\u20136 minutes in total) and the real current is measured. Best below 70% battery and below 40\u00b0C. ' +
@@ -2738,12 +2825,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   };
   $('t-log').onclick = function () {
     exec('cat ' + DATA + '/boot.log 2>/dev/null || echo "No log yet."').then(function (r) {
-      modal('Boot log', '<pre>' + esc(r.stdout || (HAS_KSU ? 'No log yet.' : PREVIEW_MSG)) + '</pre>', [{ label: 'Close', primary: true }]);
+      modal('Boot log', '<pre>' + esc(r.stdout || (HAS_KSU ? 'No log yet.' : 'No log in preview.')) + '</pre>', [{ label: 'Close', primary: true }]);
     });
   };
   $('t-defaults').onclick = function () { applyPreset(PRESETS[0]); };
   $('t-report').onclick = function () {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     var D = DATA;
     exec(BK_FIND + 'f="$B/hypercool_bugreport_$(date +%Y%m%d_%H%M%S).txt"; D=' + D + '; M=/data/adb/modules/' + MODID + '; {' +
       ' echo "# HyperCool bug report $(date "+%Y-%m-%d %H:%M:%S")";' +
@@ -2770,7 +2857,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       'Every setting, device_config flag, whitelist entry, permission and package changed by HyperCool is restored immediately. ' +
       'All system options are then switched off and saved. Kernel options are untouched (they reset on reboot anyway).', [
       { label: 'Cancel' },
-      { label: 'Revert', primary: true, fn: function () {
+      { label: 'Revert', danger: true, fn: function () {
         exec('sh ' + DATA + '/restore.sh --all').then(function (r) {
           F.forEach(function (f) { if (f.src === 'rom') cfg[f.k] = '0'; });
           syncInputs();
@@ -2820,7 +2907,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     $('cc-next').textContent = nx;
   }
   $('cc-run').onclick = function () {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     modal('Clean app cache now?', 'Every app’s cache is freed (pm trim-caches, or the cache folders directly when you keep the cache of some apps). Those apps are skipped. App data, logins and downloads are not touched. Apps rebuild their cache when they are used again.', [
       { label: 'Cancel' },
       { label: 'Clean', primary: true, fn: function () {
@@ -2847,7 +2934,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     return base.concat(extra);
   }
   $('rc-run').onclick = function () {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     var mode = $('rc-mode').value;
     modal('Clean RAM now (' + mode + ')?',
       mode === 'safe'
@@ -2900,7 +2987,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     ]);
   };
   $('t-junk').onclick = function () {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     modal('Clean junk files now?',
       'Deletes crash dumps, ANR traces, tombstones, dropbox entries, WLAN and thermal logs, stale package cache, clears the logcat/dmesg buffers and runs fstrim on /data and /cache. Personal files are not touched.', [
       { label: 'Cancel' },
@@ -2965,7 +3052,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   var SEC_T = {};
   SECTIONS.forEach(function (x) { SEC_T[x.id] = x.title; });
   function srchText(f) {
-    var a = [f.t, f.d, f.k.replace(/_/g, ' ')];
+    var a = [f.t, f.d, f.x || '', f.k.replace(/_/g, ' ')];
     (f.fields || []).forEach(function (x) { a.push(x.label || ''); });
     (f.o || []).forEach(function (x) { a.push(x[1]); });
     if (f.text) a.push(f.text.label || '');
@@ -3086,7 +3173,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   var SAFE_PATH = /^[A-Za-z0-9_\/.\-]+$/;
 
   function backupCfg() {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     var head = '# HyperCool settings backup ' + new Date().toISOString().replace('T', ' ').slice(0, 16) +
       ' (HyperCool ' + (document.querySelector('[data-ver]').textContent || '') + ')';
     var lines = [head].concat(buildConfig().replace(/\n$/, '').split('\n')).map(function (l) {
@@ -3115,7 +3202,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   }
 
   function openRestore() {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     exec(BK_FIND + 'echo "DIR|$B"; for f in $(ls -1t "$B"/hypercool_*.conf 2>/dev/null); do ' +
       'echo "F|$f|$(grep -c "^[a-z0-9_]*=" "$f")|$(grep -c "^cal_" "$f")"; done').then(function (r) {
       var dir = '', rows = [];
@@ -3377,7 +3464,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     } });
   };
   $('dx-start').onclick = function () {
-    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
+    if (!HAS_KSU) return;
     var mode = $('dx-mode').value, jobs = $('dx-jobs').value, force = (mode !== 'reset' && $('dx-force').checked) ? 1 : 0;
     var picked = $('dx-scope').value === 'sel';
     if (picked && !dx.sel.length) { snack('Choose apps first, then start.'); return; }
