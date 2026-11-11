@@ -128,7 +128,7 @@ small keepers (charge limit, charge hold, screen-off keeper that also serves Kee
 - Dim screen on Battery Saver, Smart Pixels (ROMs that have it)
 - Refresh rate cap, adaptive refresh rate (high on touch, low when idle), animation scale
 
-**More**
+**Extras**
 - Scheduler, network and I/O tuning
 - MiGT / Metis off (Xiaomi)
 - Balanced system defaults, common kernel tuning
@@ -141,7 +141,7 @@ small keepers (charge limit, charge hold, screen-off keeper that also serves Kee
 - Fewer background jobs: JobScheduler batches background work for 1-2 hours (Balanced / Strong, read back and put back if the ROM ignores it)
 - Compact background apps: compacts the memory of background apps after the screen has been off, only when free RAM is low
 - Auto clean app cache (every 1 to 7 days), apps that keep their cache, cache clean notification
-- Optimize apps (dex2oat) for all apps with live progress (More tab, on demand)
+- Optimize apps (dex2oat) for all apps with live progress (Extras tab, on demand)
 - Boot notification when everything is applied
 
 **Home**
