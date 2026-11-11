@@ -5,6 +5,9 @@
 # shellcheck disable=SC2034
 
 export PATH=/system/bin:/system/xbin:/vendor/bin:/data/adb/ksu/bin:/data/adb/magisk:"$PATH"
+# Root/early-boot shells often default to another zone (or UTC); use Android's own zone for timestamps.
+_hc_tz=$(getprop persist.sys.timezone 2>/dev/null)
+[ -n "$_hc_tz" ] && export TZ="$_hc_tz"
 HC_DATA=/data/adb/hypercool
 HC_CFG=$HC_DATA/config.conf
 HC_BOOTCFG=$HC_DATA/boot_config.conf

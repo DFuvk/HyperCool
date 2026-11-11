@@ -12,7 +12,9 @@ mkdir -p "$HC_DATA" "$HC_BAKDIR"
 # boot's id means the root manager skipped that stage: the boot_config.conf snapshot is from the
 # previous boot, so take a fresh one from the saved config (a WebUI save then applies this boot)
 _pfd_ok=""
-[ "$(cat "$HC_DATA/.pfd_ran" 2>/dev/null)" = "$(cat /proc/sys/kernel/random/boot_id 2>/dev/null)" ] && _pfd_ok=1
+_pfd_id=$(cat "$HC_DATA/.pfd_ran" 2>/dev/null)
+_boot_id=$(cat /proc/sys/kernel/random/boot_id 2>/dev/null)
+[ -n "$_pfd_id" ] && [ "$_pfd_id" = "$_boot_id" ] && _pfd_ok=1
 if [ -n "$_pfd_ok" ]; then
   rm -f "$HC_DATA/.pfd_ran"
 else
