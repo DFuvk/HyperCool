@@ -3,6 +3,7 @@
 # Copyright (C) 2026 Yudharn
 # HyperCool - uninstall
 HC_DATA=/data/adb/hypercool
+export PATH=/system/bin:/system/xbin:/vendor/bin:/data/adb/ksu/bin:/data/adb/magisk:"$PATH"
 # stop the cache keeper
 _cp=$(cat "$HC_DATA/cache_keeper.pid" 2>/dev/null)
 case "$_cp" in ''|*[!0-9]*) ;; *) grep -q cache_clean "/proc/$_cp/cmdline" 2>/dev/null && kill "$_cp" 2>/dev/null ;; esac
@@ -56,6 +57,14 @@ case "$_rq" in ''|*[!0-9]*) ;; *) grep -q rr_watch "/proc/$_rq/cmdline" 2>/dev/n
   _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_rq" ]; do sleep 1; _i=$((_i + 1)); done ;; esac
 # forced deep Doze left behind by that keeper
 [ -f "$HC_DATA/doze_forced" ] && dumpsys deviceidle unforce >/dev/null 2>&1
+# the runtime props of the RAM optimizer (ro.lmk.*) are put back
+if [ -s "$HC_DATA/persist_props" ]; then
+  while IFS='=' read -r _p _v; do
+    [ -n "$_p" ] || continue
+    resetprop -n "$_p" "$_v" 2>/dev/null
+  done < "$HC_DATA/persist_props"
+  rm -f "$HC_DATA/persist_props"
+fi
 # Keep the guard until restore succeeds. If the background restore fails,
 # the guard retries on the next boot instead of losing the backup records.
 if [ -f "$HC_DATA/restore.sh" ]; then

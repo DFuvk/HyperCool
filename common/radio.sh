@@ -48,20 +48,44 @@ radio_off() {
 }
 radio_restore() {
   [ -s "$RSAVE" ] || return 0
+  # only what was really put back is dropped: a radio that could not be restored stays in the
+  # file and is tried again at the next screen-on or at the next boot
+  _fail=""
   while IFS='|' read -r _rk _rv; do
     case "$_rk" in
       loc)
-        [ "$(loc_now)" = off ] || continue
+        _ls=$(loc_now)
+        [ "$_ls" = on ] && continue
+        # state not readable: keep the entry and try again later
+        [ "$_ls" = off ] || { _fail="$_fail$_rk|$_rv
+"; continue; }
         cmd location set-location-enabled true </dev/null >/dev/null 2>&1
+        sleep 1
         if [ "$(loc_now)" != on ]; then
           case "$_rv" in [1-9]) ;; *) _rv=3 ;; esac
           settings put secure location_mode "$_rv" </dev/null >/dev/null 2>&1
-        fi ;;
+          sleep 1
+        fi
+        [ "$(loc_now)" = on ] || _fail="$_fail$_rk|$_rv
+" ;;
       bt)
-        # do not fight airplane mode, and only turn on what is still off
-        [ "$(settings get global airplane_mode_on 2>/dev/null)" = 1 ] && continue
-        [ "$(bt_now)" = off ] && bt_set enable ;;
+        # airplane mode: Bluetooth stays as the user wants it, but the entry is kept so that
+        # Bluetooth can be put back when the airplane mode is over
+        [ "$(settings get global airplane_mode_on 2>/dev/null)" = 1 ] && { _fail="$_fail$_rk|$_rv
+"; continue; }
+        _bs=$(bt_now)
+        [ "$_bs" = on ] && continue
+        [ "$_bs" = off ] || { _fail="$_fail$_rk|$_rv
+"; continue; }
+        bt_set enable
+        sleep 1
+        [ "$(bt_now)" = off ] && _fail="$_fail$_rk|$_rv
+" ;;
     esac
   done < "$RSAVE"
-  : > "$RSAVE"
+  if [ -n "$_fail" ]; then
+    printf '%s' "$_fail" > "$RSAVE"
+  else
+    : > "$RSAVE"
+  fi
 }

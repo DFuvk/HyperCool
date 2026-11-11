@@ -134,31 +134,49 @@ lock
 # 0 = go on, 1 = stop (a reason is written and the stop flag is set)
 guard() {
   [ -e "$D/stop" ] && return 1
+  # a value that cannot be read is not "safe": stop instead of guessing (battery, space, heat)
   _c=$(cat $B/capacity 2>/dev/null); _s=$(cat $B/status 2>/dev/null)
-  if num "$_c" && [ "$_c" -le "$BAT_MIN" ]; then
+  if ! num "$_c"; then
+    [ -e "$D/reason" ] || echo battery > "$D/reason"
+    : > "$D/stop"; return 1
+  fi
+  if [ "$_c" -le "$BAT_MIN" ]; then
     case "$_s" in Charging|Full) ;; *)
       [ -e "$D/reason" ] || echo battery > "$D/reason"
       : > "$D/stop"; return 1 ;;
     esac
   fi
   _a=$(df -k /data 2>/dev/null | tail -n 1 | awk '{print $(NF-2)}')
-  if num "$_a" && [ "$_a" -lt "$FREE_MIN_KB" ]; then
+  if ! num "$_a"; then
+    [ -e "$D/reason" ] || echo storage > "$D/reason"
+    : > "$D/stop"; return 1
+  fi
+  if [ "$_a" -lt "$FREE_MIN_KB" ]; then
     [ -e "$D/reason" ] || echo storage > "$D/reason"
     : > "$D/stop"; return 1
   fi
   _t=$(cat $B/temp 2>/dev/null)
-  if [ "$AUTO" = 1 ] && num "$_t" && [ "$_t" -ge "$T_AUTO" ]; then
+  if ! num "$_t"; then
+    # battery temperature not readable: do not keep compiling
     [ -e "$D/reason" ] || echo hot > "$D/reason"
     : > "$D/stop"; return 1
   fi
-  if num "$_t" && [ "$_t" -ge "$T_PAUSE" ]; then
+  if [ "$AUTO" = 1 ] && [ "$_t" -ge "$T_AUTO" ]; then
+    [ -e "$D/reason" ] || echo hot > "$D/reason"
+    : > "$D/stop"; return 1
+  fi
+  if [ "$_t" -ge "$T_PAUSE" ]; then
     rm -f "$D/cur.$K"
     while :; do
       echo "Paused, battery $((_t / 10)).$((_t % 10))°C. Continues at $((T_RESUME / 10))°C." > "$D/note.$K"
       sleep 10
       if [ -e "$D/stop" ]; then rm -f "$D/note.$K"; return 1; fi
       _t=$(cat $B/temp 2>/dev/null)
-      num "$_t" || break
+      if ! num "$_t"; then
+        rm -f "$D/note.$K"
+        [ -e "$D/reason" ] || echo hot > "$D/reason"
+        : > "$D/stop"; return 1
+      fi
       [ "$_t" -le "$T_RESUME" ] && break
     done
     rm -f "$D/note.$K"
@@ -225,9 +243,9 @@ if [ "$_dn" -ge "$TOTAL" ]; then
 else
   PHASE=stopped; wstate "$END" "${_why:-stopped}"
   case "$_why" in
-    battery) _msg="Stopped: battery low. $_dn of $TOTAL apps done." ;;
-    storage) _msg="Stopped: storage almost full. $_dn of $TOTAL apps done." ;;
-    hot) _msg="Stopped: battery too warm. $_dn of $TOTAL apps done." ;;
+    battery) _msg="Stopped: battery low or not readable. $_dn of $TOTAL apps done." ;;
+    storage) _msg="Stopped: storage almost full or not readable. $_dn of $TOTAL apps done." ;;
+    hot) _msg="Stopped: battery too warm or the temperature is not readable. $_dn of $TOTAL apps done." ;;
     screen) _msg="Stopped: screen turned on. $_dn of $TOTAL apps done." ;;
     *) _msg="Stopped. $_dn of $TOTAL apps done." ;;
   esac

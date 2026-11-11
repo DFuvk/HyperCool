@@ -218,16 +218,17 @@ gcf_restore() {
   [ -s "$GCMARK" ] || return 0
   IFS='|' read -r _u0 _f0 _t0 _ph < "$GCMARK"
   _gd=$(gcf_dev) || _gd=""
+  _u1=$_u0; _f1=$_f0
   if [ -n "$_gd" ]; then
     [ "$(cat "$_gd/gc_urgent" 2>/dev/null)" = 0 ] || { echo 0 > "$_gd/gc_urgent"; } 2>/dev/null
+    _u1=$(gcf_unusable "$_gd") || _u1=$_u0
+    _f1=$(cat "$_gd/free_segments" 2>/dev/null)
+    case "$_f1" in ''|*[!0-9]*) _f1=$_f0 ;; esac
   fi
   if [ -n "$1" ]; then
     case "$_ph" in
       gc)
         case "$_u0$_f0$_t0" in ''|*[!0-9]*) ;; *)
-          _u1=$_u0; _f1=$_f0
-          [ -n "$_gd" ] && { _u1=$(gcf_unusable "$_gd") || _u1=$_u0; _f1=$(cat "$_gd/free_segments" 2>/dev/null); }
-          case "$_f1" in ''|*[!0-9]*) _f1=$_f0 ;; esac
           _te=$(date +%s)
           gcf_state_w "aborted:$1" -
           [ "$1" = screen-on ] && gcf_notify "aborted:$1" - ;;
@@ -237,6 +238,8 @@ gcf_restore() {
     esac
   fi
   gcf_wl 0
-  rm -f "$GCMARK"
+  # the marker is kept when the device could not be reached: gc_urgent may still be 1 and has to
+  # be put back to 0 at the next attempt (keeper stop, next boot, uninstall)
+  [ -n "$_gd" ] && rm -f "$GCMARK"
   return 0
 }

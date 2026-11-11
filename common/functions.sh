@@ -884,7 +884,16 @@ f_vm_tune() {
   [ "$_dbr" -gt 0 ] && wn "$_v/dirty_background_ratio" "$_dbr"
   [ "$_dr" -gt 0 ] && wn "$_v/dirty_ratio" "$_dr"
   [ "$_sti" -gt 0 ] && wn "$_v/stat_interval" "$_sti"
-  fin vm_tune "writeback $((_wb / 100))s, dirty ${_dbr}/${_dr}%, vmstat ${_sti}s"
+  # 0 means "keep the stock value": say that instead of showing 0 s / 0 %
+  _d=""
+  [ "$_wb" -gt 0 ] && _d="writeback $((_wb / 100))s"
+  [ "$_sti" -gt 0 ] && _d="${_d:+$_d, }vmstat ${_sti}s"
+  if [ "$_dbr" -gt 0 ] || [ "$_dr" -gt 0 ]; then
+    _d="${_d:+$_d, }dirty ${_dbr}/${_dr}%"
+  else
+    _d="${_d:+$_d, }dirty stock"
+  fi
+  fin vm_tune "${_d:-stock writeback and vmstat values}"
 }
 
 f_io_tune() {
@@ -1365,7 +1374,8 @@ f_gms_doze_verify() {
     esac
     _state=applied
   elif [ "$_mounted" = yes ]; then
-    _d="overlay mounted"; _state=applied
+    # the overlay is there, but the system whitelist still has GMS: say so instead of "applied"
+    _d="overlay mounted, but GMS is still in the system Doze whitelist (the removal was refused)"; _state=partial
   else
     _d="GMS still in the system whitelist (sys-whitelist rejected, overlay not mounted)"; _state=failed
   fi
