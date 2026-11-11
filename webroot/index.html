@@ -33,6 +33,8 @@ svg{display:block}
 .tb h1{margin:0;display:inline-block;font-size:28px;font-weight:600;letter-spacing:-.5px;line-height:1.15;padding-bottom:2px;color:var(--pri)}
 .tb .by{font-size:14px;font-weight:400;color:var(--on2);margin-top:2px;letter-spacing:.1px}
 .hbyline{font-size:13px;color:var(--dim);margin-top:5px}
+.hbyline.empty{display:none}
+.hbyline:has([data-verlong]:empty){display:none}
 .tb .grow{flex:1;min-width:0}
 .tb .logo{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--pricont)}
 .tb .logo svg{width:25px;height:25px;fill:none;stroke:var(--onpricont);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -69,6 +71,8 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 .home-actions .item+.item{border-top:1px solid var(--line)}
 .home-actions .row{padding:12px 14px;min-height:64px}
 .home-actions .txt{cursor:default}
+.home-actions .item.press .txt{cursor:pointer}
+.home-actions .press:focus-visible{outline-offset:-2px}
 .home-actions .btn{padding:8px 14px;font-size:13.5px;flex:none}
 .home-actions+.ccard{margin-top:24px}
 
@@ -171,6 +175,7 @@ textarea:disabled{opacity:.45}
 .stat b small{font-size:13px;font-weight:400;color:var(--on2);margin-left:2px}
 .summary{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:14px}
 .idle{margin-top:14px;font-size:13px;line-height:1.45;color:var(--on2)}
+.idle:empty{display:none}
 .idle b{color:var(--on);font-weight:500}
 .bcheck{margin-top:12px}
 .bcal .bcst{font-size:13.5px;color:var(--on);line-height:1.45;margin-top:10px}
@@ -296,7 +301,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .about b{font-size:17px;font-weight:600}
 .about p{margin:4px 0 0;font-size:13.5px;color:var(--on2)}
 .ccard{background:var(--surf);border-radius:var(--r-card);padding:18px 18px 14px}
-.ccard .cbig{font-size:24px;font-weight:600;line-height:1.1;color:var(--on)}
+.ccard .cbig{font-size:15.5px;font-weight:600;line-height:1.3;color:var(--on)}
 .ccard .clbl{font-size:13px;color:var(--on2);margin-top:2px}
 .ccard table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
 .ccard td{padding:7px 0;border-top:1px solid var(--line);color:var(--on2)}
@@ -567,7 +572,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   <div class="grow">
     <h1>HyperCool</h1>
     <div class="by">Heat and battery control</div>
-    <div class="hbyline"><span data-verlong>&ndash;</span></div>
+    <div class="hbyline empty"><span data-verlong></span></div>
   </div>
   <div class="tr">
     <div class="state idle" id="mstate"><i></i><span>Checking state</span></div>
@@ -689,7 +694,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
     <h2 class="sh">Configuration</h2>
     <p class="ssub">Backups are saved to Download/HyperCool and include your charger calibration.</p>
-    <div class="group">
+    <div class="group home-actions">
       <div class="item press" id="t-backup"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3.5M7 8.5l5-5 5 5"/><path d="M4 15v3.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V15"/></svg></div><div class="txt"><div class="ttl">Backup settings</div><div class="desc">Save the current options to a file you can keep or share</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
       <div class="item press" id="t-restore"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5V15M7 10l5 5 5-5"/><path d="M4 15v3.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V15"/></svg></div><div class="txt"><div class="ttl">Restore settings</div><div class="desc">Load a backup, review it, then press Save</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
       <div class="item press" id="t-import"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 3v5h5M12 17v-6M9.5 13.5L12 11l2.5 2.5"/></svg></div><div class="txt"><div class="ttl">Import settings</div><div class="desc">Pick a backup file from anywhere, or paste its text</div></div></div></div>
@@ -697,7 +702,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     </div>
 
     <h2 class="sh">Maintenance</h2>
-    <div class="group">
+    <div class="group home-actions">
       <div class="item press" id="t-log"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div><div class="txt"><div class="ttl">View boot log</div><div class="desc">What was applied, skipped or rejected on the last boot</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
       <div class="item press" id="t-report"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div><div class="txt"><div class="ttl">Create bug report</div><div class="desc">Saves device info, last boot result, settings and the boot log to Download/HyperCool, to send when you report a problem</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
       <div class="item press danger-row" id="t-revert"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></div><div class="txt"><div class="ttl">Revert system changes now</div><div class="desc">Puts everything back now and turns the ROM options off</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
@@ -706,7 +711,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
     <h2 class="sh">Support</h2>
     <p class="ssub">Donations help keep updates coming.</p>
-    <div class="group">
+    <div class="group home-actions">
       <div class="item press" data-url="https://sociabuzz.com/yudharn"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20z"/></svg></div><div class="txt"><div class="ttl">SociaBuzz</div><div class="desc">Support HyperCool via SociaBuzz</div></div><svg class="chev2" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></div></div>
       <div class="item press" data-url="https://ko-fi.com/yudharn"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3v2M12 3v2"/></svg></div><div class="txt"><div class="ttl">PayPal</div><div class="desc">Donate with PayPal through Ko-fi</div></div><svg class="chev2" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></div></div>
       <div class="item press" data-url="https://t.me/ArchivesModules/1476"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><path d="M14.5 14.5h2.5v2.5M20.5 14.5v6h-6M17 20.5v-2"/></svg></div><div class="txt"><div class="ttl">QRIS</div><div class="desc">Scan the QRIS code (Indonesian e-wallets and banks)</div></div><svg class="chev2" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></div></div>
@@ -2446,7 +2451,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     if (!HAS_KSU) {
       $('idrain').textContent = '\u2013';
       $('idrain').style.color = '';
-      el.textContent = 'Readings need the KernelSU manager.';
+      el.textContent = '';
       return;
     }
     var intro = '<b>Idle drain</b> is how fast the battery drops with the screen off, from Android battery stats. Under 1% per hour is good. ';
@@ -3603,6 +3608,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   document.addEventListener('visibilitychange', function () { if (!document.hidden) monetRefresh(); });
   apRefresh();
   monetRefresh();
+
+  /* version byline: hide it until the version string is available */
+  function syncVerline() {
+    document.querySelectorAll('.hbyline').forEach(function (line) {
+      var ver = line.querySelector('[data-verlong]');
+      line.classList.toggle('empty', !ver || !ver.textContent.trim());
+    });
+  }
+  syncVerline();
+  if (typeof MutationObserver !== 'undefined') {
+    var verObs = new MutationObserver(syncVerline);
+    document.querySelectorAll('[data-verlong]').forEach(function (v) {
+      verObs.observe(v, { childList: true, characterData: true, subtree: true });
+    });
+  }
 
   /* boot */
   try {
