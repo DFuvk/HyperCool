@@ -92,7 +92,7 @@ small keepers (charge limit, screen-off keeper that also serves Keep Wi-Fi on, C
 - Little-core frequency cap (default off, with lock)
 - GPU frequency cap (from your own GPU table, with lock)
 - GPU power collapse
-- Calmer CPU governor (WALT / schedutil)
+- Less aggressive CPU governor (WALT / schedutil)
 - Disable kernel touch boost
 - Background apps on little cores
 - Park prime core (Qualcomm; switches core_ctl on when the kernel has it off, checks that the core is really parked, locks the nodes)
@@ -103,8 +103,8 @@ small keepers (charge limit, screen-off keeper that also serves Keep Wi-Fi on, C
 **Battery drain (kernel)**
 - Adaptive screen-off power profile
 - Deep CPU sleep, UFS power saving
-- Fewer writeback wakeups, lighter I/O accounting
-- Silence kernel debug, kernel wakelock blocker
+- Fewer writeback wakeups, less I/O accounting
+- Turn off kernel debug, kernel wakelock blocker
 - Keep Wi-Fi on while the screen is off (turns it on again when the ROM switches it off; Wi-Fi you switch off yourself stays off)
 - Location and Bluetooth off after a long screen-off (both come back when the screen turns on; off by default)
 - F2FS garbage collection with the screen off (Storage; frees space that only GC can give back; once a week at most, no charger needed; off by default)
@@ -137,7 +137,7 @@ small keepers (charge limit, screen-off keeper that also serves Keep Wi-Fi on, C
 - GMS ads/analytics freeze, more telemetry off
 - Log cleanup, vendor diagnostics off
 - Kernel power-saving switches, Energy Aware Scheduler
-- Runtime power for idle USB / I2C / SPI devices (opt-in)
+- Power saving for idle USB / I2C / SPI devices (opt-in)
 - Fewer background jobs: JobScheduler batches background work for 1-2 hours (Balanced / Strong, read back and put back if the ROM ignores it)
 - Compact background apps: compacts the memory of background apps after the screen has been off, only when free RAM is low
 - Auto clean app cache (every 1 to 7 days), apps that keep their cache, cache clean notification

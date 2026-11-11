@@ -46,13 +46,15 @@ wr() {
   return $_r
 }
 # save the value to put back (default: the current one), then write the screen-off value
+# the original is only recorded when the write worked: a rejected write changes nothing
 put() {
   [ -e "$1" ] || return 1
   _cv=$(cat "$1" 2>/dev/null)
   [ -n "$_cv" ] || return 1
   [ "$_cv" = "$2" ] && return 0
+  wr "$1" "$2" || return 1
   printf '%s|%s\n' "$1" "${3:-$_cv}" >> "$SAVE"
-  wr "$1" "$2"
+  return 0
 }
 # highest frequency <= $2 in the policy table $1 (or $2 itself)
 snap() {
@@ -152,7 +154,12 @@ wifi_check() {
     return 0
   fi
   svc wifi enable </dev/null >/dev/null 2>&1
-  _wrec="$_wk $_wn"; _wcnt=$((_wcnt + 1)); _wlast=$(date '+%H:%M:%S'); note ""
+  sleep 1
+  # only a Wi-Fi that is really on again counts as a re-enable
+  if [ "$(wifi_now)" = on ]; then
+    _wrec="$_wk $_wn"; _wcnt=$((_wcnt + 1)); _wlast=$(date '+%H:%M:%S')
+  fi
+  note ""
 }
 
 # at most one check per 2 s when screen and link events are flowing, else once per 60 s (polling fallback)
@@ -194,10 +201,18 @@ jobs_stop() {
 
 restore() {
   [ -s "$SAVE" ] || return 0
+  # what could not be put back stays in the file and is tried again later
+  _fail=""
   while IFS='|' read -r _n _v; do
-    [ -n "$_n" ] && wr "$_n" "$_v"
+    [ -n "$_n" ] || continue
+    wr "$_n" "$_v" || _fail="$_fail$_n|$_v
+"
   done < "$SAVE"
-  : > "$SAVE"
+  if [ -n "$_fail" ]; then
+    printf '%s' "$_fail" > "$SAVE"
+  else
+    : > "$SAVE"
+  fi
 }
 
 trap 'jobs_stop; restore; radio_restore; ev_stop; rm -f "$PIDF"; exit 0' TERM INT HUP

@@ -20,8 +20,10 @@ notify() {
 
 # "package kb" for every app cache dir (internal + external storage)
 measure() {
-  du -sk /data/data/*/cache /data/media/0/Android/data/*/cache 2>/dev/null | awk '{
-    p = $2; sub(/^\/data\/data\//, "", p); sub(/^\/data\/media\/0\/Android\/data\//, "", p); sub(/\/cache$/, "", p)
+  # every user (clones, work profile): the clean empties /data/media/*/... too, so it has to be
+  # measured there as well - otherwise the result and the x_cache_min limit are wrong
+  du -sk /data/data/*/cache /data/media/*/Android/data/*/cache 2>/dev/null | awk '{
+    p = $2; sub(/^\/data\/data\//, "", p); sub(/^\/data\/media\/[0-9]+\/Android\/data\//, "", p); sub(/\/cache$/, "", p)
     s[p] += $1 } END { for (k in s) print k, s[k] }'
 }
 
@@ -66,7 +68,10 @@ keep_restore() {
   for _d in /data/user/*/* /data/user_de/*/* /data/media/*/Android/data/*; do
     [ -d "$_d/$KEEP_TAG" ] || continue
     if [ -d "$_d/cache" ]; then
+      # hidden files too, so that nothing of the new cache is lost when the folder is replaced
       mv "$_d/cache"/* "$_d/$KEEP_TAG"/ 2>/dev/null
+      mv "$_d/cache"/.[!.]* "$_d/$KEEP_TAG"/ 2>/dev/null
+      mv "$_d/cache"/..?* "$_d/$KEEP_TAG"/ 2>/dev/null
       rmdir "$_d/cache" 2>/dev/null || rm -rf "$_d/cache"
     fi
     mv "$_d/$KEEP_TAG" "$_d/cache" 2>/dev/null

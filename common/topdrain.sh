@@ -78,11 +78,12 @@ function sysname(u) {
 function lab(uid, u,   app) {
   if (uid < 0) { K = "core"; L = "isolated / other process"; return }
   if (uid < 10000) { K = "core"; L = sysname(uid); return }
-  app = uid % 100000
-  if (app in pk) {
-    K = pk[app]; L = pn[app]
-    if (cnt[app] > 1) L = L " +" (cnt[app] - 1)
-  } else { K = "app"; L = "uid " app " (package not found)" }
+  # the package map is keyed by the full uid (user * 100000 + app id), so look it up as it is:
+  # with uid % 100000 an app of user 10 would get the package of user 0
+  if (uid in pk) {
+    K = pk[uid]; L = pn[uid]
+    if (cnt[uid] > 1) L = L " +" (cnt[uid] - 1)
+  } else { app = uid % 100000; K = "app"; L = "uid " uid " (package not found)" }
   if (u > 0) L = L " (user " u ")"
 }
 EOF
@@ -204,6 +205,7 @@ sec {
   if (line !~ /^Wake lock /) { sec = 0; next }
   split(line, f, " ")
   id = f[3]
+  sub(/:$/, "", id)   # "Wake lock u0a123: ..." -> the id without the colon
   if (!match(line, /: ([0-9]+d )?([0-9]+h )?([0-9]+m )?([0-9]+s )?[0-9]+ms \(/)) next
   d = dur(substr(line, RSTART, RLENGTH))
   if (d <= 0) next

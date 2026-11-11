@@ -836,16 +836,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     { id: 'heat', title: 'Heat control', color: 'var(--hot)',
       sub: 'Keeps big cores, GPU and charging away from their hottest operating points' },
     { id: 'kdrain', title: 'Battery drain (kernel)', color: '#ffb36b',
-      sub: 'Lets the SoC and storage sleep deeper and wake less often' },
+      sub: 'Lets the SoC and storage stay in deep sleep longer and wake less often' },
     { id: 'protect', title: 'Protected and blocked apps', color: '#c79bff',
       sub: 'Keep important apps alive, or block others in the background' },
     { id: 'rdrain', title: 'Battery drain (system)', color: 'var(--cool)',
       sub: 'Standby drain from apps, Google services and ROM services' },
     { id: 'saver', title: 'Long battery', color: '#8be08b',
-      sub: 'Stronger Battery Saver and display-side savings' },
+      sub: 'Stronger Battery Saver and screen savings' },
     { id: 'adv', title: 'Advanced', color: 'var(--on2)', sub: 'Timing of the one-shot apply and boot notification' },
     { id: 'xk', title: 'Extra kernel tuning', color: '#ffb36b',
-      sub: 'Extra kernel tweaks, the safe ones are on by default' },
+      sub: 'Extra kernel tweaks, safe options are on by default' },
     { id: 'xram', title: 'RAM management', color: '#c79bff',
       sub: 'VM, zram and low-memory-killer tuning' },
     { id: 'xgoogle', title: 'Google services and telemetry', color: 'var(--cool)',
@@ -853,7 +853,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     { id: 'xlog', title: 'Logging and diagnostics', color: '#8be08b',
       sub: 'Less logging and vendor diagnostics' },
     { id: 'xpower', title: 'Extra power saving', color: '#8be08b',
-      sub: 'Kernel power-saving switches and lighter background memory work' },
+      sub: 'Kernel power-saving switches and less background memory work' },
     { id: 'xstore', title: 'Storage', color: 'var(--cool)',
       sub: 'App-cache cleaning, F2FS garbage collection and weekly app optimization' }
   ];
@@ -896,7 +896,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       fields: [{ k: 'gpu_idle_timer', label: 'GPU idle timer', def: '64', min: 20, max: 200, unit: 'ms', zero: true },
                { k: 'gpu_throttle', label: 'GPU thermal throttling (Adreno)', def: '1', sel: [['1', 'On (recommended, cooler)'], ['0', 'Off (full GPU speed, more heat)']] }] },
     { k: 'walt_tune', s: 'heat', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
-      t: 'Calmer CPU governor',
+      t: 'Less aggressive CPU governor',
       d: 'The CPU governor uses weaker predictive boosts and slower ramp-up.',
       x: 'RTG boosts are off, so clocks spike less. This works on WALT, schedutil and MediaTek sugov_ext.',
       fields: [{ k: 'walt_hispeed_load', label: 'Ramp-up load (hispeed_load)', def: '95', min: 50, max: 100, unit: '%', zero: true },
@@ -947,7 +947,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       fields: [{ k: 'soff_radio_min', label: 'Wait after the screen goes off', def: '15', min: 5, max: 120, unit: 'min' },
                { k: 'soff_radio_bt', label: 'Also turn Bluetooth off', def: '0', bool: true }] },
     { k: 'cpu_idle', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
-      t: 'Ensure deep CPU sleep',
+      t: 'Allow deep CPU sleep',
       d: 'The lowest CPU sleep states are allowed and never switched off.',
       hideDetail: true },
     { k: 'ufs_pm', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
@@ -962,10 +962,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
                { k: 'vm_dirty_bg', label: 'Background writeback threshold (dirty_background_ratio)', def: '10', min: 1, max: 50, unit: '%', zero: true },
                { k: 'vm_dirty', label: 'Writeback threshold (dirty_ratio)', def: '30', min: 1, max: 80, unit: '%', zero: true }] },
     { k: 'io_tune', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
-      t: 'Lighter I/O accounting',
+      t: 'Less I/O accounting',
       d: 'Drive stats and entropy sampling are off, so each read and write costs less.' },
     { k: 'debug_off', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
-      t: 'Silence kernel debug',
+      t: 'Turn off kernel debug',
       d: 'Kernel logs, ftrace, watchdogs and driver messages are quiet.',
       x: 'Kernel console logs, ftrace, schedstats, the NMI watchdog, ramdumps and driver debug masks are off until the next reboot.' },
     { k: 'debug_props', s: 'kdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
@@ -1012,7 +1012,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       o: [['0', 'Off'], ['1', 'Moderate (10 min)'], ['2', 'Aggressive (1 min)'], ['3', 'Maximum (30 s)'], ['4', 'Custom…']],
       text: { k: 'doze_custom', label: 'Doze timing (device_idle, key=ms)', filter: /[^A-Za-z0-9_=.,]/g, showWhen: '4', def: DOZE_AGGRESSIVE } },
     { k: 'devcfg_lock', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
-      t: 'Keep values (pause flag sync)',
+      t: 'Keep values (pause server flag sync)',
       d: 'Google server settings are frozen so they cannot overwrite Doze and freezer choices.',
       x: 'This pause also covers stats values. All server flag updates are paused while this is on.' },
     { k: 'gms_doze', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
@@ -1104,11 +1104,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     { k: 'x_sched', s: 'xk', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Scheduler and governor tuning',
       d: 'Tasks stay on one core longer and CPU ramp-up is softened.',
-      x: 'This works on CFS/schedutil kernels; on WALT most of these settings are skipped, so use Calmer CPU governor there.' },
+      x: 'This works on CFS/schedutil kernels; on WALT most of these settings are skipped, so use Less aggressive CPU governor there.' },
     { k: 'x_kquiet', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
-      t: 'Silence leftover kernel logging',
+      t: 'Reduce leftover kernel logging',
       d: 'Extra kernel messages such as EDAC, BPF, OOM and F2FS are quieted.',
-      x: 'This turns off more kernel logs that Silence kernel debug does not cover: EDAC, BPF printk, ramdumps, OOM dumps and F2FS iostat.' },
+      x: 'This turns off more kernel logs than Turn off kernel debug covers: EDAC, BPF printk, ramdumps, OOM dumps and F2FS iostat.' },
     { k: 'x_net', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Network stack tuning',
       d: 'TCP Fast Open stays on, and slow start after idle and metric saving are skipped.' },
@@ -1134,7 +1134,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     { k: 'x_ram_opt', s: 'xram', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'RAM optimizer',
       d: 'Memory management and the low-memory killer are tuned, leaving zram alone.',
-      x: 'This lowers memory pressure. zram is not touched here. Values come back when off (lmkd props after a reboot).',
+      x: 'This lowers memory pressure. zram is not touched here. Values come back when off (the lmkd props are put back too).',
       fields: [{ k: 'x_ram_level', label: 'Level', def: '1', sel: [['1', 'Moderate (balanced)'], ['2', 'Maximum (most free RAM, apps reload more often = uses a bit more battery)']] }] },
     { k: 'x_multitask', s: 'xram', src: 'rom', risk: 'moderate', type: 'level', def: '0',
       t: 'Multitasking profile',
@@ -1165,11 +1165,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
     // more: logging & diagnostics
     { k: 'x_log_nuke', s: 'xlog', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
-      t: 'Deep log cleanup at boot',
+      t: 'Log cleanup at boot',
       d: 'Leftover message daemons are killed and log buffers are shrunk at startup.',
       x: 'This clears and shrinks the log buffers and turns off framework tracing. Keep it off while collecting bug reports.' },
     { k: 'x_diag', s: 'xlog', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
-      t: 'Silence vendor diagnostics',
+      t: 'Turn off vendor diagnostics',
       d: 'Manufacturer loggers are quieted and ANR and looper reports are turned off.',
       x: 'This stops charge_logger and misight, and turns off looper stats, ANR debugging and vendor diagnostic logs.' },
     { k: 'x_props', s: 'xlog', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
@@ -1210,7 +1210,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       d: 'Efficient workqueues and the battery_saver module are used when available.',
       x: 'Kernel work runs on an awake core instead of waking an idle one.' },
     { k: 'x_vm_lite', s: 'xpower', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
-      t: 'Lighter background memory work',
+      t: 'Less background memory work',
       d: 'Swap read-ahead and compaction are skipped, so the processor wakes less.' },
     { k: 'x_eas', s: 'xpower', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Keep Energy Aware Scheduler on',
@@ -1219,10 +1219,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     { k: 'x_job_limit', s: 'xpower', src: 'rom', risk: 'safe', type: 'level', def: '0',
       t: 'Fewer background jobs',
       d: 'Sync and updates are batched so they wake the phone less often.',
-      x: 'This makes Android wait and batch background jobs (sync, uploads, updates), up to 1-2 hours, so they run together: fewer wake-ups, less CPU and heat. Background sync can arrive later; chat and push notifications are normally not affected. Unsupported on ROMs without these settings. Original values come back when off.',
+      x: 'This makes Android wait and batch background jobs (sync, uploads, updates), up to 1-2 hours, so they run together: fewer wake-ups, less CPU and heat. Background sync can arrive later; chat and push notifications are normally not affected. Unsupported on ROMs without these settings; when only some of them are accepted the result is Partial. Original values come back when off.',
       o: [['0', 'Off'], ['1', 'Balanced (waits up to 1 h)'], ['2', 'Strong (waits up to 2 h)']] },
     { k: 'x_rpm', s: 'xpower', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
-      t: 'Runtime power for idle devices',
+      t: 'Power saving for idle devices',
       d: 'Unused USB, I2C and SPI links are shut down, while sensors stay on.',
       x: 'Touch, audio, NFC, fingerprint and charger chips are left alone. Turn this off if a USB device or sensor stops working.' }
   ];
@@ -1274,12 +1274,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  "refresh_rate": "settings system peak_refresh_rate (min_refresh_rate only lowered if peak < 60, given back otherwise)|settings secure user_refresh_rate, miui_refresh_rate",
  "anim_scale": "settings global window_animation_scale, transition_animation_scale, animator_duration_scale",
  "apply_delay": "nothing - only controls when the one-shot apply starts",
- "x_sched": "kernel: sched_migration_cost_ns 5 ms, sched_nr_migrate 32 (CFS debug kernels only)|schedutil: up_rate_limit_us 5000, hispeed_load 99 (only where present)|interactive: go_hispeed_load 99|/dev/stune/top-app: schedtune.prefer_idle = 0, schedtune.boost = 0 (old kernels)",
+ "x_sched": "kernel: sched_migration_cost_ns 5 ms, sched_nr_migrate 32 (CFS debug kernels only)|schedutil: up_rate_limit_us 5000, hispeed_load 99 (only where present; skipped while Less aggressive CPU governor is on, it owns these two values)|interactive: go_hispeed_load 99|/dev/stune/top-app: schedtune.prefer_idle = 0, schedtune.boost = 0 (old kernels)",
  "x_kquiet": "edac/qcom-llcc log_ce, log_ue = 0|bpf_trace_printk enable = 0|printk_ratelimit = 5|vm.block_dump = 0, kernel.random wakeup thresholds 256/320|ftrace_dump_on_oops = 0, qcom_ramdump enable_dump_collection = 0|msm_show_resume_irq debug_mask = 0, vm.oom_dump_tasks = 0|f2fs iostat_enable = 0, platform snapshot_crashdumper = 0, qdf_log_dump_at_kernel_enable = N",
  "x_net": "net.ipv4: tcp_slow_start_after_idle = 0|tcp_no_metrics_save = 1, tcp_fastopen = 3|fs.inotify max_user_watches = 262144, max_user_instances = 512|tcp_syncookies untouched (stays on)",
  "x_io": "/sys/block/sd*, mmcblk*, nvme*: nomerges = 0, rq_affinity = 1",
  "x_xiaomi_fw": "migt: enable_pkg_monitor = 0, glk_freq_limit_walt = 0, boost_policy = 0, glk_disable = 1, force_stask_to_big = 0|metis: suspend_vip_enable = 0, mi_link_enable = 0, mi_switch_enable = 0",
- "x_ram_opt": "vm: vfs_cache_pressure 80, overcommit 1/75, watermark_boost_factor 0|device_config: usap_pool_enabled = false, use_compaction = true (restored when off)|classic LMK minfree, or lmkd ro.lmk.* props by level (runtime only, lmkd.reinit)|vendor reclaim off: process_reclaim, mi_reclaim, memplus, opchain",
+ "x_ram_opt": "vm: vfs_cache_pressure 80, overcommit 1/75, watermark_boost_factor 0|device_config: usap_pool_enabled = false, use_compaction = true (restored when off)|classic LMK minfree, or lmkd ro.lmk.* props by level (runtime only, lmkd.reinit; the old values are put back when the switch goes off)|vendor reclaim off: process_reclaim, mi_reclaim, memplus, opchain",
  "x_zram": "runs right when Android finishes booting (before the apply delay), while zram is still almost empty, and checks again after the delay in case the ROM set its own zram again|swapoff zram0 only when what is in zram fits back into RAM with ~400 MB to spare (Android may close background apps), reset|comp_algorithm = chosen algorithm (only if the kernel lists it), disksize = 2-8 GB or custom 1-12 GB, backing_dev kept|mkswap + swapon: priority -2 (first swap device)|ROM zram put back if the kernel refuses; ROM zram returns after a reboot when off",
  "x_multitask": "device_config activity_manager max_cached_processes = stock x 125/100/75% (min 8, restored when off)|no memory-factor override (any override is cleared)",
  "x_gms_freeze": "pm disable --user 0 for the components in common/x_gms_safe.txt|components removed from the list are enabled again|every component re-enabled (pm enable) when the switch goes off, on Revert, or on uninstall",
@@ -1289,7 +1289,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  "x_kpower": "/sys/module/workqueue/parameters/power_efficient = Y (state reported when read-only)|/sys/module/battery_saver/parameters/enabled = Y or 1 (custom kernels only)|stock values return after a reboot when off",
  "x_balanced": "/dev/stune/top-app schedtune.boost = 0, prefer_idle = 0|kernel.split_lock_mitigate = 1, sched_features NEXT_BUDDY + TTWU_QUEUE (when present)|vm.vfs_cache_pressure = 120 (not when RAM management is on)|mmcblk / sd queues: read_ahead_kb = 128, nr_requests = 64|/proc/touchpanel game_switch_enable 0, *_tp_limit_enable 1, *_tp_direction 0|Qualcomm: devfreq *memlat* / *latfloor* / *ddr-lat* min = lowest, max = highest; bus_dcvs DDR / LLCC / L3 hw_min = lowest, hw_max = highest|Qualcomm (sub-option): devfreq *cpu*-lat / *cpu*-bw / *llccbw* / *bus_llcc* / *bus_ddr* / *cpubw* / *kgsl-ddr-qos* full range|Qualcomm: kgsl devfreq/adrenoboost = 0, msm_perfmon touch_boost_enable / touch_boost_freq = 0, msm_performance touchboost = 0, pnpmgr touch_boost = 0|MediaTek: PPM PWR_THRO / THERMAL policies on, fpsgo force_onoff = 2, cpufreq_power_mode / cci_mode = 0, dramboost 0, EAS 2, GED KPI 1, GED gx_boost_on / gx_game_mode / ged_smart_boost / enable_gpu_boost / ged_boost_enable / gx_frc_mode / cpu_boost_policy / boost_extra = 0, gpu_boost_level = -1, pnpmgr mwn / boost_enable / boost_mode = 0, gpufreq not fixed, GED boost floor = lowest OPP, gpufreq_power_limited ignore_* = 0, battery_oc_protect_stop = stop 0, eara_thermal 1, DVFSRC ddr opp / vcore = -1, mtk-dvfsrc-devfreq full range|stock values return after a reboot when off",
  "x_kcommon": "kernel.sched_child_runs_first = 1, sched_autogroup_enabled = 0, sched_nr_migrate = 32, sched_schedstats = 0, task_cpustats_enable = 0|perf_cpu_time_max_percent = 3 (not when Debug off is on)|vm.page-cluster = 0, compaction_proactiveness = 0, stat_interval = 15 (not when VM tuning is on)|all block queues: iostats = 0, add_random = 0; mmc_core use_spi_crc = 0|tcp_congestion_control = bbr3 / bbr2 / bbrplus / bbr / westwood / cubic (first available), tcp_low_latency 1, tcp_ecn 2 (only when the server asks), tcp_fastopen 3, tcp_sack 1, tcp_timestamps 0|opchain chain_on 0, task_sched_info 0, oplus sched_assist 0|stock values return after a reboot when off",
- "x_job_limit": "device_config jobscheduler: min_ready_cpu_only_jobs_count, min_ready_non_active_jobs_count, max_cpu_only_job_batch_delay_ms, max_non_active_job_batch_delay_ms, conn_max_connectivity_job_batch_delay_ms (Balanced 5/8/1 h, Strong 8/12/2 h; only the ones dumpsys jobscheduler lists)|read back from dumpsys jobscheduler for up to 6 s: not taken = put back and Unsupported|original values come back when off",
+ "x_job_limit": "device_config jobscheduler: min_ready_cpu_only_jobs_count, min_ready_non_active_jobs_count, max_cpu_only_job_batch_delay_ms, max_non_active_job_batch_delay_ms, conn_max_connectivity_job_batch_delay_ms (Balanced 5/8/1 h, Strong 8/12/2 h; only the ones dumpsys jobscheduler lists)|read back from dumpsys jobscheduler for up to 6 s: what took effect stays (Partial), the other keys keep their old value; nothing taken = put back and Unsupported|original values come back when off",
  "x_compact": "runs in the screen-off keeper common/soff_watch.sh (started when screen-off profile, Keep Wi-Fi on or this is on), library common/compact.sh|after 90 s off and free RAM below 30%: cmd activity compact some <process> <uid> for up to 40 user-app processes (not protected apps, launcher, keyboard, dialer, media, system), then waits 20 min|runs in a background job that stops when the screen turns on|state in compact.state (apps, free RAM before and after)",
  "x_eas": "/proc/sys/kernel/sched_energy_aware = 1 (only written when it is 0)|stock value returns after a reboot when off",
  "cpu_cap_little": "policy*/scaling_max_freq of the little (smallest max clock) cluster only, nearest available frequency|MediaTek: PPM user limit for that cluster|Lock: chmod 0444 on that scaling_max_freq so non-root ROM services cannot raise it (thermal limits still apply; reset at reboot)",
@@ -2009,9 +2009,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   }
 
   var PRESET_INFO = [
-    { i: 'star', d: 'Cooler cores, deeper sleep and safe defaults for most phones', x: 'Cooler big cores, calmer governor, deeper sleep, messengers protected, safe Extras options and auto cache clean on' },
-    { i: 'leaf', d: 'Strongest savings: 88% CPU cap, strict Doze, little background work', x: '88% CPU cap, GPU one step below max, screen-off power profile, Maximum Doze, kernel wakelock blocker, restricted background apps, Joyose off, 60 Hz, Extreme Battery Saver at 20%, blur off, fewer background jobs, Location and Bluetooth off during long screen-off, auto F2FS GC and dex2oat, runtime power, all Extras options except Multitasking and ZRAM. Charging, Keep Wi-Fi on, Adaptive refresh rate, ZRAM, Multitasking and Compact background apps stay as you set them' },
-    { i: 'game', d: 'Keeps performance high and cuts heat: 95% CPU cap, background work limited', x: '95% CPU cap, GPU power collapse with throttling off, background apps on little cores, governor, refresh rate, Joyose and Game Turbo left stock, Performance multitasking, no app restriction, plus auto F2FS GC and dex2oat and runtime power. Charging, Keep Wi-Fi on, Adaptive refresh rate, ZRAM and Compact background apps stay as you set them' },
+    { i: 'star', d: 'Cooler cores, deeper sleep and safe defaults for most phones', x: 'Cooler big cores, a less aggressive governor, deeper sleep, messengers protected, safe Extras options and auto cache clean on' },
+    { i: 'leaf', d: 'Strongest savings: 88% CPU cap, strict Doze, little background work', x: '88% CPU cap, GPU one step below max, screen-off power profile, Maximum Doze, kernel wakelock blocker, restricted background apps, Joyose off, 60 Hz, Extreme Battery Saver at 20%, blur off, fewer background jobs, Location and Bluetooth off during long screen-off, auto F2FS GC and dex2oat, power saving for idle devices, all Extras options except Multitasking and ZRAM. Charging, Keep Wi-Fi on, Adaptive refresh rate, ZRAM, Multitasking and Compact background apps stay as you set them' },
+    { i: 'game', d: 'Keeps performance high and cuts heat: 95% CPU cap, background work limited', x: '95% CPU cap, GPU power collapse with throttling off, background apps on little cores, governor, refresh rate, Joyose and Game Turbo left stock, Performance multitasking, no app restriction, plus auto F2FS GC and dex2oat and power saving for idle devices. Charging, Keep Wi-Fi on, Adaptive refresh rate, ZRAM and Compact background apps stay as you set them' },
     { i: 'sliders', d: '' },
     { i: 'cpu', d: 'Kernel tweaks only; every system option is switched off', x: 'Only kernel tweaks (including the Extras kernel options); every system option is switched off' },
     { i: 'power', d: 'Every feature off: the module changes nothing at the next boot' }
@@ -2433,7 +2433,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   // Android's own battery statistics since the last full charge: no keeper needed
   // since-last-charge totals, plus today's screen-off discharge steps (Android 16 prints the daily
   // step history first, so both are read with awk in one pass)
-  var DRAIN_CMD = 'dumpsys batterystats 2>/dev/null | awk \'' +
+  var DRAIN_CMD = 'if command -v timeout >/dev/null 2>&1; then timeout 25 dumpsys batterystats 2>/dev/null; else dumpsys batterystats 2>/dev/null; fi | awk \'' +
     // every 1% drop since unplug with its duration; only steps spent fully with the screen off / AOD
     '/^ *Discharge step durations:/ && !ds { ds = 1; ins = 1; print "steplist=1"; next } ' +
     '/^ *Charge step durations:/ { print "steplist=1" } ' +
@@ -2502,12 +2502,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     o.pct = null;
     return o;
   }
-  function showDrain(o) {
+  function showDrain(o, err) {
     var el = $('idle');
     if (!HAS_KSU) {
       $('idrain').textContent = '\u2013';
       $('idrain').style.color = '';
       el.textContent = '';
+      return;
+    }
+    if (err) {
+      $('idrain').textContent = '\u2013';
+      $('idrain').style.color = '';
+      el.textContent = 'Could not read the battery stats. Try again in a moment.';
       return;
     }
     var intro = '<b>Idle drain</b> is how fast the battery drops with the screen off, from Android battery stats. Under 1% per hour is good. ';
@@ -2556,7 +2562,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   }
   function loadDrain() {
     if (!HAS_KSU) { showDrain(null); return; }
-    exec(DRAIN_CMD).then(function (r) { showDrain(parseDrain(r.stdout)); });
+    exec(DRAIN_CMD).then(function (r) { showDrain(parseDrain(r.stdout), r.errno ? (r.stderr || '').trim() : ''); });
   }
 
   /* battery calibration */
@@ -2626,7 +2632,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       (del ? 'touch $D/bcal_delstats; ' : 'rm -f $D/bcal_delstats; ') +
       'printf "phase=discharge\\nstart=%s\\ncap0=%s\\nlvl0=%s\\n" "$(date +%s)" "$c" "$l" > $D/bcal.state; ' +
       bcalKeeper(m) + 'sleep 1; echo OK').then(function (r) {
-      snack(/OK/.test(r.stdout || '') ? 'Battery calibration started' + (del ? ', stats files go at the next reboot' : '') : 'Couldn\'t start calibration. Check that the battery is above 5% and the charger is connected, then try again.');
+      snack(/OK/.test(r.stdout || '') ? 'Battery calibration started' + (del ? ', stats files go at the next reboot' : '')
+        : 'Couldn\'t start calibration. Check that the battery is above 5% and that the charger is unplugged (the first step runs the phone down to 5%), then try again.');
       loadBcal();
     });
   }
@@ -2664,6 +2671,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     'dumpsys battery 2>/dev/null | sed -n "s/^ *\\([A-Za-z][A-Za-z ]*\\): \\(.*\\)$/db.\\1=\\2/p"'
   ].join('\n');
   var HEALTH = { 1: 'Unknown', 2: 'Good', 3: 'Overheat', 4: 'Dead', 5: 'Over voltage', 6: 'Failure', 7: 'Cold' };
+  // dumpsys battery prints the health as a word ("GOOD"), some kernels print the number
+  var HEALTH_WORD = { unknown: 'Unknown', good: 'Good', overheat: 'Overheat', dead: 'Dead',
+    'over voltage': 'Over voltage', overvoltage: 'Over voltage', failure: 'Failure', cold: 'Cold' };
+  function healthName(v) {
+    var s = String(v == null ? '' : v).trim().toLowerCase();
+    if (!s) return '';
+    if (HEALTH[s]) return HEALTH[s];
+    if (HEALTH_WORD[s]) return HEALTH_WORD[s];
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
   function pick(b, keys) {
     for (var i = 0; i < keys.length; i++) { var v = b[keys[i]]; if (v != null && String(v).trim() !== '') return String(v).trim(); }
     return '';
@@ -2673,8 +2690,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     $('bc-run').disabled = true;
     $('bc-run').textContent = 'Reading battery\u2026';
     exec(BC_CMD).then(function (r) {
-      var b = parseKV(r.stdout), rows = [], na = 'not reported by this kernel';
-      var hs = pick(b, ['battery.health', 'bms.health']), hd = HEALTH[pick(b, ['db.health'])] || '';
+      var b = parseKV(r.stdout);
+      // a command that failed or printed nothing is an error, not "the kernel has no sensors"
+      if (r.errno || !Object.keys(b).length) throw new Error((r.stderr || '').trim() || 'The command did not answer.');
+      var rows = [], na = 'not reported by this kernel';
+      var hs = pick(b, ['battery.health', 'bms.health']), hd = healthName(pick(b, ['db.health']));
       var full = mAh(pick(b, ['battery.charge_full', 'bms.charge_full', 'battery_ext.charge_full']));
       var des = mAh(pick(b, ['battery.charge_full_design', 'bms.charge_full_design', 'battery_ext.charge_full_design']));
       var soh = pick(b, ['battery.soh', 'battery.state_of_health', 'bms.soh', 'qcb.soh']);
@@ -2760,6 +2780,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     $('td-run').disabled = true;
     $('td-run').textContent = 'Reading battery stats\u2026';
     exec('sh /data/adb/modules/' + MODID + '/common/topdrain.sh 40').then(function (r) {
+      if (r.errno) throw new Error((r.stderr || '').trim() || 'The command did not answer.');
       var kv = {}, rows = [], diag = [];
       r.stdout.split('\n').forEach(function (l) {
         l = l.replace(/\r$/, '');
@@ -2878,7 +2899,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     ]);
   };
   $('refresh').onclick = function () {
-    exec(sensCmd()).then(function (r) { showSens(parseKV(r.stdout)); loadDrain(); loadBcal(); snack('Readings refreshed'); });
+    exec(sensCmd()).then(function (r) {
+      if (r.errno) { snack('Could not read the sensors. Try again in a moment.'); return; }
+      showSens(parseKV(r.stdout)); loadDrain(); loadBcal(); snack('Readings refreshed');
+    });
   };
   $('loaderr-retry').onclick = function () {
     $('loaderr').hidden = true;
@@ -2976,11 +3000,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         snack('Cleaning app cache…');
         $('cc-run').disabled = true;
         exec('nice -n 19 sh /data/adb/modules/' + MODID + '/common/cache_clean.sh run force >/dev/null 2>&1; ' +
-             'cat ' + DATA + '/cache_clean.last; echo; echo "check=$(cat ' + DATA + '/cache_clean.check 2>/dev/null)"').then(function (r) {
+             'cat ' + DATA + '/cache_clean.last 2>/dev/null; echo; echo "check=$(cat ' + DATA + '/cache_clean.check 2>/dev/null)"; echo CLEAN_DONE').then(function (r) {
           $('cc-run').disabled = false;
-          renderCache(r.stdout);
-          var m = /^(\d+)\|(\d+)\|\d+(?:\|(\d+))?/m.exec(r.stdout || '');
-          snack(m ? 'Cleared ' + fmtKB(+m[1]) + ' from ' + (m[3] || m[2]) + ' apps' : 'Clean finished with errors');
+          var out = String(r.stdout || '').replace(/^CLEAN_DONE\s*$/m, '');
+          renderCache(out);
+          var m = /^(\d+)\|(\d+)\|\d+(?:\|(\d+))?/m.exec(out);
+          if (!/CLEAN_DONE/.test(r.stdout || '') || !m) { snack('Clean finished with errors. Check the boot log, then try again.'); return; }
+          snack('Cleared ' + fmtKB(+m[1]) + ' from ' + (m[2] || 0) + ' apps');
         });
       } }
     ]);
@@ -3413,7 +3439,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   /* optimize apps (dex2oat) */
   var dx = { timer: null, labels: {}, phase: 'none', sel: [] };
   var DX_SH = 'sh /data/adb/modules/' + MODID + '/common/dexopt.sh';
-  var DX_WHY = { user: 'Stopped by you', battery: 'Stopped: battery at 15% or lower and not charging', storage: 'Stopped: less than 1 GB free storage', noapps: 'No apps found', killed: 'Interrupted' };
+  var DX_WHY = { user: 'Stopped by you', battery: 'Stopped: battery at 15% or lower and not charging (or the level could not be read)',
+    storage: 'Stopped: less than 1 GB free storage (or it could not be read)', hot: 'Stopped: battery too warm or the temperature could not be read',
+    noapps: 'No apps found', killed: 'Interrupted' };
   function dxLabel(pkg) {
     if (!(pkg in dx.labels)) {
       var m = nativeLabels([pkg]);
@@ -3496,6 +3524,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   function dxPoll() {
     if (!HAS_KSU) return Promise.resolve();
     return exec(DX_SH + ' poll 2>/dev/null').then(function (r) {
+      if (r.errno) { dxRender({ phase: 'none' }); $('dx-hint').textContent = 'Could not read the optimization status.'; return; }
       var s = dxParse(r.stdout);
       dxRender(s);
       if (dx.phase === 'running') { if (!dx.timer) dx.timer = setInterval(function () { if (!document.hidden) dxPoll(); }, 2000); }

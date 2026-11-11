@@ -125,16 +125,32 @@ f_x_xiaomi_fw() {
 
 # ================================================================ MORE: RAM
 
-# ro.lmk.* props: resetprop without -p is runtime only, the ROM values return on reboot
+# ro.lmk.* props: resetprop without -p is runtime only, the ROM values return on reboot.
+# The value that was there before is written to $HC_DATA/persist_props, so it can be put back
+# when the feature is switched off or the module is removed.
 x_set_prop_persist() {
-  resetprop -n "$1" "$2" 2>/dev/null
+  _xp=$1; _xv=$2
+  _xo=$(getprop "$_xp" 2>/dev/null)
+  if [ -n "$_xo" ] && [ "$_xo" != "$_xv" ]; then
+    grep -q "^$_xp=" "$HC_DATA/persist_props" 2>/dev/null || echo "$_xp=$_xo" >> "$HC_DATA/persist_props"
+  fi
+  resetprop -n "$_xp" "$_xv" 2>/dev/null
+}
+# put the saved props back and forget them
+x_restore_props() {
+  [ -s "$HC_DATA/persist_props" ] || { rm -f "$HC_DATA/persist_props"; return 0; }
+  while IFS='=' read -r _p _v; do
+    [ -n "$_p" ] || continue
+    resetprop -n "$_p" "$_v" 2>/dev/null
+  done < "$HC_DATA/persist_props"
+  rm -f "$HC_DATA/persist_props"
 }
 
 # x_ram_opt - RAM optimizer: VM list, zram, LMK/minfree, lmkd, reclaim
 f_x_ram_opt() {
   if ! on x_ram_opt; then
     restore_feature x_ram_opt
-    rm -f "$HC_DATA/persist_props"
+    x_restore_props
     st x_ram_opt off
     return
   fi
@@ -318,35 +334,37 @@ f_x_log_nuke() {
   fi
   cnt_reset
   _k=0
+  _okc=0
   # init services: "stop" (kill -9 only makes init restart them); leftover logcat dumpers are killed
   _svc="logcatd tcpdump traced_perf idd-logreader idd-logreadermain aplogd vendor.tcpdump vendor_tcpdump"
   on_qcom_ok && _svc="$_svc cnss_diag vendor.cnss_diag"
   on_mtk_ok && _svc="$_svc mobile_log_d emdlogger1 emdlogger2 emdlogger3 emdlogger5 mdlogger connsyslogger"
   for _s in $_svc; do
-    case "$(getprop "init.svc.$_s")" in running|restarting) setprop ctl.stop "$_s" 2>/dev/null && _k=$((_k + 1)) ;; esac
+    case "$(getprop "init.svc.$_s")" in running|restarting) setprop ctl.stop "$_s" 2>/dev/null && { _k=$((_k + 1)); _okc=1; } ;; esac
   done
-  for _p in $(pidof logcat 2>/dev/null); do kill "$_p" 2>/dev/null && _k=$((_k + 1)); done
+  for _p in $(pidof logcat 2>/dev/null); do kill "$_p" 2>/dev/null && { _k=$((_k + 1)); _okc=1; }; done
   [ "$_k" -gt 0 ] && log "x_log_nuke: stopped $_k log service(s)/process(es)"
-  logcat -c </dev/null >/dev/null 2>&1
-  dmesg -c </dev/null >/dev/null 2>&1
-  logcat -G 64k </dev/null >/dev/null 2>&1
-  cmd activity logging disable-text </dev/null >/dev/null 2>&1
-  cmd autofill set log_level off </dev/null >/dev/null 2>&1
-  cmd display ab-logging-disable </dev/null >/dev/null 2>&1
-  cmd display dmd-logging-disable </dev/null >/dev/null 2>&1
-  cmd display dwb-logging-disable </dev/null >/dev/null 2>&1
-  cmd input_method tracing stop </dev/null >/dev/null 2>&1
-  cmd statusbar tracing stop </dev/null >/dev/null 2>&1
+  logcat -c </dev/null >/dev/null 2>&1 && _okc=1
+  dmesg -c </dev/null >/dev/null 2>&1 && _okc=1
+  logcat -G 64k </dev/null >/dev/null 2>&1 && _okc=1
+  cmd activity logging disable-text </dev/null >/dev/null 2>&1 && _okc=1
+  cmd autofill set log_level off </dev/null >/dev/null 2>&1 && _okc=1
+  cmd display ab-logging-disable </dev/null >/dev/null 2>&1 && _okc=1
+  cmd display dmd-logging-disable </dev/null >/dev/null 2>&1 && _okc=1
+  cmd display dwb-logging-disable </dev/null >/dev/null 2>&1 && _okc=1
+  cmd input_method tracing stop </dev/null >/dev/null 2>&1 && _okc=1
+  cmd statusbar tracing stop </dev/null >/dev/null 2>&1 && _okc=1
   for _wl in $(dumpsys window </dev/null 2>/dev/null | grep -E "^  (Proto|Logcat):" | sed 's/^  .*://'); do
     cmd window logging disable "$_wl" </dev/null >/dev/null 2>&1
     cmd window logging disable-text "$_wl" </dev/null >/dev/null 2>&1
   done
   cmd window logging disable </dev/null >/dev/null 2>&1
   cmd window logging disable-text </dev/null >/dev/null 2>&1
-  cmd window tracing size 0 </dev/null >/dev/null 2>&1
-  cmd voiceinteraction set-debug-hotword-logging false </dev/null >/dev/null 2>&1
-  cmd wifi set-verbose-logging disabled -l 0 </dev/null >/dev/null 2>&1
-  cnt_ok
+  cmd window tracing size 0 </dev/null >/dev/null 2>&1 && _okc=1
+  cmd voiceinteraction set-debug-hotword-logging false </dev/null >/dev/null 2>&1 && _okc=1
+  cmd wifi set-verbose-logging disabled -l 0 </dev/null >/dev/null 2>&1 && _okc=1
+  # nothing worked? then the feature did not do anything and must not be reported as applied
+  [ "$_okc" -gt 0 ] && cnt_ok
   # earlier builds set netstats_poll_interval=60000 (default 30 min: 30x more polling)
   restore_feature x_log_nuke netstats_enabled
   restore_feature x_log_nuke netstats_poll_interval
@@ -363,7 +381,7 @@ f_x_log_nuke() {
     case "$_t" in ''|'#'*) continue ;; esac
     set_s x_log_nuke global "dropbox:$_t" disabled
   done
-  fin x_log_nuke "log daemons stopped, buffers shrunk, dropbox reports off"
+  fin x_log_nuke "log daemons stopped, buffers shrunk, dropbox reports off" "nothing could be turned off on this ROM"
 }
 
 # x_diag - vendor diagnostics off

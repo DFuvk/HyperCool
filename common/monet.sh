@@ -48,12 +48,16 @@ BEGIN {
     rest = substr(l, 10)
     sub(/^\(color\/system_/, "", rest)
     sub(/\)$/, "", rest)
-    i = match(rest, /_[a-z]+$/)
+    i = match(rest, /_(light|dark)$/)
     if (i > 0) {
       mode = substr(rest, i + 1)
       role = substr(rest, 1, i - 1)
       if (mode == "light") L[role] = tolower(substr(hex, 3, 6))
       else if (mode == "dark") D[role] = tolower(substr(hex, 3, 6))
+    } else {
+      # no light/dark suffix: the dump holds one set of colours, use it for both
+      L[rest] = tolower(substr(hex, 3, 6))
+      D[rest] = tolower(substr(hex, 3, 6))
     }
   }
 }
