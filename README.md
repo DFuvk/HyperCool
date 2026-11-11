@@ -169,7 +169,6 @@ Turning a feature off puts the original value back. Unsupported features are ski
 - Power Saver Pro by @ShastikXD & @TempMeow (some code by @kveld9)
 - Hyper Optimize by Tatsh
 - Xtreme Battery Saver (DethByte64), Universal GMS Doze, sysconfig-patcher
-- Specter by @dpejoh1 as a reference for the WebUI style, the Appearance settings (dark theme, dynamic colors) and the dynamic color method
 
 ## Support
 - SociaBuzz: https://sociabuzz.com/yudharn
