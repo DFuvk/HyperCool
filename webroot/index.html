@@ -16,9 +16,8 @@
   --ok:#a8dbb8; --okc:#1d3a2b; --warn:#e6cb8a; --warnc:#40341b; --bad:#f2b8b5; --badc:#4d1f1d;
   --info:#a8c7fa; --infoc:#1f3350; --cool:#a8c7fa; --hot:#e6b89c;
   --dz:#e0524a; --dzc:#8c1d18; --ondzc:#f9dedc;
-  --g1:#ffb48f; --g2:#f6a9c4; --g3:#dcb6ff; --g4:#a9d3f2;
   --c-kernel:207,192,245; --c-rom:168,199,250; --c-only:232,201,154; --c-safe:168,219,184; --c-mod:230,203,138; --c-exp:242,184,181; --ta:.12;
-  --r-xl:26px; --r-sm:26px;
+  --r-card:20px; --r-dlg:28px; --r-btn:14px; --r-input:12px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -28,69 +27,68 @@ body{padding-bottom:190px}
 button,select,input,textarea{font-family:inherit}
 svg{display:block}
 
-/* ---------- top app bar ---------- */
-.topbar{position:sticky;top:0;z-index:10;background:var(--bar);padding:calc(16px + env(safe-area-inset-top)) 22px 16px;border-radius:0 0 30px 30px}
+/* top app bar */
+.topbar{position:sticky;top:0;z-index:10;background:var(--bar);padding:calc(16px + env(safe-area-inset-top)) 22px 16px;border-radius:0 0 var(--r-card) var(--r-card)}
 .tb{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px}
-.tb h1{margin:0;display:inline-block;font-size:30px;font-weight:700;letter-spacing:-.5px;line-height:1.15;padding-bottom:2px;color:var(--g1);background:linear-gradient(90deg,var(--g1) 0%,var(--g2) 32%,var(--g3) 62%,var(--g4) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.tb .by{font-size:15px;font-weight:500;color:var(--on2);margin-top:2px;letter-spacing:.2px}
-.hchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
-.hchip{font-size:11px;font-weight:600;line-height:1;padding:5px 10px;border-radius:999px;color:var(--onsec);background:var(--sec);white-space:nowrap}
+.tb h1{margin:0;display:inline-block;font-size:28px;font-weight:600;letter-spacing:-.5px;line-height:1.15;padding-bottom:2px;color:var(--pri)}
+.tb .by{font-size:14px;font-weight:400;color:var(--on2);margin-top:2px;letter-spacing:.1px}
+.hbyline{font-size:13px;color:var(--dim);margin-top:5px}
 .tb .grow{flex:1;min-width:0}
 .tb .logo{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--pricont)}
 .tb .logo svg{width:25px;height:25px;fill:none;stroke:var(--onpricont);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .state{display:flex;align-items:center;gap:6px;font-size:14.5px;font-weight:500;white-space:nowrap}
 .tr{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:none}
-.sbtn{width:40px;height:40px;border-radius:50%;border:0;padding:0;background:var(--surf2);color:var(--on);display:grid;place-items:center;cursor:pointer;flex:none}
+.sbtn{width:40px;height:40px;border-radius:var(--r-btn);border:0;padding:0;background:var(--surf2);color:var(--on);display:grid;place-items:center;cursor:pointer;flex:none}
 .sbtn:active{background:var(--surf3)}
 .sbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 #srch{align-items:flex-start;padding-top:calc(16px + env(safe-area-inset-top))}
 #srch .body{padding-top:18px}
-#srch .pk .ph{display:grid;place-items:center;border-radius:50%;background:var(--pricont);color:var(--onpricont)}
+#srch .pk .ph{display:grid;place-items:center;color:var(--on2)}
 #srch .pk .ph svg{width:19px;height:19px}
 .sr-empty{padding:14px 8px;color:var(--dim);font-size:14px}
 .item.hit{animation:hit 1.8s ease}
 @keyframes hit{0%,55%{box-shadow:0 0 0 2px var(--pri)}100%{box-shadow:0 0 0 2px transparent}}
 @media (prefers-reduced-motion:reduce){.item.hit{animation:none}}
-@media (max-width:370px){.topbar{padding-left:16px;padding-right:16px}.tb{gap:10px}}
 .state i{width:9px;height:9px;border-radius:50%;background:currentColor;display:inline-block}
 .state.ok{color:var(--ok)} .state.warn{color:var(--warn)} .state.idle{color:var(--dim)} .state.bad{color:var(--bad)}
 
 main{max-width:760px;margin:0 auto;padding:6px 16px 0}
-.page{display:none} .page.active{display:block;animation:fade .18s ease}
-@keyframes fade{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+.page{display:none} .page.active{display:block;animation:fade .12s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
 
-/* ---------- section headers ---------- */
-.sh{font-size:20px;font-weight:700;margin:28px 8px 2px;color:var(--on);letter-spacing:-.2px}
+/* section headers */
+.sh{font-size:20px;font-weight:600;margin:24px 8px 2px;color:var(--on);letter-spacing:-.2px}
 .ssub{margin:2px 8px 12px;font-size:13px;color:var(--dim)}
 
-/* ---------- grouped list (Material You) ---------- */
-.group{display:flex;flex-direction:column;gap:8px}
-.group>*{background:var(--surf);border-radius:var(--r-sm)}
+/* grouped list (Material You) */
+.group{display:flex;flex-direction:column;gap:12px}
+.group+.group{margin-top:24px}
+.group>*{background:var(--surf);border-radius:var(--r-card)}
 
 .item .row{display:flex;align-items:center;gap:10px;padding:14px 12px 14px 12px;min-height:64px}
-.ic{width:40px;height:40px;border-radius:50%;background:var(--pricont);color:var(--onpricont);display:grid;place-items:center;flex:none}
-.ic svg{width:20px;height:20px}
+.ic{width:22px;height:22px;border-radius:0;background:none;color:var(--on2);display:grid;place-items:center;flex:none}
+.ic svg{width:22px;height:22px}
 .txt{flex:1;min-width:0;cursor:pointer}
-.ttl{font-size:15.5px;font-weight:500;line-height:1.3}
+.ttl{font-size:15.5px;font-weight:600;line-height:1.3}
 .desc{font-size:13px;color:var(--on2);margin-top:2px;line-height:1.4}
 /* collapsed feature: 2-line summary; the full text appears when the item is opened */
 .item[id^="it-"]:not(.open) .desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
-.tag{display:inline-flex;align-items:center;font-size:9.5px;font-weight:600;letter-spacing:.7px;line-height:1;padding:4px 8px;border-radius:999px;background:var(--surf3);color:var(--on2)}
+.tag{display:inline-flex;align-items:center;font-size:13px;font-weight:500;line-height:1;padding:4px 8px;border-radius:6px;background:var(--surf3);color:var(--on2)}
 .t-kernel{background:rgba(var(--c-kernel),var(--ta));color:rgb(var(--c-kernel))}
 .t-rom{background:rgba(var(--c-rom),var(--ta));color:rgb(var(--c-rom))}
 .t-only{background:rgba(var(--c-only),var(--ta));color:rgb(var(--c-only))}
 .t-safe{background:rgba(var(--c-safe),var(--ta));color:rgb(var(--c-safe))}
 .t-moderate{background:rgba(var(--c-mod),var(--ta));color:rgb(var(--c-mod))}
 .t-exp{background:rgba(var(--c-exp),var(--ta));color:rgb(var(--c-exp))}
-.st{display:inline-flex;align-items:center;font-size:10.5px;font-weight:500;line-height:1;padding:4px 9px;border-radius:999px;background:var(--surf3);color:var(--on2)}
+.st{display:inline-flex;align-items:center;font-size:13px;font-weight:500;line-height:1;padding:4px 9px;border-radius:6px;background:var(--surf3);color:var(--on2)}
 .st.applied{background:rgba(var(--c-safe),var(--ta));color:var(--ok)}
 .st.partial{background:rgba(var(--c-mod),var(--ta));color:var(--warn)}
 .st.failed{background:rgba(var(--c-exp),var(--ta));color:var(--bad)}
 .st.pending{background:rgba(var(--c-rom),var(--ta));color:var(--info)}
 .sh.dz{color:var(--dz)}
 .ssub.dz{color:var(--dz);opacity:.85}
-.dzg .ic{background:var(--dzc);color:var(--ondzc)}
+.dzg .ic{background:none;color:var(--dz)}
 .dzg .ttl{color:var(--dz)}
 .dzg .sw input:checked+.track{background:var(--dz);border-color:var(--dz)}
 .dzg .sw input:checked+.track .thumb{background:#fff}
@@ -121,21 +119,22 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 
 /* select pill */
 .pill{position:relative}
-.pill select{appearance:none;-webkit-appearance:none;background:var(--surf3);color:var(--on);border:0;border-radius:18px;
+.pill select{appearance:none;-webkit-appearance:none;background:var(--surf3);color:var(--on);border:0;border-radius:var(--r-input);
   padding:9px 30px 9px 14px;font-size:14px;font-weight:500;max-width:150px;text-overflow:ellipsis}
 .pill:after{content:"";position:absolute;right:12px;top:50%;width:7px;height:7px;border-right:2px solid var(--on2);
   border-bottom:2px solid var(--on2);transform:translateY(-70%) rotate(45deg);pointer-events:none}
 
 /* expanded area */
 .more{padding:0 14px 16px 62px}
-.stdet{font-size:12.5px;color:var(--on2);background:var(--surf2);border-radius:12px;padding:8px 12px;margin-bottom:10px;word-break:break-word;white-space:pre-line}
+.stdet{font-size:13px;color:var(--on2);background:var(--surf2);border-radius:var(--r-input);padding:8px 12px;margin-bottom:10px;word-break:break-word;white-space:pre-line}
+.src{font-size:13px;color:var(--dim);margin-bottom:8px}
 .stdet:empty{display:none}
 .sub-row{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap}
-.sub-row label{font-size:12.5px;color:var(--on2);flex:1;min-width:150px}
+.sub-row label{font-size:13px;color:var(--on2);flex:1;min-width:150px}
 .sub-row.inl{padding:0 14px 14px 62px;margin-top:-4px}
 .sub-row label.sw{flex:none;min-width:0}
 .num{display:flex;align-items:center;gap:6px}
-.num input{width:104px;background:transparent;color:var(--on);border:1.5px solid var(--outline);border-radius:12px;
+.num input{width:104px;background:transparent;color:var(--on);border:1.5px solid var(--outline);border-radius:var(--r-input);
   padding:9px 10px;font-size:15px;text-align:right}
 .num input:focus,textarea:focus,.pill select:focus{outline:2px solid var(--pri);outline-offset:1px}
 .num span{font-size:13px;color:var(--on2);min-width:26px}
@@ -143,26 +142,27 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 .selrow{padding:0 14px 14px 62px;margin-top:-4px}
 .pill.wide{display:inline-block;max-width:100%}
 .pill.wide select{max-width:100%;min-width:170px;padding:9px 34px 9px 14px;font-size:14px}
-textarea{width:100%;margin-top:10px;background:transparent;color:var(--on);border:1.5px solid var(--outline);border-radius:14px;
+textarea{width:100%;margin-top:10px;background:transparent;color:var(--on);border:1.5px solid var(--outline);border-radius:var(--r-input);
   padding:10px 12px;font:13px/1.45 ui-monospace,monospace;min-height:80px;resize:vertical}
 textarea:disabled{opacity:.45}
-.hint{font-size:12.5px;color:var(--dim)}
-.linkbtn{background:var(--pricont);color:var(--onpricont);border:0;border-radius:18px;padding:8px 14px;font-size:13.5px;font-weight:500;cursor:pointer}
+.hint{font-size:13px;color:var(--dim)}
+.linkbtn{background:var(--pricont);color:var(--onpricont);border:0;border-radius:var(--r-btn);padding:8px 14px;font-size:13.5px;font-weight:500;cursor:pointer}
 .linkbtn:disabled{opacity:.45}
-.xh{font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);margin:14px 0 6px}
-.xlist{margin:0;padding:10px 12px 10px 28px;background:var(--surf2);border-radius:14px;font:12px/1.55 ui-monospace,monospace;color:var(--on2)}
+.xh{font-size:13px;font-weight:600;color:var(--dim);margin:14px 0 6px}
+.xlist{margin:0;padding:10px 12px 10px 28px;background:var(--surf2);border-radius:var(--r-input);font:13px/1.55 ui-monospace,monospace;color:var(--on2)}
 .xlist li{margin:2px 0;word-break:break-word}
 
-/* ---------- home ---------- */
-.hero{background:var(--surf);border-radius:var(--r-xl);padding:20px;margin-top:14px}
-.dev{font-size:26px;font-weight:700;line-height:1.1;color:var(--on);overflow-wrap:anywhere}
+/* home */
+.hero{background:var(--surf);border-radius:var(--r-card);padding:20px;margin-top:14px}
+.dev{font-size:26px;font-weight:600;line-height:1.1;color:var(--on);overflow-wrap:anywhere}
 .devsub{font-size:13.5px;color:var(--on2);margin-top:3px;word-break:break-word}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
-.stat{background:var(--surf2);border-radius:18px;padding:12px}
-.stat b{display:block;font-size:20px;font-weight:500}
-.stat span{font-size:12px;color:var(--on2)}
+.stats{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;margin-top:16px}
+.stat{background:var(--surf2);border-radius:16px;padding:12px}
+.stat b{display:block;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat.main b{font-size:28px;line-height:1.05}
+.stat span{font-size:13px;color:var(--on2)}
 .stat b{white-space:nowrap}
-.stat b small{font-size:11px;font-weight:500;color:var(--on2)}
+.stat b small{font-size:13px;font-weight:400;color:var(--on2)}
 .summary{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:14px}
 .idle{margin-top:14px;font-size:13px;line-height:1.45;color:var(--on2)}
 .idle b{color:var(--on);font-weight:500}
@@ -176,41 +176,49 @@ textarea:disabled{opacity:.45}
 .bcpop td+td{text-align:right;color:var(--on);font-weight:500;padding-left:10px}
 .bcpop .hint{margin-top:10px}
 .tdpop .tdf{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.tdpop .tdf button{border:0;background:var(--surf3);color:var(--on2);padding:6px 12px;border-radius:14px;font-size:12.5px;cursor:pointer}
+.tdpop .tdf button{border:0;background:var(--surf3);color:var(--on2);padding:6px 12px;border-radius:var(--r-btn);font-size:13px;cursor:pointer}
 .tdpop .tdf button.on{background:var(--pri);color:var(--onpri,#fff);font-weight:600}
 .tdpop .tdr{padding:8px 0;border-top:1px solid var(--line)}
 .tdpop .tdr .t1{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;color:var(--on)}
 .tdpop .tdr .t1 span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .tdpop .tdr .t1 span+span{flex:none;font-weight:500}
-.tdpop .tdr .t2{font-size:11.5px;color:var(--dim);margin-top:2px}
+.tdpop .tdr .t2{font-size:13px;color:var(--dim);margin-top:2px}
 .tdpop .tdr i{display:block;height:4px;border-radius:2px;background:var(--pri);margin-top:5px;opacity:.7}
 .summary .lbl{font-size:13px;color:var(--on2);margin-right:2px}
-.iconbtn{background:var(--surf2);border:0;color:var(--on);width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;flex:none}
+.iconbtn{background:var(--surf2);border:0;color:var(--on);width:42px;height:42px;border-radius:var(--r-btn);display:grid;place-items:center;cursor:pointer;flex:none}
 .iconbtn svg{width:20px;height:20px}
-.notice{display:flex;gap:12px;margin-top:12px;padding:14px 16px;border-radius:22px;background:var(--surf);color:var(--bad);font-size:14px}
+.notice{display:flex;gap:12px;margin-top:12px;padding:14px 16px;border-radius:var(--r-card);background:var(--surf);color:var(--bad);font-size:14px}
 .notice svg{width:20px;height:20px;flex:none;margin-top:1px}
 .demo{color:var(--warn);font-size:13px;margin-top:10px}
+.loaderr{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:14px;padding:14px 16px;border-radius:var(--r-input);background:var(--surf2);color:var(--on);font-size:14px}
+.loaderr[hidden]{display:none}
+.loaderr b{display:block;color:var(--bad)}
+.loaderr span{display:block;color:var(--on2);margin-top:2px}
 .press{cursor:pointer}
-.press:active{filter:brightness(1.15)}
+.press:active{background:var(--surf2)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.sw input:focus-visible+.track{outline:2px solid var(--pri);outline-offset:2px}
+.btn:active:not(:disabled),.tab:active,.apseg button:active,.linkbtn:active:not(:disabled),.iconbtn:active,.sbtn:active{filter:brightness(1.12)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.filepick:focus-within{outline:2px solid var(--pri);outline-offset:2px}
 .pchk{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--pri);visibility:hidden;transform:scale(.6);opacity:0;transition:transform .18s,opacity .18s}
 .pchk svg{width:18px;height:18px;fill:none;stroke:var(--onpri);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .item.sel .pchk{visibility:visible;transform:none;opacity:1}
 .item.sel{outline:1.5px solid var(--pri);outline-offset:-1.5px}
 
-/* ---------- action bar + bottom navigation ---------- */
+/* action bar + bottom navigation */
 .abar{position:fixed;left:12px;right:12px;bottom:calc(98px + env(safe-area-inset-bottom));z-index:20;max-width:736px;margin:0 auto;
-  background:var(--surf3);border-radius:22px;padding:10px 10px 10px 18px;display:flex;align-items:center;gap:8px;
-  box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  background:var(--surf3);border:1px solid var(--line);border-radius:var(--r-card);padding:10px 10px 10px 18px;display:flex;align-items:center;gap:8px}
 .abar[hidden]{display:none}
 .dirty{flex:1;font-size:14px;color:var(--warn);min-width:0}
-.btn{border:0;border-radius:20px;padding:11px 16px;font-size:14.5px;font-weight:500;cursor:pointer;white-space:nowrap}
+.btn{border:0;border-radius:var(--r-btn);padding:11px 16px;font-size:14.5px;font-weight:500;cursor:pointer;white-space:nowrap}
 .btn.tonal{background:var(--surf2);color:var(--on)}
 .btn.fill{background:var(--pri);color:var(--onpri)}
 .psave{margin-top:10px;padding:8px 14px;font-size:13px}
 .btn:disabled{opacity:.45}
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:19;padding:0 16px calc(14px + env(safe-area-inset-bottom));pointer-events:none}
-.navin{pointer-events:auto;max-width:600px;margin:0 auto;background:var(--surf);border-radius:36px;padding:8px;display:flex;
-  justify-content:space-between;gap:4px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.navin{pointer-events:auto;max-width:600px;margin:0 auto;background:var(--surf);border:1px solid var(--line);border-radius:36px;padding:8px;display:flex;
+  justify-content:space-between;gap:4px}
 .tab{flex:1;border:0;background:none;color:var(--on2);height:52px;border-radius:28px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:.18s}
 .tab svg{width:26px;height:26px}
 .tab span{display:none;font-size:16px;font-weight:500}
@@ -218,67 +226,69 @@ textarea:disabled{opacity:.45}
 .tab.active span{display:inline}
 
 
-/* ---------- appearance ---------- */
-.apr .ic{background:var(--pricont);color:var(--onpricont)}
+/* appearance */
+.apr .ic{background:none;color:var(--on2)}
 .apr .txt .desc{margin-top:1px}
 .swatch{width:30px;height:30px;border-radius:50%;flex:none;margin-right:6px;border:2px solid var(--dim);background:linear-gradient(135deg,#1a73e8 0 34%,#d93025 34% 67%,#f9ab00 67%)}
 .aprow{display:flex;align-items:center;gap:12px;padding:10px 4px;border-radius:16px;cursor:pointer}
+.aprow:active{background:var(--surf3)}
 .aprow .l{flex:1;min-width:0}
-.aprow .l b{display:block;font-weight:500;font-size:15px;color:var(--on)}
-.aprow .l span{display:block;font-size:12.5px;color:var(--on2);margin-top:1px}
+.aprow .l b{display:block;font-weight:600;font-size:15px;color:var(--on)}
+.aprow .l span{display:block;font-size:13px;color:var(--on2);margin-top:1px}
 .aprow .cs{width:28px;height:28px;border-radius:50%;flex:none;border:2px solid var(--line)}
 .aprow .ck{width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--pri);visibility:hidden}
 .aprow .ck svg{width:16px;height:16px;fill:none;stroke:var(--onpri);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .aprow.sel .ck{visibility:visible}
 .apsep{height:1px;background:var(--line);margin:6px 4px}
 .apseg{display:flex;gap:8px;margin:2px 4px 6px}
-.apseg button{flex:1;border:0;border-radius:18px;padding:10px 8px;font-size:14px;font-weight:500;background:var(--surf3);color:var(--on2);cursor:pointer}
+.apseg button{flex:1;border:0;border-radius:var(--r-btn);padding:10px 8px;font-size:14px;font-weight:500;background:var(--surf3);color:var(--on2);cursor:pointer}
 .apseg button.on{background:var(--sec);color:var(--onsec)}
 .apseg button:disabled{opacity:.45}
-.apnote{margin:4px 4px 2px;font-size:12.5px;color:var(--dim)}
+.apnote{margin:4px 4px 2px;font-size:13px;color:var(--dim)}
 
 /* frosted glass header and bottom bar (Appearance > Blur toolbar) */
-:root[data-blur="1"] .navin{background:color-mix(in srgb,var(--surf) 52%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);
-  box-shadow:0 6px 24px rgba(0,0,0,.35)}
+:root[data-blur="1"] .navin{background:color-mix(in srgb,var(--surf) 52%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5)}
 :root[data-blur="1"] .topbar{background:color-mix(in srgb,var(--bar) 70%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5)}
 :root[data-blur="1"] .tab.active{background:color-mix(in srgb,var(--sec) 78%,transparent)}
 :root[data-blur="1"] .abar{background:color-mix(in srgb,var(--surf3) 60%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5)}
 
-/* ---------- snackbar + dialogs ---------- */
+/* snackbar + dialogs */
 .snack{position:fixed;left:50%;bottom:calc(170px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);opacity:0;
-  background:var(--on);color:var(--bg);padding:12px 18px;border-radius:14px;font-size:14px;transition:.2s;
+  background:var(--on);color:var(--bg);padding:12px 18px;border-radius:var(--r-btn);font-size:14px;transition:.2s;
   max-width:calc(100% - 32px);pointer-events:none;z-index:40}
 .snack.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.snack.err{pointer-events:auto;display:flex;align-items:flex-start;gap:12px;background:var(--surf3);color:var(--on);border:1px solid var(--bad)}
+.snack .sclose{flex:none;border:0;border-radius:var(--r-btn);background:var(--surf2);color:var(--on);padding:4px 10px;font:inherit;cursor:pointer}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:30}
 .modal.show{display:flex}
-.dlg{background:var(--surf2);border-radius:28px;width:100%;max-width:560px;max-height:84vh;display:flex;flex-direction:column}
-.dlg h3{margin:0;padding:22px 24px 8px;font-size:22px;font-weight:400}
+.dlg{background:var(--surf2);border-radius:var(--r-dlg);width:100%;max-width:560px;max-height:84vh;display:flex;flex-direction:column}
+.dlg h3{margin:0;padding:22px 24px 8px;font-size:22px;font-weight:600}
 .dlg .body{padding:4px 24px 12px;overflow:auto;color:var(--on2);font-size:14.5px}
-.dlg pre{margin:0;white-space:pre-wrap;word-break:break-word;font:12px/1.5 ui-monospace,monospace;color:var(--on)}
-.dlg .acts{display:flex;justify-content:flex-end;gap:8px;padding:10px 18px 18px}
-.pk-search{width:100%;background:var(--surf3);color:var(--on);border:0;border-radius:24px;padding:12px 16px;font-size:15px;margin-bottom:8px}
+.dlg pre{margin:0;white-space:pre-wrap;word-break:break-word;font:13px/1.5 ui-monospace,monospace;color:var(--on)}
+.dlg .acts{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;padding:10px 18px 18px}
+.pk-search{width:100%;background:var(--surf3);color:var(--on);border:0;border-radius:var(--r-input);padding:12px 16px;font-size:15px;margin-bottom:8px}
 .pk-list{overflow:auto;max-height:52vh;margin:0 -8px}
-.pk{display:flex;align-items:center;gap:12px;padding:9px 8px;border-radius:14px;cursor:pointer}
+.pk{display:flex;align-items:center;gap:12px;padding:9px 8px;border-radius:var(--r-input);cursor:pointer}
 .pk:active{background:var(--surf3)}
-.pk img,.pk .ph{width:38px;height:38px;border-radius:12px;flex:none;background:var(--surf3)}
+.pk img,.pk .ph{width:38px;height:38px;border-radius:var(--r-input);flex:none;background:var(--surf3)}
 .pk .nm{flex:1;min-width:0}
-.pk .nm b{display:block;font-weight:500;font-size:15px;color:var(--on);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pk .nm small{display:block;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk .nm b{display:block;font-weight:600;font-size:15px;color:var(--on);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk .nm small{display:block;font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pk input{width:20px;height:20px;accent-color:var(--pri);flex:none}
-.pk-count{font-size:12.5px;color:var(--on2);margin:4px 4px 8px}
+.pk-count{font-size:13px;color:var(--on2);margin:4px 4px 8px}
 .chev2{flex:none;color:var(--on2);margin-left:4px}
-.bk{display:flex;align-items:center;gap:10px;padding:12px;border-radius:18px;background:var(--surf3);margin-bottom:6px}
+.bk{display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r-input);background:var(--surf3);margin-bottom:6px}
 .bk .nm{flex:1;min-width:0}
-.bk .nm b{display:block;font-weight:500;color:var(--on);font-size:15px}
-.bk .nm small{display:block;font-size:12px;color:var(--dim);word-break:break-all}
+.bk .nm b{display:block;font-weight:600;color:var(--on);font-size:15px}
+.bk .nm small{display:block;font-size:13px;color:var(--dim);word-break:break-all}
 .bk .btn{padding:8px 12px;font-size:13px}
 .abanner{display:block;width:calc(100% + 40px);max-width:none;margin:-18px -20px 16px;aspect-ratio:5/2;object-fit:cover}
 .about{overflow:hidden}
 .about{padding:18px 20px}
-.about b{font-size:17px;font-weight:500}
+.about b{font-size:17px;font-weight:600}
 .about p{margin:4px 0 0;font-size:13.5px;color:var(--on2)}
-.ccard{background:var(--surf);border-radius:var(--r-xl);padding:18px 18px 14px}
-.ccard .cbig{font-size:24px;font-weight:700;line-height:1.1;color:var(--on)}
+.ccard{background:var(--surf);border-radius:var(--r-card);padding:18px 18px 14px}
+.ccard .cbig{font-size:24px;font-weight:600;line-height:1.1;color:var(--on)}
 .ccard .clbl{font-size:13px;color:var(--on2);margin-top:2px}
 .ccard table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
 .ccard td{padding:7px 0;border-top:1px solid var(--line);color:var(--on2)}
@@ -289,15 +299,56 @@ textarea:disabled{opacity:.45}
 .dxbar{height:10px;border-radius:5px;background:var(--surf3);overflow:hidden;margin-top:14px}
 .dxbar i{display:block;height:100%;width:0;background:var(--pri);border-radius:5px;transition:width .4s}
 .dxmeta{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;color:var(--on2);font-size:13.5px}
-.dxmeta b{font-size:22px;color:var(--on)}
+.dxmeta b{font-size:22px;color:var(--on);font-weight:600;font-variant-numeric:tabular-nums}
 .dxnow{margin-top:10px;font-size:13.5px;color:var(--on2)}
 .dxnow .dxapp{color:var(--on);padding:3px 0;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dxnow .dxapp small{color:var(--dim);margin-left:6px;font-size:12px}
+.dxnow .dxapp small{color:var(--dim);margin-left:6px;font-size:13px}
 .dxnow .dxwarn{color:var(--warn)}
 .dxsum{margin-top:8px;font-size:13px;color:var(--on2)}
 .ccard .dxrow .btn{width:auto;margin-top:0;flex:none}
 .dxbtns{display:flex;gap:10px}
 .dxbtns .btn{flex:1}
+
+@media (max-width:400px){
+  .tb .logo{display:none}
+}
+@media (max-width:370px){
+  .topbar{padding-left:16px;padding-right:16px}
+  .tb{gap:10px}
+  .tb .logo{display:none}
+}
+@media (max-width:360px){
+  .tb{flex-wrap:wrap}
+  .tb .logo{display:none}
+  .tr{flex-direction:row;align-items:center;width:100%;justify-content:space-between}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat{min-width:0}
+  .stat.main{grid-column:span 2}
+  .stat b{font-size:15px}
+  .stat.main b{font-size:22px}
+  .nav{padding-left:8px;padding-right:8px}
+  .navin{padding:6px}
+  .tab span{display:none!important}
+  .tab.active{flex:1}
+  .tab svg{width:22px;height:22px}
+  .abar{flex-wrap:wrap;padding:10px}
+  .dirty{flex-basis:100%}
+  .btn{font-size:13px;padding:9px 12px}
+  .dlg h3{padding:18px 18px 6px;font-size:20px}
+  .dlg .body{padding:4px 18px 10px}
+  .dlg .acts{padding:10px 14px 14px}
+}
+@media (max-width:300px){
+  body{padding-bottom:260px}
+  .sh{font-size:18px}
+  .tb h1{font-size:24px}
+  .tb .by{font-size:13px}
+  .dev{font-size:22px}
+  .stats{grid-template-columns:1fr}
+  .stat.main{grid-column:auto}
+  .stat b{font-size:16px}
+  .stat.main b{font-size:24px}
+}
 </style>
 <script>
 /* Theme engine: dark / AMOLED / light / auto, plus colours (system dynamic or a preset). Runs before first paint. */
@@ -333,7 +384,7 @@ textarea:disabled{opacity:.45}
   }
   var st = load(), monet = loadMonet();
 
-  /* ---- colour maths (OKLCH, gamut mapped) ---- */
+  /* colour maths (OKLCH, gamut mapped) */
   function lin(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
   function gam(c) { c = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; return Math.max(0, Math.min(1, c)); }
   function hex2rgb(h) { h = h.replace('#', ''); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
@@ -363,7 +414,7 @@ textarea:disabled{opacity:.45}
     return hex(rgb);
   }
 
-  /* ---- palettes ---- */
+  /* palettes */
   function fromSeed(seed, dark, amoled) {
     var o = toOk(hex2rgb(seed));
     var C = Math.sqrt(o[1] * o[1] + o[2] * o[2]);
@@ -399,14 +450,14 @@ textarea:disabled{opacity:.45}
     return v;
   }
   var SEM_DARK = { ok: '#a8dbb8', okc: '#1d3a2b', warn: '#e6cb8a', warnc: '#40341b', bad: '#f2b8b5', badc: '#4d1f1d', info: '#a8c7fa', infoc: '#1f3350', cool: '#a8c7fa', hot: '#e6b89c',
-    dz: '#e0524a', dzc: '#8c1d18', ondzc: '#f9dedc', g1: '#ffb48f', g2: '#f6a9c4', g3: '#dcb6ff', g4: '#a9d3f2',
+    dz: '#e0524a', dzc: '#8c1d18', ondzc: '#f9dedc',
     ckernel: '207,192,245', crom: '168,199,250', conly: '232,201,154', csafe: '168,219,184', cmod: '230,203,138', cexp: '242,184,181', ta: '.12' };
   var SEM_LIGHT = { ok: '#1b6b3a', okc: '#c8ecd4', warn: '#7a5900', warnc: '#f6e3b0', bad: '#b3261e', badc: '#f9dedc', info: '#1a56a8', infoc: '#d3e3fd', cool: '#1a56a8', hot: '#9a4a1a',
-    dz: '#b3261e', dzc: '#f9dedc', ondzc: '#410e0b', g1: '#d9531e', g2: '#c2307a', g3: '#7b3fd6', g4: '#1a6fb5',
+    dz: '#b3261e', dzc: '#f9dedc', ondzc: '#410e0b',
     ckernel: '103,80,164', crom: '26,86,168', conly: '138,90,10', csafe: '27,107,58', cmod: '122,89,0', cexp: '179,38,30', ta: '.14' };
   var NAME = { bg: '--bg', surf: '--surf', surf2: '--surf2', surf3: '--surf3', on: '--on', on2: '--on2', dim: '--dim', line: '--line', pri: '--pri', onpri: '--onpri',
     pricont: '--pricont', onpricont: '--onpricont', sec: '--sec', onsec: '--onsec', ok: '--ok', okc: '--okc', warn: '--warn', warnc: '--warnc', bad: '--bad', badc: '--badc',
-    info: '--info', infoc: '--infoc', cool: '--cool', hot: '--hot', dz: '--dz', dzc: '--dzc', ondzc: '--ondzc', g1: '--g1', g2: '--g2', g3: '--g3', g4: '--g4',
+    info: '--info', infoc: '--infoc', cool: '--cool', hot: '--hot', dz: '--dz', dzc: '--dzc', ondzc: '--ondzc',
     ckernel: '--c-kernel', crom: '--c-rom', conly: '--c-only', csafe: '--c-safe', cmod: '--c-mod', cexp: '--c-exp', ta: '--ta' };
 
   function sysDark() { try { return window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { return true; } }
@@ -496,45 +547,46 @@ textarea:disabled{opacity:.45}
   <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20M3.3 7l17.4 10M20.7 7L3.3 17"/><path d="M9.5 3.5L12 6l2.5-2.5M9.5 20.5L12 18l2.5 2.5"/><path d="M3.6 10.4l3.4-.9-.9-3.4M20.4 13.6l-3.4.9.9 3.4"/><path d="M6.1 17.9l.9-3.4-3.4-.9M17.9 6.1l-.9 3.4 3.4.9"/></svg></div>
   <div class="grow">
     <h1>HyperCool</h1>
-    <div class="by">Heat &amp; Battery Fix</div>
-    <div class="hchips"><span class="hchip" data-verlong>Version 2.2.1</span><span class="hchip">By Yudharn</span></div>
+    <div class="by">Heat and battery control</div>
+    <div class="hbyline"><span data-verlong>&ndash;</span></div>
   </div>
   <div class="tr">
-    <div class="state idle" id="mstate"><i></i><span>Loading</span></div>
+    <div class="state idle" id="mstate"><i></i><span>Checking state</span></div>
     <button class="sbtn" id="srch-open" aria-label="Search features"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg></button>
   </div>
 </div>
 </header>
 
 <main>
-  <!-- ======================= HOME ======================= -->
+  <!-- HOME -->
   <section class="page active" id="page-home">
     <div class="hero">
       <div style="display:flex;gap:10px;align-items:flex-start">
         <div style="flex:1;min-width:0">
-          <div class="dev" id="dev">Loading device&hellip;</div>
+          <div class="dev" id="dev">Reading device info&hellip;</div>
           <div class="devsub" id="devsub"></div>
         </div>
         <button class="iconbtn" id="refresh" aria-label="Refresh readings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-2.8-6.3l2.8 2.8"/><path d="M20.5 3.5v5h-5"/></svg></button>
       </div>
       <div class="stats">
-        <div class="stat"><b id="btemp">&ndash;</b><span>Battery temp</span></div>
+        <div class="stat main"><b id="btemp">&ndash;</b><span>Battery temp</span></div>
         <div class="stat"><b id="idrain">&ndash;</b><span>Idle drain</span></div>
         <div class="stat"><b id="bcap">&ndash;</b><span id="bstat">Battery health</span></div>
       </div>
-      <div class="idle" id="idle">Idle battery drain: reading&hellip;</div>
+      <div class="idle" id="idle">Reading screen-off battery use&hellip;</div>
       <div class="summary" id="summary"></div>
-      <div class="demo" id="demo" hidden>Preview mode: KernelSU bridge not found, nothing will be written.</div>
+      <div class="loaderr" id="loaderr" role="alert" hidden><div><b>Couldn't read the settings.</b><span id="loaderr-msg"></span></div><button class="btn tonal" id="loaderr-retry">Try again</button></div>
+      <div class="demo" id="demo" hidden>Preview only. Open this page from the KernelSU manager to change settings.</div>
     </div>
 
     <div class="ccard bcheck">
       <div class="cbig">Battery check</div><div class="clbl">Health, cycle count, capacity and live readings from the kernel and Android</div>
-      <button class="btn fill" id="bc-run">Run battery check</button>
+      <button class="btn fill" id="bc-run">Run</button>
     </div>
 
     <div class="ccard bcheck">
       <div class="cbig">Top battery use</div><div class="clbl">Apps, system apps and hardware that used the most battery since the last charge (read only)</div>
-      <button class="btn fill" id="td-run">Show top battery use</button>
+      <button class="btn fill" id="td-run">Show</button>
     </div>
 
     <div class="ccard bcheck bcal">
@@ -542,7 +594,7 @@ textarea:disabled{opacity:.45}
       <div class="bcst" id="bcal-st">Not started.</div>
       <ol id="bcal-steps"><li>Use the phone until the battery is at 5%</li><li>Charge to 100% without unplugging</li><li>Keep it plugged in until charging finishes (at most 1 h)</li></ol>
       <div class="sub-row" id="bcal-delrow"></div>
-      <button class="btn fill" id="bcal-btn">Start calibration</button>
+      <button class="btn fill" id="bcal-btn">Start</button>
     </div>
 
     <h2 class="sh">Quick presets</h2>
@@ -550,13 +602,13 @@ textarea:disabled{opacity:.45}
     <div class="group" id="presets"></div>
   </section>
 
-  <!-- ======================= KERNEL ======================= -->
+  <!-- KERNEL -->
   <section class="page" id="page-kernel"><div id="sec-kernel"></div></section>
 
-  <!-- ======================= SYSTEM ======================= -->
+  <!-- SYSTEM -->
   <section class="page" id="page-system"><div id="sec-system"></div></section>
 
-  <!-- ======================= MORE ======================= -->
+  <!-- MORE -->
   <section class="page" id="page-more">
     <div id="sec-more"></div>
 
@@ -569,21 +621,21 @@ textarea:disabled{opacity:.45}
         <tr><td>Time</td><td id="cc-time">&ndash;</td></tr>
         <tr><td>Next auto clean</td><td id="cc-next">&ndash;</td></tr>
       </table>
-      <button class="btn fill" id="cc-run">Clean app cache now</button>
+      <button class="btn fill" id="cc-run">Clean cache</button>
     </div>
 
     <h2 class="sh">Optimize apps (dex2oat)</h2>
     <p class="ssub">Compiles every app, system apps included, for faster starts and less CPU while running. Runs once in the background, nothing changes at boot. A weekly automatic run is under Storage settings.</p>
     <div class="ccard" id="dx">
-      <div class="dxrow"><span>Mode</span><div class="pill"><select id="dx-mode">
+      <div class="dxrow"><span>Mode</span><div class="pill"><select id="dx-mode" aria-label="Compilation mode">
         <option value="speed">Speed (full)</option><option value="speed-profile">Speed-profile</option>
         <option value="everything">Everything</option><option value="reset">Reset to default</option></select></div></div>
-      <div class="dxrow"><span>Apps at the same time</span><div class="pill"><select id="dx-jobs">
+      <div class="dxrow"><span>Apps at the same time</span><div class="pill"><select id="dx-jobs" aria-label="Apps at the same time">
         <option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div></div>
-      <div class="dxrow"><span>Apps</span><div class="pill"><select id="dx-scope">
+      <div class="dxrow"><span>Apps</span><div class="pill"><select id="dx-scope" aria-label="Apps to compile">
         <option value="all">All apps</option><option value="sel">Selected apps</option></select></div></div>
       <div class="dxrow" id="dx-pick-row"><span id="dx-pick-txt">No apps chosen</span><button class="btn tonal" id="dx-pick" style="padding:8px 14px">Choose apps</button></div>
-      <div class="dxrow" id="dx-force-row"><span>Force recompile</span><label class="sw"><input type="checkbox" id="dx-force"><span class="track"><span class="thumb"><svg class="on" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span></span></label></div>
+      <div class="dxrow" id="dx-force-row"><span>Force recompile</span><label class="sw"><input type="checkbox" id="dx-force" aria-label="Force recompile"><span class="track"><span class="thumb"><svg class="on" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span></span></label></div>
       <div id="dx-prog" hidden>
         <div class="dxbar"><i id="dx-fill"></i></div>
         <div class="dxmeta"><b id="dx-pct">0%</b><span id="dx-cnt">0 / 0</span></div>
@@ -599,20 +651,20 @@ textarea:disabled{opacity:.45}
     <div class="group">
       <div class="item"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="1.5"/><path d="M7 10.5v3M11 10.5v3M15 10.5v3M7 7V4.5M12 7V4.5M17 7V4.5M7 17v2.5M17 17v2.5"/></svg></div>
         <div class="txt"><div class="ttl">Clean RAM now</div><div class="desc">Stops background apps when the phone feels slow. It doesn't save battery, apps that restart later use more. Safe: cached apps only. Aggressive: other user apps too. Extreme: everything except core system and push.</div></div>
-        <div class="ctl"><div class="pill"><select id="rc-mode"><option value="safe">Safe</option><option value="aggressive">Aggressive</option><option value="extreme">Extreme</option></select></div></div></div>
-        <div class="selrow"><button class="btn fill" id="rc-run">Clean now</button></div>
+        <div class="ctl"><div class="pill"><select id="rc-mode" aria-label="RAM clean mode"><option value="safe">Safe</option><option value="aggressive">Aggressive</option><option value="extreme">Extreme</option></select></div></div></div>
+        <div class="selrow"><button class="btn fill" id="rc-run">Clean</button></div>
       </div>
       <div class="item press" id="t-junk"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5h17M9 6.5V4h6v2.5M6 6.5l1 14h10l1-14M10 10.5v6M14 10.5v6"/></svg></div><div class="txt"><div class="ttl">Clean junk files now</div><div class="desc">Deletes crash dumps, ANR traces, old logs and thumbnails, then runs fstrim</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
     </div>
   </section>
 
-  <!-- ======================= TOOLS ======================= -->
+  <!-- TOOLS -->
   <section class="page" id="page-tools">
     <h2 class="sh">Appearance</h2>
     <div class="group apr">
-      <div class="item" id="ap-dark"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg></div><div class="txt press" id="ap-dark-open"><div class="ttl">Dark theme</div><div class="desc" id="ap-dark-sum">On (Standard)</div></div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span><span class="vdiv"></span><div class="ctl"><label class="sw"><input type="checkbox" id="ap-dark-sw"><span class="track"><span class="thumb"><svg class="on" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span></span></label></div></div></div>
+      <div class="item" id="ap-dark"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg></div><div class="txt press" id="ap-dark-open"><div class="ttl">Dark theme</div><div class="desc" id="ap-dark-sum">On (Standard)</div></div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span><span class="vdiv"></span><div class="ctl"><label class="sw"><input type="checkbox" id="ap-dark-sw" aria-label="Dark theme"><span class="track"><span class="thumb"><svg class="on" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span></span></label></div></div></div>
       <div class="item press" id="ap-color"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.9 2-1.8 0-.6-.3-1.1-.6-1.5-.3-.4-.5-.8-.5-1.3 0-.9.7-1.6 1.6-1.6H17a3.5 3.5 0 0 0 3.5-3.5C20.5 7 16.8 3.5 12 3.5z"/><circle cx="7.6" cy="11.4" r="1.2"/><circle cx="10.2" cy="7.4" r="1.2"/><circle cx="14.6" cy="7.4" r="1.2"/></svg></div><div class="txt"><div class="ttl">Colors</div><div class="desc" id="ap-color-sum">System (Dynamic)</div></div><span class="swatch" id="ap-color-sw"></span></div></div>
-      <div class="item" id="ap-blur"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5s6 6.2 6 10.5a6 6 0 0 1-12 0C6 9.7 12 3.5 12 3.5z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg></div><div class="txt" id="ap-blur-txt"><div class="ttl">Blur toolbar</div><div class="desc">Frosted glass effect on the header and the bottom bar</div></div><div class="ctl"><label class="sw"><input type="checkbox" id="ap-blur-sw"><span class="track"><span class="thumb"><svg class="on" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span></span></label></div></div></div>
+      <div class="item" id="ap-blur"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5s6 6.2 6 10.5a6 6 0 0 1-12 0C6 9.7 12 3.5 12 3.5z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg></div><div class="txt press" id="ap-blur-txt"><div class="ttl">Blur toolbar</div><div class="desc">Frosted glass effect on the header and the bottom bar</div></div><div class="ctl"><label class="sw"><input type="checkbox" id="ap-blur-sw" aria-label="Blur toolbar"><span class="track"><span class="thumb"><svg class="on" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span></span></label></div></div></div>
     </div>
 
     <h2 class="sh">Configuration</h2>
@@ -621,7 +673,7 @@ textarea:disabled{opacity:.45}
       <div class="item press" id="t-backup"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3.5M7 8.5l5-5 5 5"/><path d="M4 15v3.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V15"/></svg></div><div class="txt"><div class="ttl">Backup settings</div><div class="desc">Save the current options to a file you can keep or share</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
       <div class="item press" id="t-restore"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5V15M7 10l5 5 5-5"/><path d="M4 15v3.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V15"/></svg></div><div class="txt"><div class="ttl">Restore settings</div><div class="desc">Load a backup, review it, then press Save</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
       <div class="item press" id="t-import"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 3v5h5M12 17v-6M9.5 13.5L12 11l2.5 2.5"/></svg></div><div class="txt"><div class="ttl">Import settings</div><div class="desc">Pick a backup file from anywhere, or paste its text</div></div></div></div>
-      <div class="item press" id="t-defaults"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.8-6.3L3.5 8.5"/><path d="M3.5 3.5v5h5"/></svg></div><div class="txt"><div class="ttl">Reset to recommended</div><div class="desc">Load default values (your app lists are kept)</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
+      <div class="item press" id="t-defaults"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.8-6.3L3.5 8.5"/><path d="M3.5 3.5v5h5"/></svg></div><div class="txt"><div class="ttl">Reset to recommended settings</div><div class="desc">Load default values (your app lists are kept)</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
     </div>
 
     <h2 class="sh">Maintenance</h2>
@@ -629,11 +681,11 @@ textarea:disabled{opacity:.45}
       <div class="item press" id="t-log"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div><div class="txt"><div class="ttl">View boot log</div><div class="desc">What was applied, skipped or rejected on the last boot</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
       <div class="item press" id="t-report"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div><div class="txt"><div class="ttl">Create bug report</div><div class="desc">Saves device info, last boot result, settings and the boot log to Download/HyperCool, to send when you report a problem</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
       <div class="item press" id="t-revert"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></div><div class="txt"><div class="ttl">Revert system changes now</div><div class="desc">Puts everything back now and turns the ROM options off</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
-      <div class="item press" id="t-reboot"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg></div><div class="txt"><div class="ttl">Reboot</div><div class="desc">Apply the saved options now</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
+      <div class="item press" id="t-reboot"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg></div><div class="txt"><div class="ttl">Restart</div><div class="desc">Restart to apply your saved options</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
     </div>
 
     <h2 class="sh">Support</h2>
-    <p class="ssub">Enjoying HyperCool? A small donation helps keep it updated.</p>
+    <p class="ssub">Donations help keep updates coming.</p>
     <div class="group">
       <div class="item press" data-url="https://sociabuzz.com/yudharn"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20z"/></svg></div><div class="txt"><div class="ttl">SociaBuzz</div><div class="desc">Support HyperCool via SociaBuzz</div></div><svg class="chev2" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></div></div>
       <div class="item press" data-url="https://ko-fi.com/yudharn"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3v2M12 3v2"/></svg></div><div class="txt"><div class="ttl">PayPal</div><div class="desc">Donate with PayPal through Ko-fi</div></div><svg class="chev2" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></div></div>
@@ -642,14 +694,14 @@ textarea:disabled{opacity:.45}
 
     <h2 class="sh">About</h2>
     <div class="group">
-      <div class="about"><img class="abanner" src="banner.jpg" alt="HyperCool banner" onerror="this.remove()"><b>HyperCool <span data-ver>v2.2.1</span></b>
-        <p>By Yudharn</p>
-        <p>HyperCool for Qualcomm and MediaTek, all ROMs. Cuts overheating and battery drain for longer battery life (Focused on battery life, not peak performance).</p>
+      <div class="about"><img class="abanner" src="banner.jpg" alt="HyperCool banner" onerror="this.remove()"><b>HyperCool <span data-ver>&ndash;</span></b>
+        <p>Made by Yudharn</p>
+        <p>HyperCool works on Qualcomm and MediaTek phones, on any ROM. It lowers heat and standby drain, and favors battery life over peak speed.</p>
         <p>Runs once at boot. Features your phone doesn't support are skipped.</p>
         <p style="color:var(--dim)">License: GNU GPL v3.0 or later · Font: Google Sans (SIL Open Font License)</p>
       </div>
     </div>
-    <div class="group" style="margin-top:8px">
+    <div class="group">
       <div class="item press" data-url="https://t.me/ModuleArchives"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4.5L2.8 11.6c-.9.4-.9 1.6.1 1.9l4.6 1.4 1.8 5.5c.3.8 1.3 1 1.9.4l2.6-2.5 4.6 3.4c.7.5 1.7.1 1.9-.7L22.4 5.9c.2-1-.6-1.8-1.4-1.4z"/><path d="M8 14.6l9.5-6.6"/></svg></div><div class="txt"><div class="ttl">Telegram channel</div><div class="desc">@ModuleArchives: updates, changelogs and support</div></div><svg class="chev2" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></div></div>
     </div>
   </section>
@@ -658,26 +710,27 @@ textarea:disabled{opacity:.45}
 <div class="abar" id="abar" hidden>
   <div class="dirty" id="dirty">Unsaved changes</div>
   <button class="btn tonal" id="save">Save</button>
-  <button class="btn fill" id="savereboot">Save &amp; reboot</button>
+  <button class="btn fill" id="savereboot">Save and restart</button>
 </div>
 
-<nav class="nav"><div class="navin">
-  <button class="tab active" data-page="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11L12 3.5l8.5 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>Home</span></button>
-  <button class="tab" data-page="kernel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2.5v3M15 2.5v3M9 18.5v3M15 18.5v3M2.5 9h3M2.5 15h3M18.5 9h3M18.5 15h3"/></svg><span>Kernel</span></button>
-  <button class="tab" data-page="system"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/></svg><span>System</span></button>
-  <button class="tab" data-page="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.8"/><path d="M12 8.5v7M8.5 12h7"/></svg><span>More</span></button>
-  <button class="tab" data-page="tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Tools</span></button>
+<nav class="nav" aria-label="Main"><div class="navin">
+  <button class="tab active" data-page="home" aria-current="page" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11L12 3.5l8.5 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>Home</span></button>
+  <button class="tab" data-page="kernel" aria-label="Kernel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2.5v3M15 2.5v3M9 18.5v3M15 18.5v3M2.5 9h3M2.5 15h3M18.5 9h3M18.5 15h3"/></svg><span>Kernel</span></button>
+  <button class="tab" data-page="system" aria-label="System"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/></svg><span>System</span></button>
+  <button class="tab" data-page="more" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.8"/><path d="M12 8.5v7M8.5 12h7"/></svg><span>More</span></button>
+  <button class="tab" data-page="tools" aria-label="Tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Tools</span></button>
 </div></nav>
 
-<div class="snack" id="snack"></div>
+<div class="snack" id="snack" role="status" aria-live="polite"></div>
 
-<div class="modal" id="modal"><div class="dlg">
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="m-title"><div class="dlg">
   <h3 id="m-title"></h3>
   <div class="body" id="m-body"></div>
   <div class="acts" id="m-acts"></div>
 </div></div>
 
-<div class="modal" id="srch"><div class="dlg">
+<div class="modal" id="srch" role="dialog" aria-modal="true" aria-labelledby="srch-title"><div class="dlg">
+  <h3 class="sr-only" id="srch-title">Search features</h3>
   <div class="body">
     <input class="pk-search" id="srch-in" type="search" placeholder="Search features (e.g. zram, GPU, doze)" autocomplete="off" enterkeyhint="search" aria-label="Search features">
     <div class="pk-list" id="srch-list"></div>
@@ -685,10 +738,10 @@ textarea:disabled{opacity:.45}
   <div class="acts"><button class="btn tonal" id="srch-close">Close</button></div>
 </div></div>
 
-<div class="modal" id="picker"><div class="dlg">
+<div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="pk-title"><div class="dlg">
   <h3 id="pk-title">Choose apps</h3>
   <div class="body">
-    <input class="pk-search" id="pk-search" placeholder="Search apps or package names" autocomplete="off">
+    <input class="pk-search" id="pk-search" placeholder="Search apps or package names" autocomplete="off" aria-label="Search apps or package names">
     <div class="pk-count" id="pk-count"></div>
     <div class="pk-list" id="pk-list"></div>
   </div>
@@ -708,8 +761,9 @@ textarea:disabled{opacity:.45}
   var CFG_VER = '3';
   var ENV = 'export PATH=/system/bin:/system/xbin:/vendor/bin:/data/adb/ksu/bin:/data/adb/ap/bin:/data/adb/magisk:$PATH; ';
   var HAS_KSU = (typeof window.ksu !== 'undefined' && window.ksu && typeof window.ksu.exec === 'function');
+  var PREVIEW_MSG = 'Preview only. Open this page from the KernelSU manager to change settings.';
 
-  /* ------------------------------------------------------------ constants */
+  /* constants */
   var DOZE_AGGRESSIVE = 'light_after_inactive_to=15000,light_pre_idle_to=30000,light_idle_to=900000,light_max_idle_to=1800000,inactive_to=60000,sensing_to=0,locating_to=0,motion_inactive_to=0,idle_after_inactive_to=0,idle_pending_to=60000,quick_doze_delay_to=15000,idle_to=3600000,max_idle_to=21600000';
   var SAVER_DEFAULT = 'advertise_is_enabled=true,enable_datasaver=false,disable_launch_boost=true,disable_vibration=false,disable_animation=false,soundtrigger_mode=1,defer_full_backup=true,defer_keyvalue_backup=true,enable_firewall=true,location_mode=3,enable_brightness_adjustment=false,force_all_apps_standby=true,force_background_check=true,disable_optional_sensors=true,disable_aod=true,enable_quick_doze=true,enable_night_mode=true';
 
@@ -718,20 +772,20 @@ textarea:disabled{opacity:.45}
       sub: 'Keeps big cores, GPU and charging away from their hottest operating points' },
     { id: 'kdrain', title: 'Battery drain (kernel)', color: '#ffb36b',
       sub: 'Lets the SoC and storage sleep deeper and wake less often' },
-    { id: 'protect', title: 'Protected & blocked apps', color: '#c79bff',
+    { id: 'protect', title: 'Protected and blocked apps', color: '#c79bff',
       sub: 'Keep important apps alive, or block others in the background' },
     { id: 'rdrain', title: 'Battery drain (system)', color: 'var(--cool)',
       sub: 'Standby drain from apps, Google services and ROM services' },
     { id: 'saver', title: 'Long battery', color: '#8be08b',
       sub: 'Stronger Battery Saver and display-side savings' },
-    { id: 'adv', title: 'Advanced', color: 'var(--muted)', sub: 'Timing of the one-shot apply and boot notification' },
+    { id: 'adv', title: 'Advanced', color: 'var(--on2)', sub: 'Timing of the one-shot apply and boot notification' },
     { id: 'xk', title: 'Extra kernel tuning', color: '#ffb36b',
-      sub: 'Extra kernel tweaks, the safe ones are ON by default' },
+      sub: 'Extra kernel tweaks, the safe ones are on by default' },
     { id: 'xram', title: 'RAM management', color: '#c79bff',
       sub: 'VM, zram and low-memory-killer tuning' },
-    { id: 'xgoogle', title: 'Google services & telemetry', color: 'var(--cool)',
+    { id: 'xgoogle', title: 'Google services and telemetry', color: 'var(--cool)',
       sub: 'GMS ads/analytics and more telemetry off' },
-    { id: 'xlog', title: 'Logging & diagnostics', color: '#8be08b',
+    { id: 'xlog', title: 'Logging and diagnostics', color: '#8be08b',
       sub: 'Less logging and vendor diagnostics' },
     { id: 'xpower', title: 'Extra power saving', color: '#8be08b',
       sub: 'Kernel power-saving switches and lighter background memory work' },
@@ -747,7 +801,7 @@ textarea:disabled{opacity:.45}
    * only: extra tag for features that exist on one brand only
    */
   var F = [
-    // ---- heat
+    // heat
     { k: 'cpu_cap', s: 'heat', src: 'kernel', risk: 'safe', type: 'value', def: '95', unit: '%', min: 40, max: 99,
       t: 'Big-core frequency cap',
       d: 'Limits the big and prime cores to a % of their max clock, little cores are left alone. On MediaTek the PPM limit is set too. Turn on Lock so the ROM can\'t raise it again.',
@@ -774,8 +828,8 @@ textarea:disabled{opacity:.45}
     { k: 'walt_tune', s: 'heat', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Calmer CPU governor',
       d: 'Turns off predictive load and RTG boosts and slows the ramp-up a bit, so clocks spike less. Works on WALT, schedutil and MediaTek sugov_ext.',
-      fields: [{ k: 'walt_hispeed_load', label: 'hispeed_load', def: '95', min: 50, max: 100, unit: '%', zero: true },
-               { k: 'walt_up_rate', label: 'up_rate_limit', def: '1000', min: 100, max: 20000, unit: 'µs', zero: true },
+      fields: [{ k: 'walt_hispeed_load', label: 'Ramp-up load (hispeed_load)', def: '95', min: 50, max: 100, unit: '%', zero: true },
+               { k: 'walt_up_rate', label: 'Ramp-up rate (up_rate_limit)', def: '1000', min: 100, max: 20000, unit: 'µs', zero: true },
                { k: 'walt_sched_boost_off', label: 'Also force sched_boost = 0 and conservative PL (WALT)', def: '1', bool: true },
                { k: 'walt_task_util', label: 'Fewer small tasks boosted or grouped onto big cores (WALT task util 80 / 65)', def: '1', bool: true }] },
     { k: 'input_boost_off', s: 'heat', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
@@ -784,7 +838,7 @@ textarea:disabled{opacity:.45}
     { k: 'bg_cpuset', s: 'heat', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Background apps on little cores',
       d: 'Background apps only run on the little cores. Optional: move log daemons and light HALs there too. Sensors, vibration, Wi-Fi, GPS, Bluetooth and display are never moved.',
-      fields: [{ k: 'bg_uclamp', label: 'Background uclamp.max', def: '30', min: 10, max: 99, unit: '%', zero: true },
+      fields: [{ k: 'bg_uclamp', label: 'Background CPU limit (uclamp.max)', def: '30', min: 10, max: 99, unit: '%', zero: true },
                { k: 'bg_daemons', label: 'Also move logging / diagnostic daemons and light HALs to the background group', def: '1', bool: true }] },
     { k: 'blur_off', s: 'heat', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Disable UI blur',
@@ -798,7 +852,7 @@ textarea:disabled{opacity:.45}
       t: 'Charge limit ~80% (night charging)',
       d: 'Stops charging around 80% with Xiaomi night_charging. A small keeper sets it again after every replug (every 15 s, no wakelock). Xiaomi kernels only.' },
 
-    // ---- kernel drain
+    // kernel drain
     { k: 'soff_prof', s: 'kdrain', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Adaptive screen-off power profile',
       d: 'While the screen is off: big cores limited, GPU at its lowest clock, boosts off. Wi-Fi, data, alarms and notifications are not touched. Everything goes back when the screen turns on. One small keeper, no wakelock.',
@@ -822,10 +876,10 @@ textarea:disabled{opacity:.45}
     { k: 'vm_tune', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Fewer memory writeback wakeups',
       d: 'Flushes cached data to storage less often, so CPU and storage wake up less in standby. 0 keeps stock.',
-      fields: [{ k: 'vm_writeback', label: 'Writeback / expire interval', def: '3000', min: 500, max: 6000, unit: 'cs', zero: true },
-               { k: 'vm_stat_interval', label: 'vmstat interval', def: '10', min: 1, max: 60, unit: 's', zero: true },
-               { k: 'vm_dirty_bg', label: 'dirty_background_ratio', def: '10', min: 1, max: 50, unit: '%', zero: true },
-               { k: 'vm_dirty', label: 'dirty_ratio', def: '30', min: 1, max: 80, unit: '%', zero: true }] },
+      fields: [{ k: 'vm_writeback', label: 'Writeback interval', def: '3000', min: 500, max: 6000, unit: 'cs', zero: true },
+               { k: 'vm_stat_interval', label: 'Memory stat interval', def: '10', min: 1, max: 60, unit: 's', zero: true },
+               { k: 'vm_dirty_bg', label: 'Background writeback threshold (dirty_background_ratio)', def: '10', min: 1, max: 50, unit: '%', zero: true },
+               { k: 'vm_dirty', label: 'Writeback threshold (dirty_ratio)', def: '30', min: 1, max: 80, unit: '%', zero: true }] },
     { k: 'io_tune', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Lighter I/O accounting',
       d: 'Turns off I/O stats and entropy sampling on storage. Less CPU work per read and write.' },
@@ -833,14 +887,14 @@ textarea:disabled{opacity:.45}
       t: 'Silence kernel debug',
       d: 'Turns off kernel console logs, ftrace, schedstats, NMI watchdog, ramdumps and driver debug masks until the next reboot.' },
     { k: 'debug_props', s: 'kdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
-      t: 'Disable debug & trace props',
+      t: 'Disable debug and trace props',
       d: 'Turns off debug, log and trace props (vendor logs, IMS debug, Perfetto, atrace, StrictMode). Nothing is saved.' },
     { k: 'wakelock_block', s: 'kdrain', src: 'kernel', risk: 'exp', type: 'toggle', def: '0',
       t: 'Kernel wakelock blocker',
       d: 'Blocks the kernel wakelocks in the list. Needs a kernel with the Boeffla blocker. Wakelocks used for calls, SMS, data and push are always skipped.',
       text: { k: 'wl_list', label: 'Wakelocks to block (separated by ;)', filter: /[^A-Za-z0-9._;:@-]/g } },
 
-    // ---- protected apps
+    // protected apps
     { k: 'protect_apps', s: 'protect', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Keep important apps alive',
       d: 'Apps in this list keep running in the background: Doze whitelist, autostart and Active bucket. Set them to No restrictions in your ROM battery settings too.',
@@ -855,10 +909,10 @@ textarea:disabled{opacity:.45}
       text: { k: 'bg_block_pkgs', label: 'Blocked packages (comma separated)', filter: /[^A-Za-z0-9._,]/g, apps: true, sys: true } },
     { k: 'app_disable', s: 'protect', src: 'rom', risk: 'exp', type: 'toggle', def: '0',
       t: 'Disable apps',
-      d: 'Disables the apps you pick, system apps included. WARNING: the wrong app can break calls, data or Wi-Fi, or cause a bootloop. Critical apps are skipped. Turning this off enables them again.',
+      d: 'Disables the apps you pick, system apps included. A wrong app can break calls, data or Wi-Fi, or cause a bootloop. Critical apps are skipped. Turning this off enables them again.',
       text: { k: 'app_disable_pkgs', label: 'Packages to disable (comma separated)', filter: /[^A-Za-z0-9._,]/g, apps: true, sys: true } },
 
-    // ---- system drain
+    // system drain
     { k: 'app_freezer', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '1',
       t: 'Cached app freezer',
       d: 'Freezes cached apps so they use no CPU until you open them. Turn it off if notifications from unprotected apps arrive late.' },
@@ -866,13 +920,13 @@ textarea:disabled{opacity:.45}
       t: 'Aggressive Doze',
       d: 'How fast and how deep the phone sleeps after the screen turns off. Higher levels skip the motion check, so it also sleeps in your pocket. Custom uses your own values.',
       o: [['0', 'Off'], ['1', 'Moderate (10 min)'], ['2', 'Aggressive (1 min)'], ['3', 'Maximum (30 s)'], ['4', 'Custom…']],
-      text: { k: 'doze_custom', label: 'device_idle constants (key=ms, comma separated)', filter: /[^A-Za-z0-9_=.,]/g, showWhen: '4', def: DOZE_AGGRESSIVE } },
+      text: { k: 'doze_custom', label: 'Doze timing (device_idle, key=ms)', filter: /[^A-Za-z0-9_=.,]/g, showWhen: '4', def: DOZE_AGGRESSIVE } },
     { k: 'devcfg_lock', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Keep values (pause flag sync)',
-      d: 'Stops Google server flags from overwriting the Doze, freezer and stats values. All server flag updates are paused while this is ON.' },
+      d: 'Stops Google server flags from overwriting the Doze, freezer and stats values. All server flag updates are paused while this is on.' },
     { k: 'gms_doze', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'GMS Doze',
-      d: 'Removes Google Play services from the Doze whitelist. Saves battery, but push messages (WhatsApp, Telegram, Gmail) can arrive late in deep sleep. Leave OFF if you need instant notifications.' },
+      d: 'Removes Google Play services from the Doze whitelist. Saves battery, but push messages (WhatsApp, Telegram, Gmail) can arrive late in deep sleep. Leave it off if you need instant notifications.' },
     { k: 'scan_off', s: 'rdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Stop background Wi-Fi/Bluetooth scanning',
       d: 'Turns off Wi-Fi and Bluetooth scanning for location and throttles Wi-Fi scans from apps.' },
@@ -893,22 +947,22 @@ textarea:disabled{opacity:.45}
       t: 'Telemetry switches off',
       d: 'Turns off Android and Google telemetry switches and turns on limit ad tracking.' },
     { k: 'debloat', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '1',
-      t: 'Disable analytics & ad packages',
+      t: 'Disable analytics and ad packages',
       d: 'Disables Xiaomi analytics, MSA ads, the bug report uploader and the Facebook stub services. Use Disable apps for anything else.' },
     { k: 'joyose_off', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0', only: 'XIAOMI',
       t: 'Disable Joyose',
       d: 'Disables Joyose (Xiaomi cloud game and thermal profiles, wakes up often). Game Turbo profiles may change.' },
     { k: 'log_reduce', s: 'rdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Reduce system logging',
-      d: 'Only warnings and errors go to logcat. Keep it OFF while debugging.' },
+      d: 'Only warnings and errors go to logcat. Keep it off while debugging.' },
 
-    // ---- saver
+    // saver
     { k: 'saver_policy', s: 'saver', src: 'rom', risk: 'safe', type: 'level', def: '1',
       t: 'Stronger Battery Saver',
       d: 'Stronger rules while Battery Saver is on. Extreme also turns off animations and location with the screen off and dims the screen 20%. Vibration and haptics stay on unless turned off below.',
       o: [['0', 'Off'], ['1', 'Balanced'], ['2', 'Extreme'], ['3', 'Custom…']],
       fields: [{ k: 'saver_vib', label: 'Also turn vibration and haptics off while Battery Saver is on', def: '0', bool: true }],
-      text: { k: 'saver_constants', label: 'battery_saver_constants (key=value, comma separated)', filter: /[^A-Za-z0-9_=.,-]/g, showWhen: '3', def: SAVER_DEFAULT } },
+      text: { k: 'saver_constants', label: 'Battery Saver settings (battery_saver_constants, key=value)', filter: /[^A-Za-z0-9_=.,-]/g, showWhen: '3', def: SAVER_DEFAULT } },
     { k: 'saver_trigger', s: 'saver', src: 'rom', risk: 'moderate', type: 'value', def: '0', unit: '%', min: 5, max: 95,
       t: 'Auto Battery Saver level',
       d: 'Turns Battery Saver on automatically at this %. Some ROMs like HyperOS may ignore it.',
@@ -935,7 +989,7 @@ textarea:disabled{opacity:.45}
       d: 'Shorter animations, less GPU work. The value is % of the normal length.',
       o: [['0', 'Don’t change'], ['75', '0.75×'], ['50', '0.5×']] },
 
-    // ---- advanced
+    // advanced
     { k: 'apply_delay', s: 'adv', src: 'kernel', risk: 'safe', type: 'value', def: '30', unit: 's', min: 10, max: 120, noOff: true,
       t: 'Apply delay after boot',
       d: 'Waits this long after boot so the ROM finishes its own tuning first.',
@@ -944,9 +998,9 @@ textarea:disabled{opacity:.45}
       t: 'Boot notification',
       d: 'Shows a notification when HyperCool has finished applying at boot, with how many features were applied.' },
 
-    // ---- more: extra kernel tuning
+    // more: extra kernel tuning
     { k: 'x_sched', s: 'xk', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
-      t: 'Scheduler & governor tuning',
+      t: 'Scheduler and governor tuning',
       d: 'Tasks stay on one core longer and schedutil ramps up less. For CFS/schedutil kernels; on WALT most of it is skipped, use Calmer CPU governor there.' },
     { k: 'x_kquiet', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Silence leftover kernel logging',
@@ -965,10 +1019,10 @@ textarea:disabled{opacity:.45}
       d: 'Resets leftover performance tweaks to normal: no top-app boost, normal storage queue, bus and DRAM not forced high, MediaTek power limits on, GPU and touch boosts off. CPU and GPU limits stay with the caps.',
       fields: [{ k: 'x_bal_bus', label: 'Qualcomm: also unlock other bus voters (cpu-lat, cpu-bw, llccbw, cpubw), mostly older Snapdragon', def: '0', bool: true }] },
     { k: 'x_kcommon', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
-      t: 'Common kernel & network tuning',
+      t: 'Common kernel and network tuning',
       d: 'Common small tweaks: less scheduler and I/O accounting, no swap read-ahead, vmstat every 15 s and the best TCP congestion control (BBR if available).' },
 
-    // ---- more: RAM management
+    // more: RAM management
     { k: 'x_ram_opt', s: 'xram', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'RAM optimizer',
       d: 'VM and LMK tuning for less memory pressure. zram is not touched here. Values come back when off (lmkd props after a reboot).',
@@ -981,24 +1035,24 @@ textarea:disabled{opacity:.45}
       t: 'Compact background apps',
       d: 'About 90 s after the screen goes off, when free RAM is under 30%, Android compacts the memory of background apps (they are not closed). Frees RAM but uses some CPU, apps can open a little slower afterwards, and it does not save battery. Unsupported on ROMs without the compact command.' },
     { k: 'x_zram', s: 'xram', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
-      t: 'ZRAM size & compression',
+      t: 'ZRAM size and compression',
       d: 'Rebuilds zram with the size and algorithm you pick, priority -2. lz4 is the lightest on CPU. The ROM zram is back after a reboot when off.',
       fields: [{ k: 'x_zram_size', label: 'Size', def: '4', sel: [['2', '2 GB'], ['3', '3 GB'], ['4', '4 GB'], ['5', '5 GB'], ['6', '6 GB'], ['7', '7 GB'], ['8', '8 GB'], ['0', 'Custom…']] },
                { k: 'x_zram_custom', label: 'Custom size in GB', min: 1, max: 12, def: '4', when: ['x_zram_size', '0'] },
                { k: 'x_zram_alg', label: 'Compression algorithm', def: 'lz4', sel: [['keep', 'Keep ROM default'], ['lz4', 'lz4'], ['zstd', 'zstd'], ['lzo-rle', 'lzo-rle']] }] },
 
-    // ---- more: Google services & telemetry
+    // more: Google services and telemetry
     { k: 'x_gms_freeze', s: 'xgoogle', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
-      t: 'Freeze GMS ads & tracking services (safe list)',
+      t: 'Freeze GMS ads and tracking services (safe list)',
       d: 'Disables GMS components that are only for ads, analytics and reporting. Push, location, sign-in and Play Store keep working.' },
     { k: 'x_track', s: 'xgoogle', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Extended telemetry block',
       d: 'More telemetry off: Play Store logging, Clearcut, bug report in the power menu, slower GMS check-in.' },
 
-    // ---- more: logging & diagnostics
+    // more: logging & diagnostics
     { k: 'x_log_nuke', s: 'xlog', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Deep log cleanup at boot',
-      d: 'Stops leftover log daemons at boot, clears and shrinks the log buffers and turns off framework tracing. Keep it OFF while collecting bugreports.' },
+      d: 'Stops leftover log daemons at boot, clears and shrinks the log buffers and turns off framework tracing. Keep it off while collecting bug reports.' },
     { k: 'x_diag', s: 'xlog', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Silence vendor diagnostics',
       d: 'Stops charge_logger and misight, turns off looper stats, ANR debugging and vendor diagnostic logs.' },
@@ -1086,7 +1140,7 @@ textarea:disabled{opacity:.45}
  "debloat": "pm disable-user --user 0: com.miui.analytics, com.miui.daemon, com.miui.bugreport, com.miui.msa.global, com.miui.systemAdSolution, com.facebook.appmanager, com.facebook.services, com.facebook.system (if installed)|off / uninstall: enabled again (only what this feature disabled)",
  "joyose_off": "pm disable-user --user 0 com.xiaomi.joyose",
  "log_reduce": "runtime prop log.tag = W (not saved)",
- "saver_policy": "settings global battery_saver_constants = chosen profile (only used while Battery Saver is ON)|disable_vibration / vibration_disabled = false (Battery Saver keeps vibration and haptics), true only with the sub-option",
+ "saver_policy": "settings global battery_saver_constants = chosen profile (only used while Battery Saver is on)|disable_vibration / vibration_disabled = false (Battery Saver keeps vibration and haptics), true only with the sub-option",
  "saver_trigger": "settings global automatic_power_save_mode = 0, low_power_trigger_level = %",
  "saver_dim": "settings global battery_saver_constants: enable_brightness_adjustment=true, adjust_brightness_disabled=false, adjust_brightness_factor = 0.9 / 0.8 / 0.7 / 0.6 (other keys kept)|Android applies it only while Battery Saver is on|off: the original string comes back (or the Stronger Battery Saver string when that is on)",
  "smart_px": "checks that the ROM has Smart Pixels (SystemUI)|On Battery Saver: settings system smart_pixels_on_power_save = 1|Always: settings system smart_pixels_enable = 1|off: original values back|skipped when the ROM has no Smart Pixels",
@@ -1160,11 +1214,12 @@ textarea:disabled{opacity:.45}
     if (f.text) SUBKEYS.push(f.text.k);
   });
 
-  /* ------------------------------------------------------------ state */
+  /* state */
   var cfg = {}, saved = {}, last = {}, status = {}, freqNow = {};
   var customMode = {};
+  var loadingCfg = true;
 
-  /* ------------------------------------------------------------ bridge */
+  /* command runner */
   var cbSeq = 0;
   function exec(cmd) {
     return new Promise(function (resolve) {
@@ -1183,7 +1238,7 @@ textarea:disabled{opacity:.45}
     });
   }
 
-  /* ------------------------------------------------------------ helpers */
+  /* helpers */
   function $(id) { return document.getElementById(id); }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -1228,12 +1283,25 @@ textarea:disabled{opacity:.45}
     return Math.max(min, Math.min(max, n));
   }
   var snackT;
-  function snack(msg) {
+  function snack(msg, sticky) {
     var s = $('snack');
-    s.textContent = msg;
+    var bad = !!sticky || /^(Couldn't|Could not|Can't|Failed|Save failed|Backup failed|Report failed|Clean finished|Revert finished|Calibration stopped|Nothing|No |Choose apps first|Plug in|This file)/.test(String(msg));
+    s.innerHTML = '';
+    var t = document.createElement('span');
+    t.textContent = msg;
+    s.appendChild(t);
+    s.classList.toggle('err', bad);
+    if (bad) {
+      var b = document.createElement('button');
+      b.className = 'sclose';
+      b.textContent = 'Dismiss';
+      b.setAttribute('aria-label', 'Dismiss message');
+      b.onclick = function () { clearTimeout(snackT); s.classList.remove('show', 'err'); };
+      s.appendChild(b);
+    }
     s.classList.add('show');
     clearTimeout(snackT);
-    snackT = setTimeout(function () { s.classList.remove('show'); }, 2600);
+    if (!bad) snackT = setTimeout(function () { s.classList.remove('show'); }, 2600);
   }
   function modal(title, bodyHtml, actions) {
     $('m-title').textContent = title;
@@ -1252,8 +1320,46 @@ textarea:disabled{opacity:.45}
   function closeModal() { $('modal').classList.remove('show'); }
   $('modal').addEventListener('click', function (e) { if (e.target.id === 'modal') closeModal(); });
 
-  /* ------------------------------------------------------------ render */
-  var RISK = { safe: ['SAFE', 't-safe'], moderate: ['MODERATE', 't-moderate'], exp: ['EXPERIMENTAL', 't-exp'] };
+  function beforeLeave(e) {
+    if (!isDirty()) return;
+    e.preventDefault();
+    e.returnValue = '';
+  }
+  var leaveGuard = false;
+  function showDiscard() {
+    try { if (!(history.state && history.state.hc === 'guard')) history.pushState({ hc: 'guard' }, ''); } catch (e) {}
+    modal('Discard changes?', 'Your edits are not saved yet.', [
+      { label: 'Keep editing', primary: true },
+      { label: 'Discard', fn: function () {
+        cfg = copy(saved);
+        leaveGuard = false;
+        syncInputs();
+        updateDirty();
+      } }
+    ]);
+  }
+  document.addEventListener('keydown', function (e) {
+    var open = [].slice.call(document.querySelectorAll('.modal.show'));
+    if (!open.length) return;
+    var el = open[open.length - 1];
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      el.classList.remove('show');
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    var nodes = [].filter.call(el.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])'), function (n) {
+      return !n.disabled && n.getClientRects().length;
+    });
+    if (!nodes.length) return;
+    var first = nodes[0], last = nodes[nodes.length - 1];
+    if (!el.contains(document.activeElement)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); return; }
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  /* render */
+  var RISK = { safe: ['Safe', ''], moderate: ['Moderate', 't-moderate'], exp: ['Experimental', 't-exp'] };
   var STATE_LBL = { applied: 'Applied', partial: 'Partial', skipped: 'Unsupported', failed: 'Failed', off: 'Off' };
 
   function relKeys(f) {
@@ -1267,13 +1373,13 @@ textarea:disabled{opacity:.45}
     var st = status[f.k];
     var ref = Object.keys(last).length ? last : saved;
     var pend = relKeys(f).some(function (k) { return ref[k] !== undefined && String(ref[k]) !== String(cfg[k]); });
-    if (st) h += '<span class="st ' + esc(st.state) + '" title="Result of the last boot">' + esc(STATE_LBL[st.state] || st.state) + '</span>';
-    if (pend) h += '<span class="st pending">Applies after reboot</span>';
+    if (pend) h += '<span class="st pending">Applies after restart</span>';
+    else if (st) h += '<span class="st ' + esc(st.state) + '" title="Result of the last boot">' + esc(STATE_LBL[st.state] || st.state) + '</span>';
     return h;
   }
   function isPreset(f, v) { return (f.o || []).some(function (o) { return o[0] === String(v); }); }
 
-  /* ------------------------------------------------------------ icons */
+  /* icons */
   var ICONS = {
     cpu: '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2.5v3M15 2.5v3M9 18.5v3M15 18.5v3M2.5 9h3M2.5 15h3M18.5 9h3M18.5 15h3"/>',
     park: '<rect x="5" y="5" width="14" height="14" rx="3"/><path d="M10 9.5v5M14 9.5v5"/>',
@@ -1345,8 +1451,8 @@ textarea:disabled{opacity:.45}
   var PAGE_OF = { heat: 'kernel', kdrain: 'kernel', protect: 'system', rdrain: 'system', saver: 'system', adv: 'system',
     xk: 'more', xram: 'more', xgoogle: 'more', xlog: 'more', xstore: 'more', xpower: 'more' };
 
-  function swHtml(id) {
-    return '<label class="sw"><input type="checkbox" id="' + id + '"><span class="track"><span class="thumb">' +
+  function swHtml(id, label) {
+    return '<label class="sw"><input type="checkbox" id="' + id + '" aria-label="' + esc(label || '') + '"><span class="track"><span class="thumb">' +
       '<svg class="on" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' +
       '<svg class="off" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span></span></label>';
   }
@@ -1354,7 +1460,9 @@ textarea:disabled{opacity:.45}
     var m = $('more-' + k);
     if (!m) return;
     m.hidden = false;
-    $('it-' + k).classList.add('open');
+    var it = $('it-' + k);
+    it.classList.add('open');
+    it.querySelectorAll('[data-exp]').forEach(function (x) { x.setAttribute('aria-expanded', 'true'); });
   }
 
   // one feature card (used by the normal sections and by the red Experimental section)
@@ -1363,37 +1471,38 @@ textarea:disabled{opacity:.45}
         var r = RISK[f.risk];
         html += '<div class="item" id="it-' + f.k + '"><div class="row">' +
           '<div class="ic">' + icon(F_ICON[f.k]) + '</div>' +
-          '<div class="txt" data-exp="' + f.k + '">' +
+          '<div class="txt" data-exp="' + f.k + '" role="button" tabindex="0" aria-expanded="false" aria-controls="more-' + f.k + '">' +
             '<div class="ttl">' + esc(f.t) + '</div>' +
             '<div class="desc">' + esc(f.d) + '</div>' +
-            '<div class="meta"><span class="tag ' + (f.src === 'kernel' ? 't-kernel">KERNEL' : 't-rom">SYSTEM') + '</span>' +
-            (f.only ? '<span class="tag t-only">' + esc(f.only) + '</span>' : '') +
-            '<span class="tag ' + r[1] + '">' + r[0] + '</span><span id="chip-' + f.k + '" style="display:contents"></span>' +
+            '<div class="meta">' +
+            (f.risk !== 'safe' ? '<span class="tag ' + r[1] + '">' + r[0] + '</span>' : '') +
+            '<span id="chip-' + f.k + '" style="display:contents"></span>' +
             // toggles: the expand arrow sits at the end of the tag line so the text column stays wide
             (f.type === 'toggle' ? '<span class="chev mini" aria-hidden="true">' + icon('chev') + '</span>' : '') + '</div>' +
           '</div>' +
-          (f.type === 'toggle' ? '' : '<button class="chev" data-exp="' + f.k + '" aria-label="Details">' + icon('chev') + '</button>');
+          (f.type === 'toggle' ? '' : '<button class="chev" data-exp="' + f.k + '" aria-label="Details for ' + esc(f.t) + '" aria-expanded="false" aria-controls="more-' + f.k + '">' + icon('chev') + '</button>');
         if (f.type === 'toggle') {
-          // switch on the right, like the reference design
-          html += '<span class="vdiv"></span><div class="ctl">' + swHtml('in-' + f.k) + '</div></div>';
+          // the switch sits at the right edge; the text column keeps its width
+          html += '<span class="vdiv"></span><div class="ctl">' + swHtml('in-' + f.k, f.t) + '</div></div>';
         } else {
           // choices get their own full-width line under the text
           var opts = f.o.slice();
           if (f.type === 'value') opts.push(['custom', 'Custom…']);
-          html += '</div><div class="selrow"><div class="pill wide"><select id="in-' + f.k + '">' + opts.map(function (o) {
+          html += '</div><div class="selrow"><div class="pill wide"><select id="in-' + f.k + '" aria-label="' + esc(f.t) + '">' + opts.map(function (o) {
             return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>';
           }).join('') + '</select></div></div>';
         }
         // switches marked inline are shown on the card itself, not only in the details
         (f.fields || []).forEach(function (x) {
-          if (x.bool && x.inline) html += '<div class="sub-row inl sub-' + f.k + '"><label>' + esc(x.label) + '</label>' + swHtml('in-' + x.k) + '</div>';
+          if (x.bool && x.inline) html += '<div class="sub-row inl sub-' + f.k + '"><label>' + esc(x.label) + '</label>' + swHtml('in-' + x.k, x.label) + '</div>';
         });
         html += '<div class="more" id="more-' + f.k + '" hidden>' +
+          '<div class="src">' + (f.src === 'kernel' ? 'Kernel' : 'System') + (f.only ? ' \u00b7 ' + esc(f.only) + ' only' : '') + '</div>' +
           '<div class="stdet" id="det-' + f.k + '"></div>';
         if (f.type === 'value') {
           html += '<div class="sub-row" id="cv-' + f.k + '"><label>Custom value (' + f.min + '–' + f.max + ' ' + esc(f.unit) +
             (f.noOff ? '' : ', 0 = off') + ')</label><div class="num"><input type="number" inputmode="numeric" id="cn-' + f.k +
-            '" min="0" max="' + f.max + '"><span>' + esc(f.unit) + '</span></div></div>';
+            '" min="0" max="' + f.max + '" aria-label="Custom value for ' + esc(f.t) + '"><span>' + esc(f.unit) + '</span></div></div>';
         }
         if (f.k === 'charge_cool') {
           html += '<div class="sub-row"><label class="hint" style="margin:0" id="cal-info">Not calibrated yet</label>' +
@@ -1402,31 +1511,31 @@ textarea:disabled{opacity:.45}
         (f.fields || []).forEach(function (x) {
           if (x.bool && x.inline) return;
           if (x.bool) {
-            html += '<div class="sub-row sub-' + f.k + '"><label>' + esc(x.label) + '</label>' + swHtml('in-' + x.k) + '</div>';
+            html += '<div class="sub-row sub-' + f.k + '"><label>' + esc(x.label) + '</label>' + swHtml('in-' + x.k, x.label) + '</div>';
             return;
           }
           if (x.levelsel) {
             html += '<div class="sub-row sub-' + f.k + '"><label>' + esc(x.label) + '</label>' +
-              '<div class="pill"><select id="in-' + x.k + '"></select></div></div>';
+              '<div class="pill"><select id="in-' + x.k + '" aria-label="' + esc(x.label) + '"></select></div></div>';
             return;
           }
           if (x.sel) {
             html += '<div class="sub-row sub-' + f.k + '"><label>' + esc(x.label) + '</label>' +
-              '<div class="pill"><select id="in-' + x.k + '">' + x.sel.map(function (o) {
+              '<div class="pill"><select id="in-' + x.k + '" aria-label="' + esc(x.label) + '">' + x.sel.map(function (o) {
                 return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>';
               }).join('') + '</select></div></div>';
             return;
           }
           html += '<div class="sub-row sub-' + f.k + '"><label>' + esc(x.label) + ' (' + x.min + '–' + x.max +
             (x.zero ? ', 0 = keep stock' : '') + ', default ' + x.def + ')</label>' +
-            '<div class="num"><input type="number" inputmode="numeric" id="in-' + x.k + '" min="0" max="' + x.max + '">' +
-            '<span>' + esc(x.unit) + '</span></div></div>';
+            '<div class="num"><input type="number" inputmode="numeric" id="in-' + x.k + '" min="0" max="' + x.max +
+            '" aria-label="' + esc(x.label) + '"><span>' + esc(x.unit) + '</span></div></div>';
         });
         if (f.text) {
-          html += '<div id="tw-' + f.text.k + '"><textarea id="in-' + f.text.k + '" spellcheck="false" autocapitalize="off"></textarea>' +
+          html += '<div id="tw-' + f.text.k + '"><textarea id="in-' + f.text.k + '" spellcheck="false" autocapitalize="off" aria-label="' + esc(f.text.label) + '"></textarea>' +
             '<div class="sub-row" style="margin-top:6px"><label class="hint" style="margin:0">' + esc(f.text.label) + '</label>' +
-            (f.text.apps ? '<button class="linkbtn" id="pick-' + f.text.k + '">Pick apps</button>' : '') +
-            (f.text.def ? '<button class="linkbtn" id="rst-' + f.text.k + '">Reset</button>' : '') +
+            (f.text.apps ? '<button class="linkbtn" id="pick-' + f.text.k + '">Choose apps</button>' : '') +
+            (f.text.def ? '<button class="linkbtn" id="rst-' + f.text.k + '">Reset list</button>' : '') +
             '</div></div>';
         }
         html += '<div class="xh">What it changes</div><ul class="xlist">' +
@@ -1449,7 +1558,7 @@ textarea:disabled{opacity:.45}
       wrap.innerHTML = html;
       $('sec-' + PAGE_OF[sec.id]).appendChild(wrap);
     });
-    // experimental features: one red zone at the bottom of each page (like the Danger Zone of Specter)
+    // experimental features share one red group at the bottom of each page
     ['kernel', 'system', 'more'].forEach(function (pg) {
       var ex = F.filter(function (f) { return f.risk === 'exp' && PAGE_OF[f.s] === pg; });
       if (!ex.length) return;
@@ -1544,7 +1653,9 @@ textarea:disabled{opacity:.45}
     var m = $('more-' + k);
     if (!m) return;
     m.hidden = !m.hidden;
-    $('it-' + k).classList.toggle('open', !m.hidden);
+    var it = $('it-' + k), open = !m.hidden;
+    it.classList.toggle('open', open);
+    it.querySelectorAll('[data-exp]').forEach(function (x) { x.setAttribute('aria-expanded', open ? 'true' : 'false'); });
   });
 
   // GPU frequency list of this phone (upper half of the table, top frequency excluded)
@@ -1723,10 +1834,21 @@ textarea:disabled{opacity:.45}
     var pend = !dirty && Object.keys(last).length && Object.keys(cfg).some(function (k) {
       return last[k] !== undefined && String(cfg[k]) !== String(last[k]);
     });
-    $('abar').hidden = !(dirty || pend);
-    $('dirty').textContent = dirty ? 'Unsaved changes' : 'Saved, reboot to apply';
+    $('abar').hidden = loadingCfg || !(dirty || pend);
+    $('dirty').textContent = dirty ? 'Unsaved changes' : 'Saved, restart to apply';
     $('save').hidden = !dirty;
-    $('savereboot').textContent = dirty ? 'Save & reboot' : 'Reboot';
+    $('savereboot').textContent = dirty ? 'Save and restart' : 'Restart';
+    if (dirty && !loadingCfg) {
+      window.addEventListener('beforeunload', beforeLeave);
+      if (!leaveGuard) {
+        try {
+          if (!(history.state && history.state.hc === 'guard')) history.pushState({ hc: 'guard' }, '');
+          leaveGuard = true;
+        } catch (e) { leaveGuard = false; }
+      }
+    } else if (!dirty) {
+      window.removeEventListener('beforeunload', beforeLeave);
+    }
     updateState();
   }
 
@@ -1735,7 +1857,7 @@ textarea:disabled{opacity:.45}
     Object.keys(status).forEach(function (k) { if (c[status[k].state] !== undefined) c[status[k].state]++; });
     var h;
     if (!Object.keys(status).length) {
-      h = '<span class="lbl">No boot report yet. Reboot once after installing.</span>';
+      h = '<span class="lbl">No boot report yet. Restart once after installing.</span>';
     } else {
       h = '<span class="lbl">Last boot' + (bootTime ? ' (' + esc(bootTime.trim()) + ')' : '') + ':</span>' +
         '<span class="st applied">' + c.applied + ' applied</span>' +
@@ -1826,7 +1948,7 @@ textarea:disabled{opacity:.45}
       [{ label: 'Cancel' }, { label: 'Save', primary: true, fn: saveCustom }]);
   }
   function saveCustom() {
-    if (!HAS_KSU) { snack('Preview mode, nothing written'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     var keys = [];
     F.forEach(function (f) {
       keys.push(f.k);
@@ -1841,7 +1963,7 @@ textarea:disabled{opacity:.45}
     });
     exec('mkdir -p ' + DATA + ' && printf "%s\\n" ' + lines.join(' ') + ' > ' + DATA + '/custom_preset.conf && echo OK').then(function (r) {
       if (/OK/.test(r.stdout || '')) { CUSTOM = obj; renderPresets(); snack('Custom preset saved'); }
-      else snack('Could not save the Custom preset');
+      else snack('Couldn\'t save the Custom preset. Check free space, then try again.');
     });
   }
 
@@ -1876,7 +1998,7 @@ textarea:disabled{opacity:.45}
     snack(pr.n + ' preset loaded, press Save');
   }
 
-  /* ------------------------------------------------------------ app picker */
+  /* app picker */
   var pk = { f: null, sel: {}, apps: [] };
 
   function nativeList(type) {
@@ -1927,9 +2049,9 @@ textarea:disabled{opacity:.45}
     (f.custom ? f.custom.get() : String(cfg[f.text.k] || '')).split(',').filter(Boolean).forEach(function (x) { pk.sel[x] = true; });
     $('pk-title').textContent = f.custom ? f.custom.title : f.text.k === 'protect_pkgs' ? 'Protected apps' : f.text.k === 'bg_block_pkgs' ? 'Block in background' : f.text.k === 'x_cache_keep_pkgs' ? 'Keep cache of these apps' : 'Disable apps (pick with care)';
     $('pk-search').value = '';
-    $('pk-list').innerHTML = '<div class="hint">Loading apps…</div>';
+    $('pk-list').innerHTML = '<div class="hint">Reading installed apps…</div>';
     $('picker').classList.add('show');
-    if (!HAS_KSU) { $('pk-list').innerHTML = '<div class="hint">Preview mode, the app list needs KernelSU.</div>'; return; }
+    if (!HAS_KSU) { $('pk-list').innerHTML = '<div class="hint">' + PREVIEW_MSG + '</div>'; return; }
     loadApps(f.custom ? true : !!f.text.sys).then(function (apps) {
       // keep entries from the list that are not installed, so nothing is lost silently
       Object.keys(pk.sel).forEach(function (x) {
@@ -1955,7 +2077,7 @@ textarea:disabled{opacity:.45}
         (a.icon ? '<img loading="lazy" src="ksu://icon/' + esc(a.pkg) + '" onerror="this.style.visibility=\'hidden\'" alt="">' : '<span class="ph"></span>') +
         '<span class="nm"><b>' + esc(a.label || a.pkg) + '</b>' + (a.label ? '<small>' + esc(a.pkg) + '</small>' : '') + '</span>' +
         '<input type="checkbox" data-p="' + esc(a.pkg) + '"' + (pk.sel[a.pkg] ? ' checked' : '') + '></label>';
-    }).join('') || '<div class="hint">No apps match.</div>';
+    }).join('') || '<div class="hint">' + (q ? 'No apps match \u201c' + esc(q) + '\u201d.' : 'No apps on this phone.') + '</div>';
   }
 
   $('pk-list').addEventListener('change', function (e) {
@@ -1978,7 +2100,7 @@ textarea:disabled{opacity:.45}
   };
   $('picker').addEventListener('click', function (e) { if (e.target.id === 'picker') $('picker').classList.remove('show'); });
 
-  /* ------------------------------------------------------------ io */
+  /* io */
   var ORDER = [
     ['Heat control (kernel)', ['cpu_cap', 'cpu_cap_lock', 'cpu_cap_little', 'cpu_cap_little_lock', 'prime_park', 'gpu_cap', 'gpu_cap_lock', 'gpu_idle', 'gpu_idle_timer', 'gpu_throttle', 'walt_tune', 'walt_hispeed_load',
       'walt_up_rate', 'walt_sched_boost_off', 'walt_task_util', 'input_boost_off', 'bg_cpuset', 'bg_uclamp', 'bg_daemons', 'blur_off', 'charge_cool', 'charge_cool_level', 'charge_limit']],
@@ -2010,7 +2132,7 @@ textarea:disabled{opacity:.45}
   // HyperOS could return an empty file silently). Values never contain a single
   // quote because every field is filtered, and quotes are stripped here anyway.
   function save() {
-    if (!HAS_KSU) { snack('Preview mode, nothing written'); return Promise.resolve(false); }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return Promise.resolve(false); }
     var lines = buildConfig().replace(/\n$/, '').split('\n').map(function (l) {
       return "'" + l.replace(/'/g, '') + "'";
     });
@@ -2028,11 +2150,11 @@ textarea:disabled{opacity:.45}
         saved = copy(cfg);
         F.forEach(refreshItem);
         updateDirty();
-        snack('Saved, reboot to apply');
+        snack('Saved. Restart to apply');
         return true;
       }
       var why = (r.stderr || r.stdout || '').trim().split('\n').pop();
-      snack('Save failed: ' + (why || ('error ' + r.errno)));
+      snack('Save failed: ' + (why || ('error ' + r.errno)) + '. Check free space, then try again.');
       return false;
     });
   }
@@ -2051,6 +2173,7 @@ textarea:disabled{opacity:.45}
   }
 
   function load() {
+    loadingCfg = true;
     var cmd = [
       'D=' + DATA,
       'echo @@CFG; cat $D/config.conf 2>/dev/null',
@@ -2077,6 +2200,9 @@ textarea:disabled{opacity:.45}
       'echo @@SENS'
     ].join('\n') + '\n' + sensCmd();
     return exec(cmd).then(function (r) {
+      if (HAS_KSU && !String(r.stdout || '').trim()) {
+        throw new Error((r.stderr || '').trim() || 'The module did not answer.');
+      }
       var sec = sections(r.stdout);
       var d = defaults();
       var fileCfg = migrate(parseKV(sec.CFG));
@@ -2111,10 +2237,10 @@ textarea:disabled{opacity:.45}
           info.kernel ? 'Kernel ' + info.kernel : ''
         ].filter(Boolean).join(' · ');
         if (info.ver) document.querySelectorAll('[data-ver]').forEach(function (v) { v.textContent = info.ver; });
-        if (info.ver) document.querySelectorAll('[data-verlong]').forEach(function (v) { v.textContent = 'Version ' + info.ver.replace(/^v/i, ''); });
+        if (info.ver) document.querySelectorAll('[data-verlong]').forEach(function (v) { v.textContent = 'v' + info.ver.replace(/^v/i, '') + ' \u00b7 Yudharn'; });
       } else {
         $('dev').textContent = 'Preview';
-        $('devsub').textContent = 'Open from the KernelSU manager to control the module';
+        $('devsub').textContent = '';
         $('demo').hidden = false;
       }
       showSens(parseKV(sec.SENS));
@@ -2124,9 +2250,18 @@ textarea:disabled{opacity:.45}
       loadDrain();
       loadBcal();
       syncInputs();
+      $('loaderr').hidden = true;
       // values normalised on load (clamping) are not "unsaved changes"
       saved = copy(cfg);
+      loadingCfg = false;
       updateDirty();
+    }).catch(function (e) {
+      loadingCfg = false;
+      $('dev').textContent = 'Settings not loaded';
+      $('devsub').textContent = '';
+      $('loaderr-msg').textContent = (e && e.message ? e.message : 'The module did not answer.') +
+        ' Check that HyperCool is installed, then try again.';
+      $('loaderr').hidden = false;
     });
   }
 
@@ -2142,17 +2277,17 @@ textarea:disabled{opacity:.45}
 
   function showSens(s) {
     var bt = parseInt(s.btemp, 10);
-    $('btemp').textContent = isNaN(bt) ? '\u2013' : (bt / 10).toFixed(1) + '°C';
+    $('btemp').innerHTML = isNaN(bt) ? '\u2013' : (bt / 10).toFixed(1) + '<small>\u2009°C</small>';
     // battery health: full-charge capacity in mAh (fuel gauge estimate), % = full / design (or the gauge's own soh)
     var full = mAh(s.bfull), des = mAh(s.bdes), soh = +s.bsoh;
     var pct = full && des ? Math.round(full / des * 100) : (soh > 0 && soh <= 100 ? Math.round(soh) : 0);
-    $('bcap').innerHTML = full ? Math.round(full) + '<small> mAh</small>' : '\u2013';
+    $('bcap').innerHTML = full ? Math.round(full) + '<small>\u2009mAh</small>' : '\u2013';
     $('bstat').textContent = pct ? 'Battery health ' + pct + '%' : 'Battery health';
     $('bcap').style.color = pct && pct < 80 ? 'var(--warn)' : '';
     $('btemp').style.color = (!isNaN(bt) && bt >= 420) ? 'var(--bad)' : (!isNaN(bt) && bt >= 380 ? 'var(--warn)' : '');
   }
 
-  /* ------------------------------------------------------------ idle drain (screen off) */
+  /* idle drain (screen off) */
   // Android's own battery statistics since the last full charge: no keeper needed
   // since-last-charge totals, plus today's screen-off discharge steps (Android 16 prints the daily
   // step history first, so both are read with awk in one pass)
@@ -2197,7 +2332,7 @@ textarea:disabled{opacity:.45}
       else if ((m = /^bstat=(.*)/.exec(l))) o.bstat = m[1].trim();
       else if ((m = /^plug=(.*)/.exec(l))) o.plug = /1/.test(m[1]);
     });
-    // plugged in: the count starts again at unplug, like other battery apps
+    // plugged in: the count starts again at unplug
     if (/^(Charging|Full)$/i.test(o.bstat || '') || o.plug) { o.charging = true; return o; }
     // Android's step list (#0 = newest) is not cleared at every charge: walk back from now and stop
     // at the first step that is not one % above the next one (the battery was charged in between)
@@ -2227,12 +2362,12 @@ textarea:disabled{opacity:.45}
   }
   function showDrain(o) {
     var el = $('idle');
-    var intro = '<b>Idle battery drain</b> is how fast the battery drops while the screen is off (all screen-off time), from Android battery stats. Under 1% per hour is good. ';
+    var intro = '<b>Idle drain</b> is how fast the battery drops with the screen off, from Android battery stats. Under 1% per hour is good. ';
     if (o && o.src === 'steps') {
       var sr = o.rate;
-      $('idrain').textContent = sr.toFixed(2) + '%/h';
+      $('idrain').innerHTML = sr.toFixed(2) + '<small>\u2009%/h</small>';
       $('idrain').style.color = sr > 2 ? 'var(--bad)' : (sr > 1 ? 'var(--warn)' : '');
-      el.innerHTML = intro + 'Idle drain <b>' + sr.toFixed(2) + '% per hour</b> \u00b7 <b>' + o.sn + '%</b> drained in <b>' +
+      el.innerHTML = intro + 'About <b>' + sr.toFixed(2) + '% per hour</b> \u00b7 <b>' + o.sn + '%</b> lost in <b>' +
         o.sh.toFixed(1) + ' h</b> screen off since you unplugged.';
       return;
     }
@@ -2250,7 +2385,7 @@ textarea:disabled{opacity:.45}
     }
     if (!o || o.pct === null || (o.pct < 1 && o.hours < 1)) {
       $('idrain').textContent = '\u2013';
-      el.innerHTML = intro + (!HAS_KSU ? 'Preview mode.' : 'Shows after the battery drops 1% with the screen off' +
+      el.innerHTML = intro + (!HAS_KSU ? PREVIEW_MSG : 'Shows after the battery drops 1% with the screen off' +
         (o && o.hours > 0 ? ' (' + Math.round(o.hours * 60) + ' min screen off so far).' : '.'));
       $('idrain').style.color = '';
       return;
@@ -2258,17 +2393,17 @@ textarea:disabled{opacity:.45}
     // Android counts whole percent steps: 0% after a short time only gives an upper bound
     if (o.pct < 1) {
       var ub = 1 / o.hours;
-      $('idrain').textContent = '<' + ub.toFixed(2) + '%/h';
+      $('idrain').innerHTML = '&lt;' + ub.toFixed(2) + '<small>\u2009%/h</small>';
       $('idrain').style.color = '';
-      el.innerHTML = intro + 'Idle drain <b>under ' + ub.toFixed(2) + '% per hour</b> \u00b7 less than 1% drained in <b>' +
+      el.innerHTML = intro + 'Under <b>' + ub.toFixed(2) + '% per hour</b> \u00b7 less than 1% lost in <b>' +
         o.hours.toFixed(1) + ' h</b> screen off (since the last full charge).';
       return;
     }
     var rate = o.pct / o.hours;
-    $('idrain').textContent = rate.toFixed(rate < 10 ? 2 : 1) + '%/h';
+    $('idrain').innerHTML = rate.toFixed(rate < 10 ? 2 : 1) + '<small>\u2009%/h</small>';
     $('idrain').style.color = rate > 2 ? 'var(--bad)' : (rate > 1 ? 'var(--warn)' : '');
-    el.innerHTML = intro + 'Idle drain <b>' + rate.toFixed(2) + '% per hour</b> \u00b7 total <b>' +
-      o.hours.toFixed(1) + ' h</b> screen off \u00b7 <b>' + (Math.round(o.pct * 10) / 10) + '%</b> battery drained' +
+    el.innerHTML = intro + 'About <b>' + rate.toFixed(2) + '% per hour</b> \u00b7 total <b>' +
+      o.hours.toFixed(1) + ' h</b> screen off \u00b7 <b>' + (Math.round(o.pct * 10) / 10) + '%</b> battery lost' +
       (o.src === 'today' ? ' (today, ' + o.steps + ' screen-off steps).' : ' (since the last full charge).');
   }
   function loadDrain() {
@@ -2276,7 +2411,7 @@ textarea:disabled{opacity:.45}
     exec(DRAIN_CMD).then(function (r) { showDrain(parseDrain(r.stdout)); });
   }
 
-  /* ------------------------------------------------------------ battery calibration */
+  /* battery calibration */
   var BCAL_ACTIVE = { discharge: 1, charge: 1, hold: 1 };
   function bcalKeeper(m) {
     var x = m + '/common/bcal_watch.sh';
@@ -2327,7 +2462,7 @@ textarea:disabled{opacity:.45}
       li.className = step < 0 ? '' : (i < step ? 'ok' : (i === step ? 'cur' : ''));
     });
     $('bcal-delrow').style.display = act ? 'none' : '';
-    $('bcal-btn').textContent = act ? 'Cancel calibration' : 'Start calibration';
+    $('bcal-btn').textContent = act ? 'Cancel calibration' : 'Start';
     $('bcal-btn').className = 'btn ' + (act ? 'tonal' : 'fill');
     $('bcal-btn').dataset.act = act ? '1' : '';
   }
@@ -2343,7 +2478,7 @@ textarea:disabled{opacity:.45}
       (del ? 'touch $D/bcal_delstats; ' : 'rm -f $D/bcal_delstats; ') +
       'printf "phase=discharge\\nstart=%s\\ncap0=%s\\nlvl0=%s\\n" "$(date +%s)" "$c" "$l" > $D/bcal.state; ' +
       bcalKeeper(m) + 'sleep 1; echo OK').then(function (r) {
-      snack(/OK/.test(r.stdout || '') ? 'Battery calibration started' + (del ? ', stats files go at the next reboot' : '') : 'Could not start the calibration');
+      snack(/OK/.test(r.stdout || '') ? 'Battery calibration started' + (del ? ', stats files go at the next reboot' : '') : 'Couldn\'t start calibration. Check that the battery is above 5% and the charger is connected, then try again.');
       loadBcal();
     });
   }
@@ -2351,13 +2486,13 @@ textarea:disabled{opacity:.45}
     exec('D=' + DATA + '; p=$(cat $D/bcal_watch.pid 2>/dev/null); ' +
       '[ -n "$p" ] && grep -q bcal_watch /proc/$p/cmdline 2>/dev/null && kill $p; rm -f $D/bcal_watch.pid $D/bcal_delstats; ' +
       'sed -i "s/^phase=.*/phase=cancel/" $D/bcal.state 2>/dev/null; echo OK').then(function () {
-      snack('Battery calibration cancelled');
+      snack('Calibration cancelled');
       loadBcal();
     });
   }
-  $('bcal-delrow').innerHTML = '<label>Also delete batterystats.bin at the next reboot (clears the battery usage history in Settings)</label>' + swHtml('bcal-del');
+  $('bcal-delrow').innerHTML = '<label>Also delete batterystats.bin at the next reboot (clears the battery usage history in Settings)</label>' + swHtml('bcal-del', 'Delete batterystats.bin at the next reboot');
   $('bcal-btn').onclick = function () {
-    if (!HAS_KSU) { snack('Preview mode, needs KernelSU'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     if ($('bcal-btn').dataset.act) {
       modal('Cancel battery calibration?', '<p>Charge limit works again right away. You can start a new calibration any time.</p>',
         [{ label: 'Keep going' }, { label: 'Cancel calibration', primary: true, fn: bcalCancel }]);
@@ -2372,7 +2507,7 @@ textarea:disabled{opacity:.45}
       [{ label: 'Not now' }, { label: 'Start', primary: true, fn: bcalStart }]);
   };
 
-  /* ------------------------------------------------------------ battery check */
+  /* battery check */
   var BC_CMD = [
     'for d in battery bms battery_ext; do P=/sys/class/power_supply/$d; [ -d $P ] || continue; ' +
       'for n in health cycle_count charge_full charge_full_design capacity temp voltage_now current_now technology status charge_counter soh state_of_health; do ' +
@@ -2388,7 +2523,7 @@ textarea:disabled{opacity:.45}
   function mAh(v) { var n = +v; if (!n || n < 0) return 0; return n > 100000 ? n / 1000 : n; }
   function runBattery() {
     $('bc-run').disabled = true;
-    $('bc-run').textContent = 'Checking\u2026';
+    $('bc-run').textContent = 'Reading battery\u2026';
     exec(BC_CMD).then(function (r) {
       var b = parseKV(r.stdout), rows = [], na = 'not reported by this kernel';
       var hs = pick(b, ['battery.health', 'bms.health']), hd = HEALTH[pick(b, ['db.health'])] || '';
@@ -2423,17 +2558,21 @@ textarea:disabled{opacity:.45}
         '</table><div class="hint">Checked ' + esc(new Date().toLocaleTimeString()) +
         (full && des ? ' \u00b7 battery health is the fuel gauge\u2019s full-charge estimate divided by the design capacity' : '') + '</div></div>',
         [{ label: 'Run again', fn: runBattery }, { label: 'Close', primary: true }]);
-    }).catch(function () {}).then(function () {
+    }).catch(function (e) {
+      modal('Battery check failed', '<p>Couldn\'t read the battery sensors. ' + esc(e && e.message ? e.message : 'The command did not answer.') +
+        '</p><p>Check that HyperCool is installed and the KernelSU manager is working, then try again.</p>',
+        [{ label: 'Close' }, { label: 'Try again', primary: true, fn: runBattery }]);
+    }).then(function () {
       $('bc-run').disabled = false;
-      $('bc-run').textContent = 'Run battery check';
+      $('bc-run').textContent = 'Run';
     });
   }
   $('bc-run').onclick = function () {
-    if (!HAS_KSU) { snack('Preview mode, needs KernelSU'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     runBattery();
   };
 
-  /* ------------------------------------------------------------ top battery use */
+  /* top battery use */
   var TD_KIND = { app: 'User app', system: 'System app', core: 'System service', hw: 'Hardware' };
   var td = { rows: [], unit: 'mAh', filter: 'all', src: '', since: '', total: 0 };
   var TD_HW = { cpu: 'CPU', screen: 'Screen', wifi: 'Wi-Fi', mobile_radio: 'Mobile network', bluetooth: 'Bluetooth', camera: 'Camera', audio: 'Audio',
@@ -2471,7 +2610,7 @@ textarea:disabled{opacity:.45}
   }
   function runTop() {
     $('td-run').disabled = true;
-    $('td-run').textContent = 'Reading\u2026';
+    $('td-run').textContent = 'Reading battery stats\u2026';
     exec('sh /data/adb/modules/' + MODID + '/common/topdrain.sh 40').then(function (r) {
       var kv = {}, rows = [], diag = [];
       r.stdout.split('\n').forEach(function (l) {
@@ -2497,17 +2636,21 @@ textarea:disabled{opacity:.45}
         td.filter = b.getAttribute('data-f');
         $('td-body').innerHTML = tdShow();
       };
-    }).catch(function () {}).then(function () {
+    }).catch(function (e) {
+      modal('Battery stats unavailable', '<p>Couldn\'t read the battery usage list. ' + esc(e && e.message ? e.message : 'The command did not answer.') +
+        '</p><p>Check that HyperCool is installed and the KernelSU manager is working, then try again.</p>',
+        [{ label: 'Close' }, { label: 'Try again', primary: true, fn: runTop }]);
+    }).then(function () {
       $('td-run').disabled = false;
-      $('td-run').textContent = 'Show top battery use';
+      $('td-run').textContent = 'Show';
     });
   }
   $('td-run').onclick = function () {
-    if (!HAS_KSU) { snack('Preview mode, needs KernelSU'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     runTop();
   };
 
-  /* ------------------------------------------------------------ charge calibration */
+  /* charge calibration */
   var calTable = {};
   function fillLevels(cur) {
     var sel = $('in-charge_cool_level');
@@ -2546,7 +2689,7 @@ textarea:disabled{opacity:.45}
       } else if (p[0] === 'done' || p[0] === 'error') {
         clearInterval(calTimer); calTimer = null;
         $('cal-btn').disabled = false;
-        if (p[0] === 'error') { el.textContent = 'Calibration stopped: ' + (p[1] || 'error'); snack('Calibration stopped'); return; }
+        if (p[0] === 'error') { el.textContent = 'Calibration stopped: ' + (p[1] || 'error'); snack('Calibration stopped. Check the note above, then start again.'); return; }
         exec('cat ' + DATA + '/charge_levels.conf 2>/dev/null').then(function (t) {
           renderCal(t.stdout);
           snack('Calibration done, applied at next boot');
@@ -2556,7 +2699,7 @@ textarea:disabled{opacity:.45}
   }
   document.addEventListener('click', function (e) {
     if (!e.target || !e.target.closest || !e.target.closest('#cal-btn')) return;
-    if (!HAS_KSU) { snack('Preview mode'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     modal('Calibrate charge levels?',
       'Keep the fast charger plugged in and the WebUI open. Every charger level is tested for about 20 seconds ' +
       '(5\u20136 minutes in total) and the real current is measured. Best below 70% battery and below 40\u00b0C. ' +
@@ -2566,7 +2709,7 @@ textarea:disabled{opacity:.45}
         exec('[ "$(cat /sys/class/power_supply/battery/status 2>/dev/null)" = Charging ] || { echo notcharging; exit 0; }; ' +
              'rm -f ' + DATA + '/charge_cal.progress; ' +
              '(nohup sh /data/adb/modules/' + MODID + '/common/charge_cal.sh >/dev/null 2>&1 &); echo started').then(function (r) {
-          if (/notcharging/.test(r.stdout)) { snack('Plug in the charger first'); return; }
+          if (/notcharging/.test(r.stdout)) { snack('Plug in the charger first, then start.'); return; }
           $('cal-btn').disabled = true;
           $('cal-info').textContent = 'Calibration started\u2026';
           if (calTimer) clearInterval(calTimer);
@@ -2576,27 +2719,31 @@ textarea:disabled{opacity:.45}
     ]);
   });
 
-  /* ------------------------------------------------------------ actions */
+  /* actions */
   $('save').onclick = function () { save(); };
   $('savereboot').onclick = function () {
-    modal(isDirty() ? 'Save and reboot?' : 'Reboot now?', 'Your choices are applied once during the next boot.', [
+    modal('Restart now?', 'Your phone restarts now. Unsaved changes are saved first.', [
       { label: 'Cancel' },
-      { label: 'Reboot', primary: true, fn: function () {
-        (isDirty() ? save() : Promise.resolve(true)).then(function (ok) { if (ok) { snack('Rebooting…'); setTimeout(reboot, 600); } });
+      { label: 'Restart', primary: true, fn: function () {
+        (isDirty() ? save() : Promise.resolve(true)).then(function (ok) { if (ok) { snack('Restarting\u2026'); setTimeout(reboot, 600); } });
       } }
     ]);
   };
   $('refresh').onclick = function () {
     exec(sensCmd()).then(function (r) { showSens(parseKV(r.stdout)); loadDrain(); loadBcal(); snack('Readings refreshed'); });
   };
+  $('loaderr-retry').onclick = function () {
+    $('loaderr').hidden = true;
+    load();
+  };
   $('t-log').onclick = function () {
     exec('cat ' + DATA + '/boot.log 2>/dev/null || echo "No log yet."').then(function (r) {
-      modal('Boot log', '<pre>' + esc(r.stdout || (HAS_KSU ? 'No log yet.' : 'Preview mode.')) + '</pre>', [{ label: 'Close', primary: true }]);
+      modal('Boot log', '<pre>' + esc(r.stdout || (HAS_KSU ? 'No log yet.' : PREVIEW_MSG)) + '</pre>', [{ label: 'Close', primary: true }]);
     });
   };
   $('t-defaults').onclick = function () { applyPreset(PRESETS[0]); };
   $('t-report').onclick = function () {
-    if (!HAS_KSU) { snack('Preview mode, nothing written'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     var D = DATA;
     exec(BK_FIND + 'f="$B/hypercool_bugreport_$(date +%Y%m%d_%H%M%S).txt"; D=' + D + '; M=/data/adb/modules/' + MODID + '; {' +
       ' echo "# HyperCool bug report $(date "+%Y-%m-%d %H:%M:%S")";' +
@@ -2615,7 +2762,7 @@ textarea:disabled{opacity:.45}
       ' } > "$f" 2>&1 || { echo "write failed" >&2; exit 4; }; echo "OK|$f"').then(function (r) {
       var m = /OK\|(.+)/.exec(r.stdout || '');
       if (m) snack('Report saved: Download/HyperCool/' + m[1].trim().split('/').pop());
-      else snack('Report failed: ' + ((r.stderr || '').trim().split('\n').pop() || 'error ' + r.errno));
+      else snack('Report failed: ' + ((r.stderr || '').trim().split('\n').pop() || 'error ' + r.errno) + '. Check free space in Download, then try again.');
     });
   };
   $('t-revert').onclick = function () {
@@ -2627,13 +2774,13 @@ textarea:disabled{opacity:.45}
         exec('sh ' + DATA + '/restore.sh --all').then(function (r) {
           F.forEach(function (f) { if (f.src === 'rom') cfg[f.k] = '0'; });
           syncInputs();
-          save().then(function () { snack(r.errno === 0 ? 'System changes reverted' : 'Revert finished with errors'); });
+          save().then(function () { snack(r.errno === 0 ? 'System changes reverted' : 'Revert finished with errors. Check the boot log, then try again.'); });
         });
       } }
     ]);
   };
 
-  /* ------------------------------------------------------------ app cache card */
+  /* app cache card */
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   function fmtTime(ep) {
     // 24-hour clock
@@ -2642,9 +2789,9 @@ textarea:disabled{opacity:.45}
     return MON[d.getMonth()] + ' ' + p2(d.getDate()) + ', ' + d.getFullYear() + ', ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
   }
   function fmtKB(kb) {
-    if (kb >= 1048576) return (kb / 1048576).toFixed(2) + ' GB';
-    if (kb >= 1024) return (kb / 1024).toFixed(kb >= 102400 ? 0 : 1) + ' MB';
-    return kb + ' KB';
+    if (kb >= 1048576) return (kb / 1048576).toFixed(2) + '\u2009GB';
+    if (kb >= 1024) return (kb / 1024).toFixed(kb >= 102400 ? 0 : 1) + '\u2009MB';
+    return kb + '\u2009KB';
   }
   var cacheTxt = '';
   function renderCache(txt) {
@@ -2673,7 +2820,7 @@ textarea:disabled{opacity:.45}
     $('cc-next').textContent = nx;
   }
   $('cc-run').onclick = function () {
-    if (!HAS_KSU) { snack('Preview mode'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     modal('Clean app cache now?', 'Every app’s cache is freed (pm trim-caches, or the cache folders directly when you keep the cache of some apps). Those apps are skipped. App data, logins and downloads are not touched. Apps rebuild their cache when they are used again.', [
       { label: 'Cancel' },
       { label: 'Clean', primary: true, fn: function () {
@@ -2690,7 +2837,7 @@ textarea:disabled{opacity:.45}
     ]);
   };
 
-  /* ------------------------------------------------------------ one-shot actions (More) */
+  /* one-shot actions (More) */
   function rcExcludes() {
     // protected apps + the components that must never be force-stopped
     var base = ['com.android.systemui', 'com.android.phone', 'android.process.acore', 'android', 'com.google.android.gms', 'com.google.android.gsf', 'com.xiaomi.xmsf', 'com.miui.powerkeeper', 'com.miui.securitycenter'];
@@ -2700,7 +2847,7 @@ textarea:disabled{opacity:.45}
     return base.concat(extra);
   }
   $('rc-run').onclick = function () {
-    if (!HAS_KSU) { snack('Preview mode'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     var mode = $('rc-mode').value;
     modal('Clean RAM now (' + mode + ')?',
       mode === 'safe'
@@ -2746,14 +2893,14 @@ textarea:disabled{opacity:.45}
             snack('RAM cleaned' + (mode === 'safe' ? '' : ', ' + m[1] + ' apps stopped') +
               (freed > 0 ? ', +' + freed + ' MB free' : ''));
           } else {
-            snack('Clean finished with errors');
+            snack('Clean finished with errors. Check the boot log, then try again.');
           }
         });
       } }
     ]);
   };
   $('t-junk').onclick = function () {
-    if (!HAS_KSU) { snack('Preview mode'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     modal('Clean junk files now?',
       'Deletes crash dumps, ANR traces, tombstones, dropbox entries, WLAN and thermal logs, stale package cache, clears the logcat/dmesg buffers and runs fstrim on /data and /cache. Personal files are not touched.', [
       { label: 'Cancel' },
@@ -2774,10 +2921,14 @@ textarea:disabled{opacity:.45}
     ]);
   };
 
-  /* ------------------------------------------------------------ navigation */
+  /* navigation */
   function showPage(p) {
     document.querySelectorAll('.page').forEach(function (s) { s.classList.toggle('active', s.id === 'page-' + p); });
-    document.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-page') === p); });
+    document.querySelectorAll('.tab').forEach(function (t) {
+      var on = t.getAttribute('data-page') === p;
+      t.classList.toggle('active', on);
+      if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+    });
     window.scrollTo(0, 0);
   }
   document.querySelectorAll('.tab').forEach(function (t) {
@@ -2810,7 +2961,7 @@ textarea:disabled{opacity:.45}
     }, { passive: true });
   })();
 
-  /* ------------------------------------------------------------ feature search */
+  /* feature search */
   var SEC_T = {};
   SECTIONS.forEach(function (x) { SEC_T[x.id] = x.title; });
   function srchText(f) {
@@ -2879,11 +3030,19 @@ textarea:disabled{opacity:.45}
         var el = m.target, open = el.classList.contains('show'), i = stack.indexOf(el);
         if (open && i < 0) {
           stack.push(el);
+          el._hcReturn = document.activeElement;
+          var first = [].filter.call(el.querySelectorAll('input,select,textarea,button,[tabindex]:not([tabindex="-1"])'), function (n) {
+            return !n.disabled && !n.classList.contains('sr-only');
+          })[0];
+          if (first) setTimeout(function () { try { first.focus(); } catch (e) {} }, 30);
           try { history.pushState({ hc: el.id }, ''); } catch (e) {}
         } else if (!open && i >= 0) {
           stack.splice(i, 1);
           if (!el.hcByBack) { skip++; try { history.back(); } catch (e) { skip--; } }
           el.hcByBack = false;
+          var back = el._hcReturn;
+          el._hcReturn = null;
+          if (back && back.focus) setTimeout(function () { try { back.focus(); } catch (e) {} }, 0);
         }
       });
     });
@@ -2891,7 +3050,8 @@ textarea:disabled{opacity:.45}
     window.addEventListener('popstate', function () {
       if (skip > 0) { skip--; return; }
       var el = stack[stack.length - 1];
-      if (el) { el.hcByBack = true; el.classList.remove('show'); }
+      if (el) { el.hcByBack = true; el.classList.remove('show'); return; }
+      if (isDirty() && !document.querySelector('.modal.show')) showDiscard();
     });
   })();
   $('srch-in').addEventListener('keydown', function (e) {
@@ -2899,7 +3059,7 @@ textarea:disabled{opacity:.45}
     if (e.key === 'Enter') { var g = $('srch-list').querySelector('[data-go]'); if (g) srchGo(g.getAttribute('data-go')); }
   });
 
-  /* top-right module state, like the status pill in the reference design */
+  /* module state in the header */
   function updateState() {
     markPresets();
     var el = $('mstate');
@@ -2911,14 +3071,14 @@ textarea:disabled{opacity:.45}
       return last[k] !== undefined && String(cfg[k]) !== String(last[k]);
     }));
     if (!HAS_KSU) { cls = 'idle'; txt = 'Preview'; }
-    else if (pend) { cls = 'warn'; txt = 'Reboot to apply'; }
+    else if (pend) { cls = 'warn'; txt = 'Restart to apply'; }
     else if (c.total && c.failed) { cls = 'bad'; txt = c.failed + ' failed'; }
     else if (c.total) { cls = 'ok'; txt = 'Active'; }
     el.className = 'state ' + cls;
     el.innerHTML = '<i></i><span>' + esc(txt) + '</span>';
   }
 
-  /* ------------------------------------------------------------ config backup / restore */
+  /* config backup / restore */
   // first existing Download folder, works in the KernelSU WebUI shell
   var BK_FIND = 'B=""; for d in /sdcard/Download /storage/emulated/0/Download /data/media/0/Download; do ' +
     '[ -d "$d" ] && { B="$d/HyperCool"; break; }; done; [ -n "$B" ] || { echo "no Download folder" >&2; exit 2; }; ' +
@@ -2926,7 +3086,7 @@ textarea:disabled{opacity:.45}
   var SAFE_PATH = /^[A-Za-z0-9_\/.\-]+$/;
 
   function backupCfg() {
-    if (!HAS_KSU) { snack('Preview mode, nothing written'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     var head = '# HyperCool settings backup ' + new Date().toISOString().replace('T', ' ').slice(0, 16) +
       ' (HyperCool ' + (document.querySelector('[data-ver]').textContent || '') + ')';
     var lines = [head].concat(buildConfig().replace(/\n$/, '').split('\n')).map(function (l) {
@@ -2944,7 +3104,7 @@ textarea:disabled{opacity:.45}
         var name = m[1].trim().split('/').pop();
         snack('Backup saved: Download/HyperCool/' + name);
       } else {
-        snack('Backup failed: ' + ((r.stderr || '').trim().split('\n').pop() || 'error ' + r.errno));
+        snack('Backup failed: ' + ((r.stderr || '').trim().split('\n').pop() || 'error ' + r.errno) + '. Check free space in Download, then try again.');
       }
     });
   }
@@ -2955,7 +3115,7 @@ textarea:disabled{opacity:.45}
   }
 
   function openRestore() {
-    if (!HAS_KSU) { snack('Preview mode'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     exec(BK_FIND + 'echo "DIR|$B"; for f in $(ls -1t "$B"/hypercool_*.conf 2>/dev/null); do ' +
       'echo "F|$f|$(grep -c "^[a-z0-9_]*=" "$f")|$(grep -c "^cal_" "$f")"; done').then(function (r) {
       var dir = '', rows = [];
@@ -3000,7 +3160,7 @@ textarea:disabled{opacity:.45}
     var kv = parseKV(text);
     var d = defaults();
     var known = Object.keys(d).filter(function (k) { return kv[k] !== undefined; }).length;
-    if (known < 5) { snack('This file is not a HyperCool backup'); return; }
+    if (known < 5) { snack('This file is not a HyperCool backup. Choose a hypercool_*.conf file.'); return; }
     kv = migrate(kv);
     Object.keys(d).forEach(function (k) {
       if (kv[k] === undefined) return;
@@ -3025,15 +3185,15 @@ textarea:disabled{opacity:.45}
     modal('Import settings',
       '<div class="hint" style="margin-bottom:10px">Choose a <b>hypercool_*.conf</b> file from your phone, or paste the backup text below. ' +
       'Nothing is applied until you press Save.</div>' +
-      '<label class="btn tonal" style="display:block;text-align:center;margin-bottom:10px">Choose file' +
-      '<input type="file" id="imp-file" accept=".conf,.txt,text/plain,*/*" style="display:none"></label>' +
+      '<label class="btn tonal filepick" style="display:block;text-align:center;margin-bottom:10px">Choose file' +
+      '<input type="file" id="imp-file" class="sr-only" accept=".conf,.txt,text/plain,*/*"></label>' +
       '<div class="hint" id="imp-info" style="margin-bottom:6px">No file chosen</div>' +
-      '<textarea id="imp-text" rows="7" spellcheck="false" placeholder="# HyperCool settings backup ..." ' +
-      'style="width:100%;box-sizing:border-box;border-radius:14px;border:1px solid var(--line,#5a4650);background:var(--surf3);' +
-      'color:var(--on);padding:10px;font:12px/1.4 monospace;resize:vertical"></textarea>',
+      '<textarea id="imp-text" rows="7" spellcheck="false" placeholder="# HyperCool settings backup ..." aria-label="Backup text" ' +
+      'style="width:100%;box-sizing:border-box;border-radius:var(--r-input);border:1px solid var(--line,#5a4650);background:var(--surf3);' +
+      'color:var(--on);padding:10px;font:13px/1.4 monospace;resize:vertical"></textarea>',
       [{ label: 'Cancel' }, { label: 'Import', primary: true, fn: function () {
         var t = ($('imp-text') || {}).value || '';
-        if (!t.trim()) { snack('Nothing to import'); return; }
+        if (!t.trim()) { snack('Nothing to import. Paste a backup or choose a file.'); return; }
         applyBackupText(t);
       } }]);
   }
@@ -3065,19 +3225,34 @@ textarea:disabled{opacity:.45}
     });
   }
   document.querySelectorAll('[data-url]').forEach(function (el) {
+    el.setAttribute('role', 'link');
+    el.tabIndex = 0;
     el.onclick = function () { openUrl(el.getAttribute('data-url')); };
   });
+  document.querySelectorAll('.press').forEach(function (el) {
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+    if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var t = e.target;
+    if (!t || !t.closest) return;
+    var host = t.closest('.press,[data-exp],[data-c]');
+    if (host) {
+      e.preventDefault();
+      host.click();
+    }
+  });
   $('t-reboot').onclick = function () {
-    modal('Reboot now?', isDirty() ? 'You have unsaved changes. They will be saved first, then applied during boot.'
-      : 'Saved options are applied once during the next boot.', [
+    modal('Restart now?', 'Your phone restarts now. Unsaved changes are saved first.', [
       { label: 'Cancel' },
-      { label: 'Reboot', primary: true, fn: function () {
-        (isDirty() ? save() : Promise.resolve(true)).then(function (ok) { if (ok) { snack('Rebooting…'); setTimeout(reboot, 600); } });
+      { label: 'Restart', primary: true, fn: function () {
+        (isDirty() ? save() : Promise.resolve(true)).then(function (ok) { if (ok) { snack('Restarting\u2026'); setTimeout(reboot, 600); } });
       } }
     ]);
   };
 
-  /* ------------------------------------------------------------ optimize apps (dex2oat) */
+  /* optimize apps (dex2oat) */
   var dx = { timer: null, labels: {}, phase: 'none', sel: [] };
   var DX_SH = 'sh /data/adb/modules/' + MODID + '/common/dexopt.sh';
   var DX_WHY = { user: 'Stopped by you', battery: 'Stopped: battery at 15% or lower and not charging', storage: 'Stopped: less than 1 GB free storage', noapps: 'No apps found', killed: 'Interrupted' };
@@ -3202,10 +3377,10 @@ textarea:disabled{opacity:.45}
     } });
   };
   $('dx-start').onclick = function () {
-    if (!HAS_KSU) { snack('Preview mode'); return; }
+    if (!HAS_KSU) { snack(PREVIEW_MSG); return; }
     var mode = $('dx-mode').value, jobs = $('dx-jobs').value, force = (mode !== 'reset' && $('dx-force').checked) ? 1 : 0;
     var picked = $('dx-scope').value === 'sel';
-    if (picked && !dx.sel.length) { snack('Choose apps first'); return; }
+    if (picked && !dx.sel.length) { snack('Choose apps first, then start.'); return; }
     var who = picked ? (dx.sel.length === 1 ? '1 chosen app' : dx.sel.length + ' chosen apps') : 'Every app, system apps included';
     var body = mode === 'reset'
       ? (picked ? 'The ' + who + ' go' : 'Every app goes') + ' back to the default compilation of the ROM. Apps start a bit slower until Android compiles them again while idle and charging. Nothing is broken by this.'
@@ -3233,7 +3408,7 @@ textarea:disabled{opacity:.45}
   };
 
 
-  /* ------------------------------------------------------------ appearance */
+  /* appearance */
   var CK = '<span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>';
   function apRefresh() {
     var T = window.HCTheme, s = T.get();
@@ -3253,14 +3428,14 @@ textarea:disabled{opacity:.45}
     var T = window.HCTheme;
     function body() {
       var s = T.get(), dark = T.isDark();
-      return '<div class="aprow" data-a="master"><div class="l"><b>Use dark theme</b><span>' + (dark ? 'On' : 'Off') + '</span></div>' + swHtml('ap-m-sw') + '</div>' +
+      return '<div class="aprow" data-a="master"><div class="l"><b>Use dark theme</b><span>' + (dark ? 'On' : 'Off') + '</span></div>' + swHtml('ap-m-sw', 'Use dark theme') + '</div>' +
         '<div class="apsep"></div>' +
         '<div class="apnote" style="margin-bottom:6px">Dark style</div>' +
-        '<div class="apseg"><button data-v="standard" class="' + (s.v === 'standard' ? 'on' : '') + '">Standard</button>' +
-        '<button data-v="amoled" class="' + (s.v === 'amoled' ? 'on' : '') + '">AMOLED</button></div>' +
+        '<div class="apseg"><button data-v="standard" aria-pressed="' + (s.v === 'standard' ? 'true' : 'false') + '" class="' + (s.v === 'standard' ? 'on' : '') + '">Standard</button>' +
+        '<button data-v="amoled" aria-pressed="' + (s.v === 'amoled' ? 'true' : 'false') + '" class="' + (s.v === 'amoled' ? 'on' : '') + '">AMOLED</button></div>' +
         '<div class="apnote">AMOLED uses a pure black background and saves battery on OLED screens.</div>' +
         '<div class="apsep"></div>' +
-        '<div class="aprow" data-a="auto"><div class="l"><b>Follow system</b><span>Match your device\'s dark or light theme</span></div>' + swHtml('ap-a-sw') + '</div>';
+        '<div class="aprow" data-a="auto"><div class="l"><b>Follow system</b><span>Match your device\'s dark or light theme</span></div>' + swHtml('ap-a-sw', 'Follow system') + '</div>';
     }
     function wire() {
       var s = T.get();
@@ -3292,7 +3467,7 @@ textarea:disabled{opacity:.45}
     function body() {
       var c = T.get().c, h = '';
       function row(id, name, sub, sw) {
-        return '<div class="aprow' + (c === id ? ' sel' : '') + '" data-c="' + id + '"><span class="cs" style="background:' + sw + '"></span>' +
+        return '<div class="aprow' + (c === id ? ' sel' : '') + '" data-c="' + id + '" role="button" tabindex="0" aria-pressed="' + (c === id ? 'true' : 'false') + '"><span class="cs" style="background:' + sw + '"></span>' +
           '<div class="l"><b>' + esc(name) + '</b>' + (sub ? '<span>' + esc(sub) + '</span>' : '') + '</div>' + CK + '</div>';
       }
       var dsub = T.hasRoles() ? 'Theme extracted from your wallpaper' : (T.hasMonet() ? 'Generated from your wallpaper accent' : 'Wallpaper colors not found, using the default look');
@@ -3305,10 +3480,13 @@ textarea:disabled{opacity:.45}
     function wire() {
       Array.prototype.forEach.call($('m-body').querySelectorAll('.aprow'), function (r) {
         r.onclick = function () {
-          T.set({ c: r.getAttribute('data-c') });
+          var id = r.getAttribute('data-c');
+          T.set({ c: id });
           apRefresh();
           $('m-body').innerHTML = body(); wire();
-          if (r.getAttribute('data-c') === 'dynamic') monetRefresh(true, function () { if ($('m-body').querySelector('.aprow[data-c]')) { $('m-body').innerHTML = body(); wire(); } });
+          var next = $('m-body').querySelector('.aprow[data-c="' + id + '"]');
+          if (next && document.activeElement === document.body) next.focus();
+          if (id === 'dynamic') monetRefresh(true, function () { if ($('m-body').querySelector('.aprow[data-c]')) { $('m-body').innerHTML = body(); wire(); } });
         };
       });
     }
@@ -3339,13 +3517,20 @@ textarea:disabled{opacity:.45}
   apRefresh();
   monetRefresh();
 
-  /* ------------------------------------------------------------ boot */
-  renderPresets();
-  cfg = defaults();
-  saved = copy(cfg);
-  render();
-  load();
-  dxInit();
+  /* boot */
+  try {
+    renderPresets();
+    cfg = defaults();
+    saved = copy(cfg);
+    render();
+    load();
+    dxInit();
+  } catch (e) {
+    $('dev').textContent = 'Settings not loaded';
+    $('devsub').textContent = '';
+    $('loaderr-msg').textContent = (e && e.message ? e.message : 'The page could not start.') + ' Open the page again from the KernelSU manager.';
+    $('loaderr').hidden = false;
+  }
 })();
 
 
