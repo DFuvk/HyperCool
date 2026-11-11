@@ -1,6 +1,35 @@
 # Changelog
 
-> Current build: **v2.2.3 (223)**.
+> Current build: **v2.2.4 (224)**.
+
+## v2.2.4 (224)
+
+- WebUI: every feature description rewritten in plain wording. Each card says in one line what the feature does, what it changes and what happens when the ROM does not support it. Section titles use "and" instead of "&".
+- WebUI: the Home cards have real titles again ("Battery health", "Top battery use"). The repeated "Battery check" / "Check battery" wording is gone.
+- WebUI: the More tab is now called Extras (layers icon).
+- WebUI: the preset cards (Recommended, Max battery, Cool gaming, Kernel only, All off) have a detail button that lists exactly what the preset switches on and what it leaves alone.
+- WebUI: the repeated intro line above the detail panels is removed and empty detail panels are no longer shown.
+- WebUI: plain text instead of marketing wording ("Calmer", "Silence", "Lighter", "Deep", "Runtime power" are gone), minimum 13 px body text, 44 px tap targets, one status pill and one tag per row, clearer hero stats, a solid title and role-based corner radii.
+- WebUI: the dialog keeps the focus inside, Escape closes it, the Android back button closes the open dialog instead of leaving the WebUI, the switch thumb is centered in the off position, keyboard rows work and the snackbar is announced.
+- WebUI: a failed command is reported as an error. Battery check, Top battery use, Idle drain, Clean cache, the app-optimization status and the sensor refresh no longer show an empty result when the command fails; dumpsys batterystats gets a 25 s timeout.
+- WebUI: the battery health words of dumpsys battery (GOOD, Over voltage, ...) are shown instead of an empty field.
+- Fixed: the wake-lock rows of Top battery use show the app again. The id was read with the trailing colon, so every wake lock was listed as "isolated / other process".
+- Fixed: Top battery use no longer mixes up work-profile apps with the apps of user 0.
+- Fixed: the app cache size is measured for every user (clones, work profile), so the result, the minimum size limit and the notification are right. Hidden files are no longer lost when an interrupted cache folder is restored.
+- Fixed: Location and Bluetooth off keeps a radio that could not be put back in its list and tries again at the next screen-on or boot. In airplane mode the Bluetooth entry is kept for later.
+- Fixed: the app optimization (dex2oat) stops when the battery level, the free space or the temperature cannot be read, instead of running without any limit.
+- Fixed: the screen-off keeper no longer counts a value it could not write, and a value it could not put back is retried later. Keep Wi-Fi on only counts as re-enabled when Wi-Fi is really on.
+- Fixed: the adaptive refresh rate keeper reads the rate back (a refused write is retried), notices a disabled module within a minute instead of up to ten, and stops when the event filter dies.
+- Fixed: the F2FS GC marker is kept when the device cannot be reached, so gc_urgent cannot stay at 1.
+- Fixed: the RAM optimizer really restores the lmkd props (ro.lmk.*) when the switch goes off or the module is removed.
+- Fixed: the deep log cleanup is only reported as applied when something was really turned off.
+- Fixed: the VM tuning status says "stock" instead of "writeback 0s" (0 = keep the stock value), and GMS Doze shows Partial instead of Applied when GMS is still in the system Doze whitelist.
+- Fixed: the post-fs-data marker is only accepted when it holds this boot's id, so a leftover marker no longer makes the module apply the previous boot's config.
+- Fixed: the log timestamps use Android's own timezone (persist.sys.timezone) instead of the zone of the root shell.
+- Fixed: Scheduler and governor tuning no longer overwrites hispeed_load and up_rate_limit while the less aggressive CPU governor owns them.
+- Fixed: Fewer background jobs keeps the JobScheduler keys that took effect (Partial) instead of putting every key back and reporting Unsupported.
+- Changed: the README no longer lists the removed "charge hold" feature, and the Specter credit is gone.
+
 
 ## v2.2.3 (223)
 
