@@ -178,9 +178,13 @@ Turning a feature off puts the original value back. Unsupported features are ski
 - Xtreme Battery Saver (DethByte64), Universal GMS Doze, sysconfig-patcher
 
 ## Support
-- SociaBuzz: https://sociabuzz.com/yudharn
-- PayPal (Ko-fi): https://ko-fi.com/yudharn
-- QRIS: https://t.me/ArchivesModules/1476
+
+> [!NOTE]
+> If HyperCool is useful to you, consider supporting development:
+>
+> <a href="https://ko-fi.com/yudharn"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi"></a>
+
+Other ways to support: [SociaBuzz](https://sociabuzz.com/yudharn) · [QRIS](https://t.me/ArchivesModules/1476)
 
 Telegram: https://t.me/ModuleArchives
 
