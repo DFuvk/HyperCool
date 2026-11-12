@@ -1,8 +1,8 @@
 # Changelog
 
-> Current build: **v2.2.4 (224)**.
+> Current build: **v2.2.5 (225)**.
 
-## v2.2.5 (unreleased)
+## v2.2.5 (225)
 
 - Fixed: ZRAM keeps priority -2 when possible. The module tries `swapon -p -2`, checks the live value in `/proc/swaps`, and falls back to the kernel default; the status names the swap that already holds -2 instead of claiming it.
 - Fixed: the background-app compaction check no longer overflows on large-RAM devices, and battery calibration skips an unreadable temperature instead of calculating with it.
