@@ -144,7 +144,7 @@ wifi_check() {
   sleep 2
   [ "$(wifi_now)" = off ] || return 0
   scr_off_real || return 0
-  # 3 re-enables in 10 min: the ROM keeps switching it off, pause 5 min
+  # 3 attempts in 10 min: the ROM keeps switching it off, pause 5 min
   _wk=""; _wc=0
   for _wt in $_wrec; do
     [ $((_wn - _wt)) -lt 600 ] && { _wk="$_wk $_wt"; _wc=$((_wc + 1)); }
@@ -154,10 +154,17 @@ wifi_check() {
     return 0
   fi
   svc wifi enable </dev/null >/dev/null 2>&1
-  sleep 1
-  # only a Wi-Fi that is really on again counts as a re-enable
-  if [ "$(wifi_now)" = on ]; then
-    _wrec="$_wk $_wn"; _wcnt=$((_wcnt + 1)); _wlast=$(date '+%H:%M:%S')
+  # every attempt counts for the limiter, even when the radio takes longer than 1 s to come up;
+  # wait up to 5 s only to report a successful re-enable in the status
+  _wi=0
+  while [ "$_wi" -lt 5 ]; do
+    sleep 1
+    [ "$(wifi_now)" = on ] && break
+    _wi=$((_wi + 1))
+  done
+  _wrec="$_wk $_wn"
+  if [ "$_wi" -lt 5 ]; then
+    _wcnt=$((_wcnt + 1)); _wlast=$(date '+%H:%M:%S')
   fi
   note ""
 }

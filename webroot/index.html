@@ -200,11 +200,11 @@ textarea:disabled{opacity:.45}
 .stats{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:0;margin-top:18px}
 .stat{display:grid;grid-template-rows:38px auto;align-content:start;min-width:0;padding:0 0 0 16px;border-left:1px solid var(--line)}
 .stat:first-child{padding-left:0;border-left:0}
-.stat b{display:flex;align-items:flex-end;min-height:38px;font-size:22px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.stat b{display:flex;align-items:flex-end;min-height:38px;font-size:22px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace}
 .stat.main b{font-size:34px}
 .stat span{font-size:13px;color:var(--on2);white-space:nowrap;margin-top:4px}
 .stat b{white-space:nowrap}
-.stat b small{font-size:13px;font-weight:400;color:var(--on2);margin-left:2px}
+.stat b small{font-size:13px;font-weight:400;color:var(--on2);margin-left:2px;font-family:'Google Sans','Google Sans Text',Roboto,system-ui,sans-serif}
 .summary{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:14px}
 .idle{margin-top:14px;font-size:13px;line-height:1.45;color:var(--on2)}
 .idle:empty{display:none}
@@ -1148,7 +1148,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     { k: 'x_zram', s: 'xram', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'ZRAM size and compression',
       d: 'The swap area is rebuilt with your chosen size and compression algorithm.',
-      x: 'The swap priority is -2. lz4 is the lightest on CPU. The ROM zram is back after a reboot when off.',
+      x: 'The swap priority follows the kernel default (usually -1); the live value is shown below. lz4 is the lightest on CPU. The ROM zram is back after a reboot when off.',
       fields: [{ k: 'x_zram_size', label: 'Size', def: '4', sel: [['2', '2 GB'], ['3', '3 GB'], ['4', '4 GB'], ['5', '5 GB'], ['6', '6 GB'], ['7', '7 GB'], ['8', '8 GB'], ['0', 'Custom…']] },
                { k: 'x_zram_custom', label: 'Custom size in GB', min: 1, max: 12, def: '4', when: ['x_zram_size', '0'] },
                { k: 'x_zram_alg', label: 'Compression algorithm', def: 'lz4', sel: [['keep', 'Keep ROM default'], ['lz4', 'lz4'], ['zstd', 'zstd'], ['lzo-rle', 'lzo-rle']] }] },
@@ -1280,7 +1280,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  "x_io": "/sys/block/sd*, mmcblk*, nvme*: nomerges = 0, rq_affinity = 1",
  "x_xiaomi_fw": "migt: enable_pkg_monitor = 0, glk_freq_limit_walt = 0, boost_policy = 0, glk_disable = 1, force_stask_to_big = 0|metis: suspend_vip_enable = 0, mi_link_enable = 0, mi_switch_enable = 0",
  "x_ram_opt": "vm: vfs_cache_pressure 80, overcommit 1/75, watermark_boost_factor 0|device_config: usap_pool_enabled = false, use_compaction = true (restored when off)|classic LMK minfree, or lmkd ro.lmk.* props by level (runtime only, lmkd.reinit; the old values are put back when the switch goes off)|vendor reclaim off: process_reclaim, mi_reclaim, memplus, opchain",
- "x_zram": "runs right when Android finishes booting (before the apply delay), while zram is still almost empty, and checks again after the delay in case the ROM set its own zram again|swapoff zram0 only when what is in zram fits back into RAM with ~400 MB to spare (Android may close background apps), reset|comp_algorithm = chosen algorithm (only if the kernel lists it), disksize = 2-8 GB or custom 1-12 GB, backing_dev kept|mkswap + swapon: priority -2 (first swap device)|ROM zram put back if the kernel refuses; ROM zram returns after a reboot when off",
+ "x_zram": "runs right when Android finishes booting (before the apply delay), while zram is still almost empty, and checks again after the delay in case the ROM set its own zram again|swapoff zram0 only when what is in zram fits back into RAM with ~400 MB to spare (Android may close background apps), reset|comp_algorithm = chosen algorithm (only if the kernel lists it), disksize = 2-8 GB or custom 1-12 GB, backing_dev kept|mkswap + swapon: the kernel's default priority (usually -1); the live value is shown|ROM zram put back if the kernel refuses; ROM zram returns after a reboot when off",
  "x_multitask": "device_config activity_manager max_cached_processes = stock x 125/100/75% (min 8, restored when off)|no memory-factor override (any override is cleared)",
  "x_gms_freeze": "pm disable --user 0 for the components in common/x_gms_safe.txt|components removed from the list are enabled again|every component re-enabled (pm enable) when the switch goes off, on Revert, or on uninstall",
  "x_track": "settings global = 0: play_store_panel_logging_enabled, clearcut_events, clearcut_gcm, bugreport_in_power_menu|gms_checkin_timeout_min = 120|all restored when switched off",
@@ -1298,7 +1298,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  "boot_notify": "after the one-shot apply: cmd notification post as the shell user, tag hc_boot, text = features applied / partly applied / failed|nothing else changes",
  "x_rpm": "/sys/bus/usb, i2c and spi devices/*/power/control = auto (only devices with runtime PM)|left on: input devices (touch, keys, HID), USB audio / HID / video / wireless, and touch, fingerprint, NFC, audio, haptics, charger and PMIC drivers|stock values return after a reboot when off",
  "x_vm_lite": "vm.page-cluster = 0|vm.compaction_proactiveness = 0 (kernel 5.9+)|stock values return after a reboot when off",
- "x_cache_auto": "keeper common/cache_clean.sh: sleeps 15 min steps (first check 15 min after boot), every x_cache_days days (1-7) runs: du of /data/data/*/cache + /data/media/0/Android/data/*/cache, pm trim-caches (Android frees app caches), du again|result in /data/adb/hypercool/cache_clean.last (cleared KB, apps, time)|skipped when the total cache is below the minimum|keeper stops when switched off (at its next check), when the module is disabled or removed",
+ "x_cache_auto": "keeper common/cache_clean.sh: sleeps 15 min steps (first check 15 min after boot), every x_cache_days days (1-7) runs: du of /data/user/*/*/cache, /data/user_de/*/*/cache and /data/media/*/Android/data/*/cache (all users and volumes); with an empty keep list pm trim-caches (Android frees app caches), with a keep list it empties the other cache folders itself (listed apps are not touched); du again|result in /data/adb/hypercool/cache_clean.last (cleared KB, apps cleaned, time, apps scanned)|skipped when the total cache is below the minimum|keeper stops when switched off (at its next check), when the module is disabled or removed",
  "x_props": "runtime props from common/x_props.txt via resetprop -n (never persisted, gone on reboot)|debug.sf/hwc show+dump flags (not gpu_comp_tiling / disable_backpressure), stagefright, profiler.*, brcm/oem dumps, service logging, detailed log_* outputs, lmk/dalvik debug props",
 };
 

@@ -146,7 +146,7 @@ x_restore_props() {
   rm -f "$HC_DATA/persist_props"
 }
 
-# x_ram_opt - RAM optimizer: VM list, zram, LMK/minfree, lmkd, reclaim
+# x_ram_opt - RAM optimizer: VM list, LMK/minfree, lmkd, reclaim
 f_x_ram_opt() {
   if ! on x_ram_opt; then
     restore_feature x_ram_opt
@@ -227,7 +227,7 @@ f_x_ram_opt() {
     [ -e "$_n" ] && wn "$_n" 0
   done
 
-  fin x_ram_opt "VM/zram/LMK tuned for $_lvlname ($((_tk / 1024)) MB RAM)"
+  fin x_ram_opt "VM/LMK tuned for $_lvlname ($((_tk / 1024)) MB RAM)"
 }
 
 # x_multitask - cached-process limits profile
@@ -487,7 +487,7 @@ f_x_vm_lite() {
   fin x_vm_lite "$_d"
 }
 
-# x_zram - zram size, compression algorithm and swap order (priority -2)
+# x_zram - zram size, compression algorithm and swap order (kernel default priority)
 hc_zram_back() { # put a zram setup back: <alg> <bytes> <backing_dev>
   { echo 1 > /sys/block/zram0/reset; } 2>/dev/null
   [ -n "$3" ] && [ "$3" != none ] && { echo "$3" > /sys/block/zram0/backing_dev; } 2>/dev/null
@@ -511,8 +511,8 @@ f_x_zram() {
   _csz=$(rd "$_z/disksize")
   _cpr=$(awk '$1 ~ /\/zram0$/ {print $5}' /proc/swaps 2>/dev/null)
   _was="was $(awk -v b="${_csz:-0}" 'BEGIN { m = b / 1048576; if (m >= 1024) printf "%.1f GB", m / 1024; else printf "%d MB", m }' | sed 's/\.0 GB/ GB/') ${_calg:-?}${_cpr:+, priority $_cpr}"
-  if [ "$_csz" = "$_want" ] && [ "$_calg" = "$_alg" ] && [ "$_cpr" = "-2" ]; then
-    cnt_ok; fin x_zram "zram0 $_gb GB $_alg, priority -2 (already set)"; return
+  if [ "$_csz" = "$_want" ] && [ "$_calg" = "$_alg" ] && [ -n "$_cpr" ]; then
+    cnt_ok; fin x_zram "zram0 $_gb GB $_alg, priority ${_cpr:-?} (already set)"; return
   fi
   # data already in zram must fit back into RAM before the swap can be switched off
   _used=$(awk '$1 ~ /\/zram0$/ {print $4}' /proc/swaps 2>/dev/null)
@@ -534,8 +534,7 @@ f_x_zram() {
     _nalg=$(sed -n 's/.*\[\([^]]*\)\].*/\1/p' "$_z/comp_algorithm" 2>/dev/null)
     _npr=$(awk '$1 ~ /\/zram0$/ {print $5}' /proc/swaps 2>/dev/null)
     cnt_ok
-    _n=""; [ "$_npr" != "-2" ] && _n="; another swap device took -2"
-    fin x_zram "zram0 $_gb GB ${_nalg:-$_alg}, priority ${_npr:-?} ($_was)$_n"
+    fin x_zram "zram0 $_gb GB ${_nalg:-$_alg}, priority ${_npr:-?} ($_was)"
   else
     hc_zram_back "$_calg" "$_csz" "$_bd"
     st x_zram failed "kernel refused $_gb GB / $_alg; ROM zram put back ($_was)"
@@ -641,7 +640,9 @@ f_x_cache_notify() {
 # audio / HID / video / wireless interfaces, and touch, fingerprint, NFC, audio, haptics and charger
 # chips matched by driver name. Kernel nodes: stock values return after a reboot when off.
 hc_rpm_skip() {
-  ls -d "$1"/input* "$1"/*/input* >/dev/null 2>&1 && return 0
+  for _hi in "$1"/input* "$1"/*/input*; do
+    [ -e "$_hi" ] && return 0
+  done
   for _ic in "$1"/bInterfaceClass "$1"/*/bInterfaceClass; do
     [ -f "$_ic" ] || continue
     case "$(cat "$_ic" 2>/dev/null)" in 01|03|0e|e0) return 0 ;; esac
