@@ -78,12 +78,13 @@ function sysname(u) {
 function lab(uid, u,   app) {
   if (uid < 0) { K = "core"; L = "isolated / other process"; return }
   if (uid < 10000) { K = "core"; L = sysname(uid); return }
-  # the package map is keyed by the full uid (user * 100000 + app id), so look it up as it is:
-  # with uid % 100000 an app of user 10 would get the package of user 0
-  if (uid in pk) {
-    K = pk[uid]; L = pn[uid]
-    if (cnt[uid] > 1) L = L " +" (cnt[uid] - 1)
-  } else { app = uid % 100000; K = "app"; L = "uid " uid " (package not found)" }
+  # pk/pn/cnt are keyed by app id (uid % 100000) from user 0's package list;
+  # app id is the same across all users, so look up by app id, not full uid
+  app = uid % 100000
+  if (app in pk) {
+    K = pk[app]; L = pn[app]
+    if (cnt[app] > 1) L = L " +" (cnt[app] - 1)
+  } else { K = "app"; L = "uid " uid " (package not found)" }
   if (u > 0) L = L " (user " u ")"
 }
 EOF
