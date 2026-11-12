@@ -17,8 +17,11 @@ memk() { # <MemTotal|MemAvailable> -> kB
 }
 compact_low_ram() {
   _ct=$(memk MemTotal); _ca=$(memk MemAvailable)
-  case "$_ct$_ca" in ''|*[!0-9]*) return 1 ;; esac
-  [ "$_ct" -gt 0 ] && [ $((_ca * 100)) -lt $((_ct * LOWPCT)) ]
+  case "$_ct" in ''|*[!0-9]*) return 1 ;; esac
+  case "$_ca" in ''|*[!0-9]*) return 1 ;; esac
+  [ "$_ct" -gt 0 ] || return 1
+  # mksh uses 32-bit signed math: _ca * 100 overflows above ~21.5 GB, so compare in awk
+  awk -v a="$_ca" -v t="$_ct" -v p="$LOWPCT" 'BEGIN { if (a * 100 < t * p) exit 0; exit 1 }'
 }
 # uid_of <proc dir>: first number of the Uid line, empty when unreadable
 uid_of() {

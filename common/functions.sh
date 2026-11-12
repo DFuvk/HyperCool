@@ -1327,7 +1327,11 @@ f_gms_doze_verify() {
       dumpsys deviceidle sys-whitelist +"$_g" </dev/null >/dev/null 2>&1
       log "gms_doze: GMS returned to the system Doze whitelist (unrecorded removal)"
     fi
-    restore_feature gms_doze
+    if restore_feature gms_doze; then
+      st gms_doze off
+    else
+      st gms_doze failed "some Doze whitelist changes could not be restored"
+    fi
     return
   fi
   _mounted=none

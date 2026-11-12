@@ -51,7 +51,15 @@ meas() {
 # charging direction differs per device: taken from level 0 (full charging)
 SIGN=1
 
-T0=$(( $(cat $B/temp 2>/dev/null || echo 0) / 10 ))
+# battery temp in tenths of a degree; an empty or non-numeric node must not reach shell arithmetic
+batt_temp() {
+  _bt=$(cat "$B/temp" 2>/dev/null)
+  case "$_bt" in ''|-) return 1 ;; esac
+  case "${_bt#-}" in *[!0-9]*) return 1 ;; esac
+  echo "$_bt"
+}
+
+if _t0=$(batt_temp); then T0=$((_t0 / 10)); else T0="?"; fi
 C0=$(cat $B/capacity 2>/dev/null)
 {
   echo "# HyperCool charge level calibration $(date '+%Y-%m-%d %H:%M')"
@@ -79,7 +87,7 @@ while [ "$L" -lt "$MAX" ]; do
   L=$((L + 1))
 done
 
-T1=$(( $(cat $B/temp 2>/dev/null || echo 0) / 10 ))
+if _t1=$(batt_temp); then T1=$((_t1 / 10)); else T1="?"; fi
 echo "# end: $(cat $B/capacity 2>/dev/null)% ${T1}C" >> "$TMP"
 mv -f "$TMP" "$OUT"
 DONE=1

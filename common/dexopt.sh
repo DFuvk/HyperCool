@@ -91,9 +91,14 @@ notify() {
     cmd notification post -S bigtext -t HyperCool hc_dex "$1" </dev/null >/dev/null 2>&1
 }
 
+# automatic: 3 h; manual: 12 h. A killed run must not hold the wake lock until the next reboot.
 lock() {
   [ -w /sys/power/wake_lock ] || return 0
-  if [ "$AUTO" = 1 ]; then echo "$WL 10800000000000" > /sys/power/wake_lock 2>/dev/null; else echo "$WL" > /sys/power/wake_lock 2>/dev/null; fi
+  if [ "$AUTO" = 1 ]; then
+    echo "$WL 10800000000000" > /sys/power/wake_lock 2>/dev/null
+  else
+    echo "$WL 43200000000000" > /sys/power/wake_lock 2>/dev/null
+  fi
 }
 unlock() { [ -w /sys/power/wake_unlock ] && echo "$WL" > /sys/power/wake_unlock 2>/dev/null; }
 
