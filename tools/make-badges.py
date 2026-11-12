@@ -7,8 +7,9 @@ background rectangles get a rounded clip path, and crispEdges is replaced so
 the corners are anti-aliased. Everything else (values, logos, colours, fonts)
 stays whatever shields.io returns, so the badge content is always current.
 
-Run it by hand after a release, or let .github/workflows/badges.yml do it on a
-schedule. A badge that cannot be fetched is left untouched.
+Run it by hand after a release, or let .github/workflows/badges.yml do it
+daily, on every release, and on demand. A badge that cannot be fetched is left
+untouched.
 """
 
 import pathlib
