@@ -19,11 +19,11 @@ notify() {
 }
 
 # "package kb" for every app cache dir (internal + external storage)
+# du covers every user (clones, work profile), CE and DE storage, external storage; /data/data is
+# left out because it is a symlink to /data/user/0 and would count user 0 twice.
 measure() {
-  # every user (clones, work profile): the clean empties /data/media/*/... too, so it has to be
-  # measured there as well - otherwise the result and the x_cache_min limit are wrong
-  du -sk /data/data/*/cache /data/media/*/Android/data/*/cache 2>/dev/null | awk '{
-    p = $2; sub(/^\/data\/data\//, "", p); sub(/^\/data\/media\/[0-9]+\/Android\/data\//, "", p); sub(/\/cache$/, "", p)
+  du -sk /data/user/*/*/cache /data/user_de/*/*/cache /data/media/*/Android/data/*/cache 2>/dev/null | awk '{
+    p = $2; sub(/^\/data\/user(_de)?\/[0-9]+\//, "", p); sub(/^\/data\/media\/[0-9]+\/Android\/data\//, "", p); sub(/\/cache$/, "", p)
     s[p] += $1 } END { for (k in s) print k, s[k] }'
 }
 

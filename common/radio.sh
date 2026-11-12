@@ -3,7 +3,8 @@
 # Copyright (C) 2026 Yudharn
 # HyperCool - screen-off radios (sourced by soff_watch.sh, functions.sh and uninstall.sh)
 # radio_off [1]  : switch Location off (and Bluetooth when $1 = 1); what was switched off is written to
-#                  $RSAVE, one line per radio (loc|<old location_mode>, bt|)
+#                  $RSAVE, one line per radio (loc|<old location_mode>, bt|). Entries that could not be
+#                  restored stay saved and are retried at the next screen-on or boot.
 # radio_restore  : switch back only what radio_off switched off, then empty $RSAVE
 RSAVE=${RSAVE:-${HC_DATA:-/data/adb/hypercool}/soff_radio.save}
 
@@ -33,17 +34,26 @@ bt_busy() {
   printf '%s\n' "$_bd" | grep -Eq 'ActiveDevice: *([0-9A-Fa-fXx]{2}:){5}[0-9A-Fa-f]{2}' && return 0
   return 1
 }
+# radio_save <key> <value> : replace entry with same key in $RSAVE (keeps other entries)
+radio_save() {
+  [ -e "$RSAVE" ] || : > "$RSAVE"
+  _tmp="$RSAVE.tmp.$$"
+  grep -v "^$1|" "$RSAVE" > "$_tmp" 2>/dev/null
+  printf '%s\n' "$1|$2" >> "$_tmp"
+  mv "$_tmp" "$RSAVE"
+}
+
 radio_off() {
-  : > "$RSAVE"
+  [ -e "$RSAVE" ] || : > "$RSAVE"
   if [ "$(loc_now)" = on ]; then
     _lm=$(settings get secure location_mode 2>/dev/null)
     cmd location set-location-enabled false </dev/null >/dev/null 2>&1
     [ "$(loc_now)" = off ] || settings put secure location_mode 0 </dev/null >/dev/null 2>&1
-    [ "$(loc_now)" = off ] && echo "loc|$_lm" >> "$RSAVE"
+    [ "$(loc_now)" = off ] && radio_save loc "$_lm"
   fi
   if [ "$1" = 1 ] && [ "$(bt_now)" = on ] && ! bt_busy; then
     bt_set disable
-    echo "bt|" >> "$RSAVE"
+    radio_save bt ""
   fi
 }
 radio_restore() {
