@@ -186,7 +186,7 @@ Turning a feature off puts the original value back. Unsupported features are ski
 
 Other ways to support: [SociaBuzz](https://sociabuzz.com/yudharn) · [QRIS](https://t.me/ArchivesModules/1476)
 
-Telegram: https://t.me/ModuleArchives
+<a href="https://t.me/ModuleArchives"><img src="docs/badges/telegram.svg" alt="Telegram channel" height="30"></a>
 
 ## Disclaimer
 HyperCool changes kernel and system settings. Use it at your own risk; the author is not responsible
