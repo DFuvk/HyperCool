@@ -2,10 +2,11 @@ name: Refresh README badges
 
 # The badges in README.md are local SVGs so they can keep the for-the-badge
 # look with rounded corners (shields.io has no radius option). They are
-# regenerated from shields.io, which keeps the values current.
+# regenerated from shields.io daily, on every release, and on demand, which
+# keeps the values current.
 on:
   schedule:
-    - cron: "23 4 * * 1"
+    - cron: "23 4 * * *"
   release:
     types: [published]
   workflow_dispatch:
