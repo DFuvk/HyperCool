@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Refresh the rounded README badges (docs/badges/*.svg).
 
-The four badges are drawn by shields.io in the "for-the-badge" style (exactly
+The badges are drawn by shields.io in the "for-the-badge" style (exactly
 the look used in README.md) and only two things are changed here: the two
 background rectangles get a rounded clip path, and crispEdges is replaced so
 the corners are anti-aliased. Everything else (values, logos, colours, fonts)
@@ -41,6 +41,11 @@ BADGES = {
         "https://img.shields.io/github/v/release/%s"
         "?style=for-the-badge&label=release&labelColor=2d333b&color=3d444d"
         "&logo=github&logoColor=white" % REPO
+    ),
+    "telegram": (
+        "https://img.shields.io/badge/Telegram-%40ModuleArchives-229ED9"
+        "?style=for-the-badge&labelColor=229ED9&color=229ED9"
+        "&logo=telegram&logoColor=white"
     ),
 }
 
