@@ -78,8 +78,6 @@ small keepers (charge limit, screen-off keeper that also serves Keep Wi-Fi on, C
       <img src="docs/screenshots/extra-power-saving.png" alt="Extra power saving" width="200" /><br />
       <b>Extra power saving</b>
     </td>
-  </tr>
-  <tr>
     <td align="center" valign="top">
       <img src="docs/screenshots/battery-drain-system.png" alt="Battery drain (system)" width="200" /><br />
       <b>Battery drain (system)</b>
