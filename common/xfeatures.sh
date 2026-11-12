@@ -487,12 +487,45 @@ f_x_vm_lite() {
   fin x_vm_lite "$_d"
 }
 
-# x_zram - zram size, compression algorithm and swap order (kernel default priority)
+# x_zram - zram size, compression algorithm and swap priority (-2 when the kernel can)
+hc_zram_prio() { # live priority of zram0 from /proc/swaps
+  awk '$1 ~ /\/zram0$/ { print $5; exit }' /proc/swaps 2>/dev/null
+}
+hc_zram_note() { # status suffix when zram is not at priority -2
+  case "${1:-}" in
+    -2) return 0 ;;
+    '') echo "; priority not readable"; return 0 ;;
+  esac
+  _p2=$(awk '$1 !~ /\/zram0$/ && $5 == -2 { print $1; exit }' /proc/swaps 2>/dev/null)
+  if [ -n "$_p2" ]; then
+    echo "; -2 is used by ${_p2##*/}"
+  else
+    echo "; -2 was not assigned"
+  fi
+}
+hc_zram_on() { # swapon zram0; try -p -2 where this ROM's swapon accepts it
+  _zd=$1
+  # Standard kernels give the first default swap -2, but toybox swapon only
+  # accepts 0..32767. Try the negative flag when the ROM supports it, verify
+  # the result, and fall back to the kernel's default assignment.
+  if swapon -p -2 "$_zd" 2>/dev/null; then
+    _zp=$(hc_zram_prio)
+    [ "$_zp" = "-2" ] && return 0
+    swapoff "$_zd" 2>/dev/null || return 0
+  else
+    _zp=$(hc_zram_prio)
+    if [ -n "$_zp" ]; then
+      [ "$_zp" = "-2" ] && return 0
+      swapoff "$_zd" 2>/dev/null || return 0
+    fi
+  fi
+  swapon "$_zd" 2>/dev/null
+}
 hc_zram_back() { # put a zram setup back: <alg> <bytes> <backing_dev>
   { echo 1 > /sys/block/zram0/reset; } 2>/dev/null
   [ -n "$3" ] && [ "$3" != none ] && { echo "$3" > /sys/block/zram0/backing_dev; } 2>/dev/null
   [ -n "$1" ] && { echo "$1" > /sys/block/zram0/comp_algorithm; } 2>/dev/null
-  { echo "$2" > /sys/block/zram0/disksize; } 2>/dev/null && mkswap /dev/block/zram0 >/dev/null 2>&1 && swapon /dev/block/zram0 2>/dev/null
+  { echo "$2" > /sys/block/zram0/disksize; } 2>/dev/null && mkswap /dev/block/zram0 >/dev/null 2>&1 && hc_zram_on /dev/block/zram0
 }
 f_x_zram() {
   on x_zram || { st x_zram off; return; }
@@ -509,10 +542,11 @@ f_x_zram() {
   _alg=$(cfg x_zram_alg lz4)
   case "$_algs" in *" $_alg "*) ;; *) _alg=$_calg ;; esac
   _csz=$(rd "$_z/disksize")
-  _cpr=$(awk '$1 ~ /\/zram0$/ {print $5}' /proc/swaps 2>/dev/null)
+  _cpr=$(hc_zram_prio)
   _was="was $(awk -v b="${_csz:-0}" 'BEGIN { m = b / 1048576; if (m >= 1024) printf "%.1f GB", m / 1024; else printf "%d MB", m }' | sed 's/\.0 GB/ GB/') ${_calg:-?}${_cpr:+, priority $_cpr}"
   if [ "$_csz" = "$_want" ] && [ "$_calg" = "$_alg" ] && [ -n "$_cpr" ]; then
-    cnt_ok; fin x_zram "zram0 $_gb GB $_alg, priority ${_cpr:-?} (already set)"; return
+    _pnote=$(hc_zram_note "$_cpr")
+    cnt_ok; fin x_zram "zram0 $_gb GB $_alg, priority ${_cpr:-?} (already set)$_pnote"; return
   fi
   # data already in zram must fit back into RAM before the swap can be switched off
   _used=$(awk '$1 ~ /\/zram0$/ {print $4}' /proc/swaps 2>/dev/null)
@@ -530,14 +564,20 @@ f_x_zram() {
   { echo 1 > "$_z/reset"; } 2>/dev/null
   [ -n "$_bd" ] && [ "$_bd" != none ] && { echo "$_bd" > "$_z/backing_dev"; } 2>/dev/null
   [ "$_alg" != "$_calg" ] && { echo "$_alg" > "$_z/comp_algorithm"; } 2>/dev/null
-  if { echo "${_gb}G" > "$_z/disksize"; } 2>/dev/null && mkswap "$_zd" >/dev/null 2>&1 && swapon "$_zd" 2>/dev/null; then
+  if { echo "${_gb}G" > "$_z/disksize"; } 2>/dev/null && mkswap "$_zd" >/dev/null 2>&1 && hc_zram_on "$_zd"; then
     _nalg=$(sed -n 's/.*\[\([^]]*\)\].*/\1/p' "$_z/comp_algorithm" 2>/dev/null)
-    _npr=$(awk '$1 ~ /\/zram0$/ {print $5}' /proc/swaps 2>/dev/null)
+    _npr=$(hc_zram_prio)
+    _pnote=$(hc_zram_note "$_npr")
     cnt_ok
-    fin x_zram "zram0 $_gb GB ${_nalg:-$_alg}, priority ${_npr:-?} ($_was)"
+    fin x_zram "zram0 $_gb GB ${_nalg:-$_alg}, priority ${_npr:-?} ($_was)$_pnote"
   else
-    hc_zram_back "$_calg" "$_csz" "$_bd"
-    st x_zram failed "kernel refused $_gb GB / $_alg; ROM zram put back ($_was)"
+    if hc_zram_back "$_calg" "$_csz" "$_bd"; then
+      _bpr=$(hc_zram_prio)
+      _bnote=$(hc_zram_note "$_bpr")
+      st x_zram failed "kernel refused $_gb GB / $_alg; ROM zram put back ($_was; now priority ${_bpr:-?})$_bnote"
+    else
+      st x_zram failed "kernel refused $_gb GB / $_alg; ROM zram could not be put back"
+    fi
   fi
 }
 
