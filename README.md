@@ -6,10 +6,10 @@ KernelSU / Magisk module for Qualcomm and MediaTek phones. Less heat, less batte
 Focused on battery life, not peak performance.
 
 <p align="center">
-  <a href="https://github.com/yudharn/HyperCool/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/yudharn/HyperCool/total?style=for-the-badge&amp;label=downloads&amp;labelColor=2d333b&amp;color=2d333b&amp;logo=github&amp;logoColor=white"></a>
-  <a href="https://github.com/yudharn/HyperCool/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/yudharn/HyperCool?style=for-the-badge&amp;label=stars&amp;labelColor=2d333b&amp;color=2d333b&amp;logo=github&amp;logoColor=white"></a>
-  <img alt="Android 11+" src="https://img.shields.io/badge/Android-11%2B-2d333b?style=for-the-badge&amp;labelColor=2d333b&amp;logo=android&amp;logoColor=3ddc84" />
-  <a href="https://github.com/yudharn/HyperCool/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/yudharn/HyperCool?style=for-the-badge&amp;label=release&amp;labelColor=2d333b&amp;color=2d333b&amp;logo=github&amp;logoColor=white"></a>
+  <a href="https://github.com/yudharn/HyperCool/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/yudharn/HyperCool/total?style=for-the-badge&amp;label=downloads&amp;labelColor=2d333b&amp;color=3d444d&amp;logo=github&amp;logoColor=white"></a>
+  <a href="https://github.com/yudharn/HyperCool/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/yudharn/HyperCool?style=for-the-badge&amp;label=stars&amp;labelColor=2d333b&amp;color=3d444d&amp;logo=github&amp;logoColor=white"></a>
+  <img alt="Android 11+" src="https://img.shields.io/badge/Android-11%2B-3d444d?style=for-the-badge&amp;labelColor=2d333b&amp;logo=android&amp;logoColor=3ddc84" />
+  <a href="https://github.com/yudharn/HyperCool/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/yudharn/HyperCool?style=for-the-badge&amp;label=release&amp;labelColor=2d333b&amp;color=3d444d&amp;logo=github&amp;logoColor=white"></a>
 </p>
 
 Everything is set from the WebUI and applied once at the next boot. Nothing keeps running except
