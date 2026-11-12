@@ -2,6 +2,15 @@
 
 > Current build: **v2.2.4 (224)**.
 
+## v2.2.5 (unreleased)
+
+- Fixed: ZRAM keeps priority -2 when possible. The module tries `swapon -p -2`, checks the live value in `/proc/swaps`, and falls back to the kernel default; the status names the swap that already holds -2 instead of claiming it.
+- Fixed: the background-app compaction check no longer overflows on large-RAM devices, and battery calibration skips an unreadable temperature instead of calculating with it.
+- Fixed: GMS Doze reports off/failed when its whitelist cannot be restored, and a manual app optimization run releases its wake lock after 12 hours at most.
+- Fixed: Runtime power detects input devices correctly when only one input glob matches; the RAM optimizer status no longer claims ZRAM tuning.
+- Fixed: Keep Wi-Fi on counts every attempt for its limiter, but only reports a re-enable when Wi-Fi is really on.
+- WebUI: Home stats use tabular monospace numbers, and the cache details describe the real measured paths and keep-list behavior.
+
 ## v2.2.4 (224)
 
 - WebUI: every feature description rewritten in plain wording. Each card says in one line what the feature does, what it changes and what happens when the ROM does not support it. Section titles use "and" instead of "&".
@@ -18,7 +27,7 @@
 - Fixed: the app cache size is measured for every user (clones, work profile), so the result, the minimum size limit and the notification are right. Hidden files are no longer lost when an interrupted cache folder is restored.
 - Fixed: Location and Bluetooth off keeps a radio that could not be put back in its list and tries again at the next screen-on or boot. In airplane mode the Bluetooth entry is kept for later.
 - Fixed: the app optimization (dex2oat) stops when the battery level, the free space or the temperature cannot be read, instead of running without any limit.
-- Fixed: the screen-off keeper no longer counts a value it could not write, and a value it could not put back is retried later. Keep Wi-Fi on counts every attempt for its limiter, but only reports a re-enable when Wi-Fi is really on.
+- Fixed: the screen-off keeper no longer counts a value it could not write, and a value it could not put back is retried later. Keep Wi-Fi on only counts as re-enabled when Wi-Fi is really on.
 - Fixed: the adaptive refresh rate keeper reads the rate back (a refused write is retried), notices a disabled module within a minute instead of up to ten, and stops when the event filter dies.
 - Fixed: the F2FS GC marker is kept when the device cannot be reached, so gc_urgent cannot stay at 1.
 - Fixed: the RAM optimizer really restores the lmkd props (ro.lmk.*) when the switch goes off or the module is removed.
@@ -28,11 +37,6 @@
 - Fixed: the log timestamps use Android's own timezone (persist.sys.timezone) instead of the zone of the root shell.
 - Fixed: Scheduler and governor tuning no longer overwrites hispeed_load and up_rate_limit while the less aggressive CPU governor owns them.
 - Fixed: Fewer background jobs keeps the JobScheduler keys that took effect (Partial) instead of putting every key back and reporting Unsupported.
-- Fixed: ZRAM keeps priority -2 when possible. The module tries `swapon -p -2`, checks the live value in `/proc/swaps`, and falls back to the kernel default; the status names the swap that already holds -2 instead of claiming it.
-- Fixed: the background-app compaction check no longer overflows on large-RAM devices, and battery calibration skips an unreadable temperature instead of calculating with it.
-- Fixed: GMS Doze reports off/failed when its whitelist cannot be restored, and a manual app optimization run releases its wake lock after 12 hours at most.
-- Fixed: Runtime power detects input devices correctly when only one input glob matches; the RAM optimizer status no longer claims ZRAM tuning.
-- WebUI: Home stats use tabular monospace numbers, and the cache details describe the real measured paths and keep-list behavior.
 - Changed: the README no longer lists the removed "charge hold" feature, and the Specter credit is gone.
 
 
