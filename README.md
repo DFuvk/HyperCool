@@ -71,10 +71,6 @@ small keepers (charge limit, screen-off keeper that also serves Keep Wi-Fi on, C
   </tr>
   <tr>
     <td align="center" valign="top">
-      <img src="docs/screenshots/appearance.png" alt="Appearance and configuration" width="200" /><br />
-      <b>Experimental</b>
-    </td>
-    <td align="center" valign="top">
       <img src="docs/screenshots/appearance-status.png" alt="Appearance and configuration" width="200" /><br />
       <b>Tools</b>
     </td>
