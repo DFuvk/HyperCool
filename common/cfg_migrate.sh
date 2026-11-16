@@ -11,8 +11,13 @@
 hc_migrate_config() {
   _f=$1
   [ -f "$_f" ] || return 0
+  # config version: 4 or newer is already current, so an update never migrates twice
+  # and a downgrade of a newer module does not rewrite the config backwards
   _cv=$(sed -n 's/^cfg_ver=//p' "$_f" | tail -n 1 | tr -d '\r')
-  [ "$_cv" = 4 ] && return 1
+  case "$_cv" in
+    ''|*[!0-9]*) ;;
+    *) [ "$_cv" -ge 4 ] && return 1 ;;
+  esac
   _hc_mv() { # <key> <old default> <new default>
     _cur=$(sed -n "s/^$1=//p" "$_f" | tail -n 1 | tr -d '\r')
     [ "$_cur" = "$2" ] && sed -i "s/^$1=.*/$1=$3/" "$_f"
@@ -37,6 +42,8 @@ hc_migrate_config() {
   if [ "$_ra" = 120 ] && [ "$_ri" = 60 ]; then
     sed -i -e 's/^rr_active=.*/rr_active=0/' -e 's/^rr_idle=.*/rr_idle=0/' "$_f"
   fi
+  # never append to a last line without a newline: cfg_ver would join that value
+  [ -s "$_f" ] && [ -n "$(tail -c1 "$_f")" ] && echo >> "$_f"
   if grep -q '^cfg_ver=' "$_f"; then
     sed -i 's/^cfg_ver=.*/cfg_ver=4/' "$_f"
   else
