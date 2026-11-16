@@ -57,3 +57,4 @@ com.google.mainline.telemetry/com.google.mainline.telemetry.TelemetryService
 com.google.android.gms/com.google.android.gms.instantapps.service.InstantAppsService
 com.google.android.gms/com.google.android.gms.checkin.EventLogService
 com.google.android.gms/com.google.android.gms.location.reporting.service.GcmBroadcastReceiver
+com.google.android.gms/com.google.android.gms.measurement.service.MeasurementBrokerService

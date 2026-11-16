@@ -13,3 +13,7 @@ netstats
 system_server_lowmem
 storage_trim
 SYSTEM_AUDIT
+BATTERY_DISCHARGE_INFO
+keymaster
+storage_benchmark
+netstats_error

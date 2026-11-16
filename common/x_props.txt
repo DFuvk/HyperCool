@@ -78,3 +78,7 @@ ro.lmk.log_stats=false
 dalvik.vm.check-dex-sum=false
 dalvik.vm.minidebuginfo=false
 dalvik.vm.dex2oat-minidebuginfo=false
+# SurfaceFlinger keeps recording every transaction into a trace buffer (Android 13+); read when it starts
+debug.sf.enable_transaction_tracing=false
+# lmkd stops sending a statsd report for every app it kills
+persist.sys.lmk.reportkills=false

@@ -3,3 +3,5 @@
 # Shorter CFS latency/granularity values were removed: more preemption = more CPU wake-ups.
 /proc/sys/kernel/sched_migration_cost_ns|5000000
 /proc/sys/kernel/sched_nr_migrate|32
+# RT tasks (audio, input, display) are not forced to the top CPU frequency (AOSP default 0; some ROMs leave 1024)
+/proc/sys/kernel/sched_util_clamp_min_rt_default|0

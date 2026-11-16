@@ -11,3 +11,10 @@
 /sys/module/qcom_ramdump/parameters/enable_dump_collection|0
 /sys/module/msm_show_resume_irq/parameters/debug_mask|0
 /proc/sys/vm/oom_dump_tasks|0
+# soft-lockup detector: its per-CPU timer fires every few seconds and keeps idle cores from staying idle
+# (diagnostics only; the hardware watchdog that reboots a hung phone is separate and stays on)
+/proc/sys/kernel/soft_watchdog|0
+# hung-task detector: khungtaskd wakes every 2 min only to print warnings
+/proc/sys/kernel/hung_task_timeout_secs|0
+# console stays suspended during suspend: faster suspend / resume
+/sys/module/printk/parameters/console_suspend|Y
