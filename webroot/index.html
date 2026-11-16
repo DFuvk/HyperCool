@@ -912,6 +912,7 @@ html[data-style="mono"],html[data-style="mono"] body{
     </div>
     <div class="group">
       <div class="item press" data-url="https://t.me/ModuleArchives"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4.5L2.8 11.6c-.9.4-.9 1.6.1 1.9l4.6 1.4 1.8 5.5c.3.8 1.3 1 1.9.4l2.6-2.5 4.6 3.4c.7.5 1.7.1 1.9-.7L22.4 5.9c.2-1-.6-1.8-1.4-1.4z"/><path d="M8 14.6l9.5-6.6"/></svg></div><div class="txt"><div class="ttl">Telegram channel</div><div class="desc">@ModuleArchives: updates, changelogs and support</div></div><svg class="chev2" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></div></div>
+      <div class="item press" data-url="https://github.com/yudharn/HyperCool"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></div><div class="txt"><div class="ttl">Source code</div><div class="desc">GitHub repository: source code and releases</div></div><svg class="chev2" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></div></div>
     </div>
   </section>
 </main>
@@ -1010,7 +1011,7 @@ html[data-style="mono"],html[data-style="mono"] body{
    */
   var F = [
     // heat
-    { k: 'cpu_cap', s: 'heat', src: 'kernel', risk: 'safe', type: 'value', def: '95', unit: '%', min: 40, max: 99,
+    { k: 'cpu_cap', s: 'heat', src: 'kernel', risk: 'safe', type: 'value', def: '88', unit: '%', min: 40, max: 99,
       t: 'Big-core frequency cap',
       d: 'Big cores stay between 40% and 99% of their rated maximum.',
       x: 'Little cores are left alone. On MediaTek the PPM limit is set too. Turn on Lock so the ROM cannot raise the limit again.',
@@ -1036,14 +1037,14 @@ html[data-style="mono"],html[data-style="mono"] body{
       t: 'GPU power collapse',
       d: 'The GPU sleeps between frames with lower clocks and a shorter timer.',
       x: 'On Adreno, forced clocks are off, the bus is split and the idle timer is shorter. On Mali, the power policy is coarse_demand.',
-      fields: [{ k: 'gpu_idle_timer', label: 'GPU idle timer', def: '64', min: 20, max: 200, unit: 'ms', zero: true },
+      fields: [{ k: 'gpu_idle_timer', label: 'GPU idle timer', def: '20', min: 20, max: 200, unit: 'ms', zero: true },
                { k: 'gpu_throttle', label: 'GPU thermal throttling (Adreno)', def: '1', sel: [['1', 'On (recommended, cooler)'], ['0', 'Off (full GPU speed, more heat)']] }] },
     { k: 'walt_tune', s: 'heat', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Less aggressive CPU governor',
       d: 'The CPU governor uses weaker predictive boosts and slower ramp-up.',
       x: 'RTG boosts are off, so clocks spike less. This works on WALT, schedutil and MediaTek sugov_ext.',
-      fields: [{ k: 'walt_hispeed_load', label: 'Ramp-up load (hispeed_load)', def: '95', min: 50, max: 100, unit: '%', zero: true },
-               { k: 'walt_up_rate', label: 'Ramp-up rate (up_rate_limit)', def: '1000', min: 100, max: 20000, unit: 'µs', zero: true },
+      fields: [{ k: 'walt_hispeed_load', label: 'Ramp-up load (hispeed_load)', def: '99', min: 50, max: 100, unit: '%', zero: true },
+               { k: 'walt_up_rate', label: 'Ramp-up rate (up_rate_limit)', def: '5000', min: 100, max: 20000, unit: 'µs', zero: true },
                { k: 'walt_sched_boost_off', label: 'Also force sched_boost = 0 and conservative PL (WALT)', def: '1', bool: true },
                { k: 'walt_task_util', label: 'Fewer small tasks boosted or grouped onto big cores (WALT task util 80 / 65)', def: '1', bool: true }] },
     { k: 'input_boost_off', s: 'heat', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
@@ -1054,7 +1055,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       t: 'Background apps on little cores',
       d: 'Background apps run only on little cores, never on big cores.',
       x: 'Log daemons and light HALs can move to little cores. Sensors, vibration, Wi-Fi, GPS, Bluetooth and screen are never moved.',
-      fields: [{ k: 'bg_uclamp', label: 'Background CPU limit (uclamp.max)', def: '30', min: 10, max: 99, unit: '%', zero: true },
+      fields: [{ k: 'bg_uclamp', label: 'Background CPU limit (uclamp.max)', def: '25', min: 10, max: 99, unit: '%', zero: true },
                { k: 'bg_daemons', label: 'Also move logging / diagnostic daemons and light HALs to the background group', def: '1', bool: true }] },
     { k: 'blur_off', s: 'heat', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Disable UI blur',
@@ -1076,7 +1077,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       t: 'Adaptive screen-off power profile',
       d: 'Big cores and GPU speed drop while the screen is off.',
       x: 'Wi-Fi, data, alarms and notifications keep working while the screen is off. CPU and GPU speed return when the screen turns on. One small keeper runs without a wakelock.',
-      fields: [{ k: 'soff_cpu', label: 'Big-core limit while the screen is off', def: '60', min: 30, max: 90, unit: '%' },
+      fields: [{ k: 'soff_cpu', label: 'Big-core limit while the screen is off', def: '30', min: 30, max: 90, unit: '%' },
                { k: 'soff_gpu', label: 'Hold the GPU at its lowest clock', def: '1', bool: true },
                { k: 'soff_boost', label: 'Turn scheduler and touch boosts off', def: '1', bool: true }] },
     { k: 'wifi_keep', s: 'kdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
@@ -1087,13 +1088,13 @@ html[data-style="mono"],html[data-style="mono"] body{
       t: 'Location and Bluetooth off during long screen-off',
       d: 'Location turns off after a long screen-off, Bluetooth can too, and both return.',
       x: 'Fewer GPS and Bluetooth wake-ups. While they are off, location alarms, Find My Device and navigation get no position. Bluetooth stays on while audio plays or an audio device is connected; a smartwatch or fitness band loses its connection while Bluetooth is off.',
-      fields: [{ k: 'soff_radio_min', label: 'Wait after the screen goes off', def: '15', min: 5, max: 120, unit: 'min' },
+      fields: [{ k: 'soff_radio_min', label: 'Wait after the screen goes off', def: '5', min: 5, max: 120, unit: 'min' },
                { k: 'soff_radio_bt', label: 'Also turn Bluetooth off', def: '0', bool: true }] },
     { k: 'soff_data', s: 'kdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Mobile data and NFC off during screen-off',
       d: 'A while after the screen goes off, mobile data and NFC turn off. They come back when you turn the screen on.',
       x: 'Worth it if you spend most of the day on mobile data. While data is off, WhatsApp, Telegram and email only fetch new messages when you wake the phone. Regular calls and SMS still come through. It holds off during a call, while music or a video is playing, and while the hotspot is on. Wi-Fi is left alone, and nothing happens in airplane mode.',
-      fields: [{ k: 'soff_data_min', label: 'Wait after the screen goes off', def: '10', min: 5, max: 120, unit: 'min' },
+      fields: [{ k: 'soff_data_min', label: 'Wait after the screen goes off', def: '5', min: 5, max: 120, unit: 'min' },
                { k: 'soff_data_mobile', label: 'Turn mobile data off', def: '1', bool: true },
                { k: 'soff_data_nfc', label: 'Turn NFC off', def: '1', bool: true }] },
     { k: 'cpu_idle', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
@@ -1106,10 +1107,10 @@ html[data-style="mono"],html[data-style="mono"] body{
       t: 'Fewer memory writeback wakeups',
       d: 'Cached data is written back less often, so the phone wakes less in standby.',
       x: 'A value of 0 keeps the stock writeback interval; higher values make CPU and storage wake less.',
-      fields: [{ k: 'vm_writeback', label: 'Writeback interval', def: '3000', min: 500, max: 6000, unit: 'cs', zero: true },
-               { k: 'vm_stat_interval', label: 'Memory stat interval', def: '10', min: 1, max: 60, unit: 's', zero: true },
-               { k: 'vm_dirty_bg', label: 'Background writeback threshold (dirty_background_ratio)', def: '10', min: 1, max: 50, unit: '%', zero: true },
-               { k: 'vm_dirty', label: 'Writeback threshold (dirty_ratio)', def: '30', min: 1, max: 80, unit: '%', zero: true }] },
+      fields: [{ k: 'vm_writeback', label: 'Writeback interval', def: '6000', min: 500, max: 6000, unit: 'cs', zero: true },
+               { k: 'vm_stat_interval', label: 'Memory stat interval', def: '60', min: 1, max: 60, unit: 's', zero: true },
+               { k: 'vm_dirty_bg', label: 'Background writeback threshold (dirty_background_ratio)', def: '20', min: 1, max: 50, unit: '%', zero: true },
+               { k: 'vm_dirty', label: 'Writeback threshold (dirty_ratio)', def: '40', min: 1, max: 80, unit: '%', zero: true }] },
     { k: 'io_tune', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Less I/O accounting',
       d: 'Drive stats and entropy sampling are off, so each read and write costs less.' },
@@ -1231,9 +1232,9 @@ html[data-style="mono"],html[data-style="mono"] body{
     { k: 'rr_adapt', s: 'saver', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Adaptive refresh rate',
       d: 'The screen refresh rate drops when you stop touching the screen.',
-      x: 'Pressing a button raises the refresh rate again. The low rate returns 2 s after the last touch, so status bar and notification changes stay at the low rate. It saves battery and replaces Peak refresh rate while on.',
-      fields: [{ k: 'rr_active', label: 'Active refresh rate (when you touch the screen or press a button)', def: '120', sel: [['90', 'Medium (90 Hz)'], ['120', 'High (120 Hz)'], ['144', 'Very high (144 Hz)']] },
-               { k: 'rr_idle', label: 'Idle refresh rate (when you are not using the phone)', def: '60', sel: [['30', 'Lowest (30 Hz)'], ['48', 'Very low (48 Hz)'], ['60', 'Low (60 Hz)'], ['90', 'Medium (90 Hz)']] },] },
+      x: 'The active rate is the highest mode the panel supports; the idle rate is the lowest. Both can be overridden. Pressing a button raises the refresh rate again. The low rate returns 2 s after the last touch, so status bar and notification changes stay at the low rate. It saves battery and replaces Peak refresh rate while on.',
+      fields: [{ k: 'rr_active', label: 'Active refresh rate', def: '0', sel: [['0', 'Auto (panel max)'], ['90', 'Medium (90 Hz)'], ['120', 'High (120 Hz)'], ['144', 'Very high (144 Hz)']] },
+               { k: 'rr_idle', label: 'Idle refresh rate', def: '0', sel: [['0', 'Auto (panel min)'], ['30', 'Lowest (30 Hz)'], ['48', 'Very low (48 Hz)'], ['60', 'Low (60 Hz)'], ['90', 'Medium (90 Hz)']] },] },
     { k: 'anim_scale', s: 'saver', src: 'rom', risk: 'safe', type: 'value', def: '0', unit: '%', min: 10, max: 100,
       t: 'Animation scale',
       d: 'Transitions are shortened to a percentage, with less graphics work.',
@@ -1391,7 +1392,7 @@ html[data-style="mono"],html[data-style="mono"] body{
  "wifi_keep": "keeper common/soff_watch.sh (shared with the screen-off profile, started when either is on): the Wi-Fi state is read once when the screen turns off (cmd wifi status) and is what you want|ip monitor link (a small child of the keeper, no CPU while idle) wakes the keeper when wlan changes; plus the 60 s timer (does not run in suspend)|while the screen is off, on every such wake-up (at most one check per 2 s; per 60 s without screen events): if you wanted it on, it is off now and still off 2 s later and airplane mode is off: svc wifi enable|3 re-enables within 10 min = the ROM keeps switching it off: pause 5 min|screen on: nothing is touched|no setting is changed, nothing to restore", "cpu_idle": "qcom_lpm sleep_disabled = N, lpm_levels sleep_disabled = 0|cpu*/cpuidle/state*/disable = 0 (only states that were disabled)",
  "f2fs_gc": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/f2gc.sh|device: /sys/fs/f2fs/<dev> of the F2FS mounted on /data (dev.mnt.blk.data, /proc/mounts), needs gc_urgent and unusable|start: screen off 10 min, last run at least 7 days ago, not paused, gc_urgent is 0, unusable (4 KB blocks) >= f2fs_gc_gb GB, battery temp under f2fs_gc_temp minus 5 C (35-45 C, default 40 C), and charging or at least 30% battery; battery low or too warm: looked at again every 5 min for 1 h, once per screen-off period|run: echo 1 > gc_urgent (default pace), a wake lock hypercool_gc that also expires by itself, checked every 10 s; stops when unusable is at or under min(1 GB, trigger/4), after 420 s, under 20% battery (not charging), at f2fs_gc_temp C (41-50, default 45), or when the screen turns on; then echo 0 > gc_urgent|fstrim /data after a finished run when f2fs_gc_trim is on, at most every 7 days|f2fs_gc_notify: after each run a notification (cmd notification post as the shell user, tag hc_f2gc) with the reclaimable space before and after and the time; also when the run was stopped|two finished runs in a row that cut unusable by less than 1% pause it for 7 days; state in f2fs_gc.state and f2fs_gc.meta; leftovers (gc_urgent, wake lock) are put back at boot, when the keeper stops and on uninstall",
  "x_dexopt_auto": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/dxauto.sh, runs common/dexopt.sh run <mode> 1 0, mode from x_dexopt_mode: 1 speed-profile, 2 speed, 3 everything (the same script as the Optimize apps card; force recompile is never used)|start: screen off 10 min, last finished run of all apps at least 7 days ago (a run started by hand from the card counts too), at most one try per 20 h, no other optimization running, no F2FS GC running, battery temp under 40 C, and charging or at least 40% battery; battery low or too warm: looked at again every 5 min for 1 h, once per screen-off period|run: cmd package compile -m speed-profile <package> for every enabled app (system apps included), a wake lock hypercool_dexopt that also expires after 3 h; stops (the apps now compiling finish, no new ones start) when the screen turns on, at 45 C, under 15% battery (not charging) or under 1 GB free storage|x_dexopt_notify: after each run a notification (cmd notification post as the shell user, tag hc_dex) with the number of apps and the time, also when it was stopped|a run started by hand from the card is never stopped by the keeper; state of the last run in dexopt/state, last / try / runs in dexopt_auto.meta; stopped when the keeper stops and on uninstall; compiled apps stay compiled",
- "soff_radio": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/radio.sh|screen off for N min (soff_radio_min, 5-120; counted from the screen-off event, can fire late in deep sleep): Location: cmd location set-location-enabled false (fallback settings put secure location_mode 0), read back with cmd location is-location-enabled / settings get secure location_mode|Bluetooth (only with the Bluetooth option, and only when it is on): svc bluetooth disable, skipped while dumpsys audio shows a started player, while dumpsys bluetooth_manager shows an active A2dp/Headset device, or when that dump is not in the expected format|what was switched off is written to soff_radio.save; screen on: location set-location-enabled true (fallback the old location_mode, 3 if unknown), svc bluetooth enable (not in airplane mode); leftovers are put back at the next boot, when the keeper stops and on uninstall|once per screen-off period; nothing is polled",
+ "soff_radio": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/radio.sh|screen off for N min (soff_radio_min, 5-120; counted from the screen-off event, can fire late in deep sleep): Location: cmd location set-location-enabled false (fallback settings put secure location_mode 0), read back with cmd location is-location-enabled / settings get secure location_mode|Bluetooth (only with the Bluetooth option, and only when it is on): cmd bluetooth_manager disable (fallback svc bluetooth disable), skipped while dumpsys audio shows a started player, while dumpsys bluetooth_manager shows an active A2dp/Headset device, or when that dump is not in the expected format|what was switched off is written to soff_radio.save; screen on: location set-location-enabled true (fallback the old location_mode, 3 if unknown), cmd bluetooth_manager enable (fallback svc bluetooth enable, not in airplane mode); leftovers are put back at the next boot, when the keeper stops and on uninstall|a switch that is still on after the command is retried every 5 min, up to 12 times per screen-off period; nothing is polled",
  "soff_data": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/radio.sh|screen off for N min (soff_data_min, 5-120; counted from the screen-off event, can fire late in deep sleep)|mobile data (soff_data_mobile): svc data disable (fallback cmd phone data disable), read back from settings global mobile_data<default data subId> / mobile_data; not done in airplane mode, and held off while dumpsys telephony.registry shows a call (or no readable call state), while dumpsys audio shows a started player, or while tethering is on (dumpsys tethering TetheredState, or an ap/swlan/rndis/ncm/bt-pan interface up): looked at again every 5 min, at most 24 times per screen-off|NFC (soff_data_nfc): svc nfc disable (fallback cmd nfc disable-nfc), read back from dumpsys nfc mState|what was switched off is written to soff_data.save; screen on: svc data enable / svc nfc enable; leftovers are put back at the next boot, when the module is disabled, uninstalled or the keeper stops",
  "ufs_pm": "*.ufshc (Qualcomm) or *.ufshci (MediaTek): clkgate_enable, clkscale_enable, hibern8_on_idle_enable = 1",
  "vm_tune": "vm.dirty_writeback_centisecs, vm.dirty_expire_centisecs|vm.dirty_background_ratio, vm.dirty_ratio|vm.stat_interval|(each 0 = untouched)",
@@ -1408,7 +1409,7 @@ html[data-style="mono"],html[data-style="mono"] body{
  "devcfg_lock": "device_config set_sync_disabled_for_tests persistent (previous mode restored when off)",
  "gms_doze": "dumpsys deviceidle sys-whitelist -com.google.android.gms (saved by Android in deviceidle.xml, recorded)|dumpsys deviceidle whitelist -com.google.android.gms, only if you had added it (recorded)|plus an overlay of sysconfig XML without GMS, if a mount metamodule mounts it|off / uninstall: sys-whitelist +gms (and your own whitelist entry back)",
  "loc_throttle": "settings global location_background_throttle_interval_ms = 1 / 2 / 4 h|settings global location_background_throttle_proximity_alert_interval_ms = same|apps on Android's location allow-list keep their normal rate|ROM values come back when off",
- "scan_off": "settings global wifi_scan_always_enabled = 0, ble_scan_always_enabled = 0|settings global wifi_scan_throttle_enabled = 1",
+ "scan_off": "cmd wifi set-scan-always-available disabled (Android 12+; the original is put back when the switch is off)|settings global wifi_scan_always_enabled = 0, ble_scan_always_enabled = 0|settings global wifi_scan_throttle_enabled = 1",
  "net_save": "settings global mobile_data_always_on = 0|network_recommendations_enabled = 0, wifi_wakeup_enabled = 0",
  "standby": "settings global app_standby_enabled = 1, adaptive_battery_management_enabled = 1|forced_app_standby_enabled = 1, app_auto_restriction_enabled = 1",
  "stats_reduce": "settings global battery_stats_constants, binder_calls_stats, looper_stats|device_config interaction_jank_monitor enabled = false|device_config activity_manager disable_app_profiler_pss_profiling = true",
@@ -1998,14 +1999,9 @@ html[data-style="mono"],html[data-style="mono"] body{
     zramNow = mb ? '\nNow: zram0 ' + (mb >= 1024 ? (mb / 1024).toFixed(1).replace(/\.0$/, '') + ' GB' : mb + ' MB') + ' ' + cur + (z.prio ? ', priority ' + z.prio : ', not in use') : '';
   }
 
-  // refresh rates this panel really has (dumpsys display): only those are offered
+  // refresh rates this panel really has (dumpsys display): Auto plus the real modes
   function rrLbl(hz) {
     return (hz >= 144 ? 'Very high' : hz >= 120 ? 'High' : hz >= 90 ? 'Medium' : hz >= 60 ? 'Low' : hz >= 30 ? 'Very low' : 'Lowest') + ' (' + hz + ' Hz)';
-  }
-  function rrNear(list, v) {
-    var b = list[0];
-    list.forEach(function (h) { if (Math.abs(h - v) < Math.abs(b - v)) b = h; });
-    return String(b);
   }
   function fillRr(r) {
     var m = String(r.modes || '').split(/\s+/).map(Number).filter(function (n) { return n > 0; });
@@ -2016,13 +2012,13 @@ html[data-style="mono"],html[data-style="mono"] body{
       var act = m.length > 1 ? m.slice(1) : m, idl = m.length > 1 ? m.slice(0, -1) : m;
       // touch rate: 60 Hz and up (LTPO panels also list 1-48 Hz modes, only useful as idle rates)
       if (act.some(function (h) { return h >= 60; })) act = act.filter(function (h) { return h >= 60; });
-      [['rr_active', act.slice().reverse(), String(act[act.length - 1])],
-       ['rr_idle', idl, String(idl.indexOf(60) >= 0 ? 60 : idl[idl.length - 1])]].forEach(function (z) {
+      [['rr_active', act.slice().reverse(), 'Auto (panel max)'],
+       ['rr_idle', idl, 'Auto (panel min)']].forEach(function (z) {
         var x = fr.fields.filter(function (y) { return y.k === z[0]; })[0], sel = $('in-' + z[0]);
-        x.sel = z[1].map(function (h) { return [String(h), rrLbl(h)]; });
-        x.def = z[2];
+        x.sel = [['0', z[2]]].concat(z[1].map(function (h) { return [String(h), rrLbl(h)]; }));
+        x.def = '0';
         var nums = z[1].map(Number);
-        [saved, cfg].forEach(function (o) { if (o[z[0]] !== undefined && nums.indexOf(+o[z[0]]) < 0) o[z[0]] = rrNear(nums, +o[z[0]]); });
+        [saved, cfg].forEach(function (o) { if (o[z[0]] !== undefined && String(o[z[0]]) !== '0' && nums.indexOf(+o[z[0]]) < 0) o[z[0]] = '0'; });
         if (sel) {
           sel.innerHTML = x.sel.map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join('');
           sel.value = cfg[z[0]];

@@ -96,19 +96,25 @@ radio_restore() {
     case "$_rk" in
       loc)
         _ls=$(loc_now)
-        [ "$_ls" = on ] && continue
         # state not readable: keep the entry and try again later
-        [ "$_ls" = off ] || { _fail="$_fail$_rk|$_rv
+        [ "$_ls" = off ] || [ "$_ls" = on ] || { _fail="$_fail$_rk|$_rv
 "; continue; }
-        cmd location set-location-enabled true </dev/null >/dev/null 2>&1
-        sleep 1
-        # How the location was enabled does not matter: put the exact saved mode back too.
-        # The old code only wrote it when enabling had failed, then dropped the loc record,
-        # leaving e.g. location_mode 0 after a successful enable.
+        # Put the exact saved mode back even when Location is already on. It can be on
+        # because the previous attempt enabled it but failed to restore the mode; dropping
+        # the record then would lose the original mode for good.
         case "$_rv" in [1-9]) ;; *) _rv=3 ;; esac
-        settings put secure location_mode "$_rv" </dev/null >/dev/null 2>&1
-        sleep 1
+        if [ "$_ls" = off ]; then
+          cmd location set-location-enabled true </dev/null >/dev/null 2>&1
+          sleep 1
+        fi
         _lm_now=$(settings get secure location_mode 2>/dev/null)
+        # If cmd was ignored, setting the saved mode is still the fallback that can put
+        # Location back on. Do it whenever either the state or the mode is not right.
+        if [ "$(loc_now)" != on ] || [ "$_lm_now" != "$_rv" ]; then
+          settings put secure location_mode "$_rv" </dev/null >/dev/null 2>&1
+          sleep 1
+          _lm_now=$(settings get secure location_mode 2>/dev/null)
+        fi
         if [ "$(loc_now)" != on ] || [ "$_lm_now" != "$_rv" ]; then
           _fail="$_fail$_rk|$_rv
 "

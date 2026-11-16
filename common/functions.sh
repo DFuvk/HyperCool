@@ -394,7 +394,7 @@ hc_gpu_dev() {
 f_gpu_idle() {
   on gpu_idle || { st gpu_idle off; return; }
   _k=/sys/class/kgsl/kgsl-3d0
-  _t=$(rng gpu_idle_timer 64 20 200)
+  _t=$(rng gpu_idle_timer 20 20 200)
   cnt_reset
   if [ ! -d "$_k" ] || ! on_qcom_ok; then
     on_mtk_ok || { fin gpu_idle "" "no Adreno kgsl device"; return; }
@@ -420,8 +420,8 @@ f_gpu_idle() {
 
 f_walt_tune() {
   on walt_tune || { st walt_tune off; return; }
-  _hl=$(rng walt_hispeed_load 95 50 100)
-  _ur=$(rng walt_up_rate 1000 100 20000)
+  _hl=$(rng walt_hispeed_load 99 50 100)
+  _ur=$(rng walt_up_rate 5000 100 20000)
   cnt_reset
   _wpl=0; _whl=0; _wur=0
   for _g in /sys/devices/system/cpu/cpufreq/policy*/walt /sys/devices/system/cpu/cpufreq/policy*/schedutil \
@@ -482,7 +482,7 @@ f_input_boost_off() {
 
 f_bg_cpuset() {
   on bg_cpuset || { st bg_cpuset off; return; }
-  _uc=$(rng bg_uclamp 50 10 100)
+  _uc=$(rng bg_uclamp 25 10 100)
   cnt_reset
   _lp=$(hc_little_policy)
   _cpus=$(rd "$_lp/related_cpus")
@@ -691,9 +691,9 @@ f_soff_prof() {
   [ "$_gcf" = 0 ] && st f2fs_gc off
   [ "$_dxf" = 0 ] && st x_dexopt_auto off
   [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dat" = 0 ] && return
-  _sc=60; _sg=1; _sb=1; _st=0; _cc=0
+  _sc=30; _sg=1; _sb=1; _st=0; _cc=0
   if [ "$_prof" = 1 ]; then
-    _sc=$(rng soff_cpu 60 30 90); [ "$_sc" = 0 ] && _sc=60
+    _sc=$(rng soff_cpu 30 30 90); [ "$_sc" = 0 ] && _sc=30
     _sg=$(cfg soff_gpu 1); _sb=$(cfg soff_boost 1)
     # Big-core cap % (same rules as f_cpu_cap): the keeper puts the CPU limit back to it, never to a
     # value read while thermal limits were active
@@ -723,19 +723,19 @@ f_soff_prof() {
       [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dat" = 0 ] && return ;;
     esac
   fi
-  _rbt=0; _rmin=15
+  _rbt=0; _rmin=5
   if [ "$_rad" = 1 ]; then
     _rbt=$(cfg soff_radio_bt 0); [ "$_rbt" = 1 ] || _rbt=0
-    _rmin=$(rng soff_radio_min 15 5 120); [ "$_rmin" = 0 ] && _rmin=15
+    _rmin=$(rng soff_radio_min 5 5 120); [ "$_rmin" = 0 ] && _rmin=5
     command -v settings >/dev/null 2>&1 && command -v cmd >/dev/null 2>&1 || {
       st soff_radio skipped "no settings/cmd command on this Android"
       _rad=0
       [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dat" = 0 ] && return
     }
   fi
-  _dmin=10; _dmob=1; _dnfc=1
+  _dmin=5; _dmob=1; _dnfc=1
   if [ "$_dat" = 1 ]; then
-    _dmin=$(rng soff_data_min 10 5 120); [ "$_dmin" = 0 ] && _dmin=10
+    _dmin=$(rng soff_data_min 5 5 120); [ "$_dmin" = 0 ] && _dmin=5
     _dmob=$(cfg soff_data_mobile 1); [ "$_dmob" = 0 ] || _dmob=1
     _dnfc=$(cfg soff_data_nfc 1); [ "$_dnfc" = 0 ] || _dnfc=1
     if [ "$_dmob" = 0 ] && [ "$_dnfc" = 0 ]; then
@@ -917,10 +917,10 @@ f_ufs_pm() {
 
 f_vm_tune() {
   on vm_tune || { st vm_tune off; return; }
-  _wb=$(rng vm_writeback 3000 500 6000)
-  _sti=$(rng vm_stat_interval 10 1 60)
-  _dbr=$(rng vm_dirty_bg 10 0 50)
-  _dr=$(rng vm_dirty 30 0 80)
+  _wb=$(rng vm_writeback 6000 500 6000)
+  _sti=$(rng vm_stat_interval 60 1 60)
+  _dbr=$(rng vm_dirty_bg 20 0 50)
+  _dr=$(rng vm_dirty 40 0 80)
   cnt_reset
   _v=/proc/sys/vm
   [ "$_wb" -gt 0 ] && wn "$_v/dirty_writeback_centisecs" "$_wb"
@@ -1336,10 +1336,16 @@ f_doze_aggr() {
     _key=${_kv%%=*}; _val=${_kv#*=}
     case "$_key" in ''|*[!a-z_]*) continue ;; esac
     case "$_val" in ''|*[!0-9.]*) continue ;; esac
-    set_d doze_aggr device_idle "$_key" "$_val"
+    if set_d doze_aggr device_idle "$_key" "$_val"; then
+      _got=$(device_config get device_idle "$_key" </dev/null 2>/dev/null)
+      [ "$_got" = "$_val" ] || { cnt_fail; log "  doze_aggr: $_key reads [$_got] after write, wanted [$_val]"; }
+    fi
   done
   # Android <= 11 and some ROMs still read the global string
-  set_s doze_aggr global device_idle_constants "$_c"
+  if set_s doze_aggr global device_idle_constants "$_c"; then
+    _got=$(settings get global device_idle_constants </dev/null 2>/dev/null)
+    [ "$_got" = "$_c" ] || { cnt_fail; log "  doze_aggr: device_idle_constants was not stored as written"; }
+  fi
   sed -i '/^doze_aggr|meta|/d' "$HC_ROMBAK" 2>/dev/null
   echo "doze_aggr|meta|-|level|$_nm:$_c" >> "$HC_ROMBAK"
   dumpsys deviceidle enable all </dev/null >/dev/null 2>&1
@@ -1436,7 +1442,7 @@ f_scan_off() {
   cnt_reset
   # Android 12+ reads this from the Wi-Fi config store; the legacy global key alone is
   # ignored on some ROMs. Record the original so restore_feature can put it back.
-  _ws_orig=?
+  _ws_orig='?'
   if command -v cmd >/dev/null 2>&1; then
     _ws=$(cmd wifi status </dev/null 2>/dev/null | grep -i -m1 'scanning is')
     case "$_ws" in
@@ -1446,7 +1452,16 @@ f_scan_off() {
   fi
   if [ "$_ws_orig" = on ]; then
     recv scan_off cmdwifi - scan "$_ws_orig"
-    if cmd wifi set-scan-always-available disabled </dev/null >/dev/null 2>&1; then cnt_ok; else cnt_fail; fi
+    if cmd wifi set-scan-always-available disabled </dev/null >/dev/null 2>&1; then
+      # `cmd wifi` can accept the command and still leave the setting on
+      _ws=$(cmd wifi status </dev/null 2>/dev/null | grep -i -m1 'scanning is')
+      case "$_ws" in
+        *only*) cnt_ok ;;
+        *) cnt_fail; log "  scan_off: Wi-Fi scan-always is still on (${_ws:-no status})" ;;
+      esac
+    else
+      cnt_fail
+    fi
   fi
   set_s scan_off global wifi_scan_always_enabled 0
   set_s scan_off global ble_scan_always_enabled 0
@@ -1675,11 +1690,17 @@ f_rr_adapt() {
   # the peak cap owns the same settings: give them back first so the backup holds the ROM values
   restore_feature refresh_rate
   cnt_reset
-  _mx=$(rng rr_active 120 60 165); _mn=$(rng rr_idle 60 30 120)
+  _mx=$(rng rr_active 0 60 165); _mn=$(rng rr_idle 0 1 120)
   _ml=$(dumpsys display 2>/dev/null | grep -m 1 -i 'supportedModes' | grep -o 'fps=[0-9]*' | cut -d= -f2 | sort -un | tr '\n' ' ' | sed 's/ *$//')
   if [ -n "$_ml" ]; then
+    _max_mode=${_ml##* }; _min_mode=${_ml%% *}
+    [ "$_mx" = 0 ] && _mx=$_max_mode
+    [ "$_mn" = 0 ] && _mn=$_min_mode
     # shellcheck disable=SC2086
     _mx=$(hc_near "$_mx" $_ml); _mn=$(hc_near "$_mn" $_ml)
+  else
+    [ "$_mx" = 0 ] && _mx=90
+    [ "$_mn" = 0 ] && _mn=30
   fi
   if [ "$_mn" -ge "$_mx" ]; then
     restore_feature rr_adapt

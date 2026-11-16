@@ -20,8 +20,14 @@ _hc_undo() {
       # Android 12+ reads scan-always-available from the Wi-Fi config store, not only
       # the legacy Settings.Global key. The value is on|off from `cmd wifi status`.
       case "$4" in
-        on|enabled) cmd wifi set-scan-always-available enabled </dev/null >/dev/null 2>&1 ;;
-        off|disabled) cmd wifi set-scan-always-available disabled </dev/null >/dev/null 2>&1 ;;
+        on|enabled)
+          cmd wifi set-scan-always-available enabled </dev/null >/dev/null 2>&1 || return 1
+          _cw=$(cmd wifi status </dev/null 2>/dev/null | grep -i -m1 'scanning is')
+          case "$_cw" in *always*) return 0 ;; *) return 1 ;; esac ;;
+        off|disabled)
+          cmd wifi set-scan-always-available disabled </dev/null >/dev/null 2>&1 || return 1
+          _cw=$(cmd wifi status </dev/null 2>/dev/null | grep -i -m1 'scanning is')
+          case "$_cw" in *only*) return 0 ;; *) return 1 ;; esac ;;
         *) return 0 ;;
       esac ;;
     devcfg)
@@ -249,15 +255,27 @@ _hc_radios_fallback() {
       case "$_fk" in
         loc)
           _fl=$(_hc_fb_loc_now)
-          [ "$_fl" = on ] && continue
-          if [ "$_fl" != off ]; then _fb_fail="${_fb_fail}loc|$_fv
-"; continue; fi
-          cmd location set-location-enabled true </dev/null >/dev/null 2>&1
-          sleep 1
+          if [ "$_fl" != on ] && [ "$_fl" != off ]; then
+            _fb_fail="${_fb_fail}loc|$_fv
+"; continue
+          fi
           case "$_fv" in [1-9]) ;; *) _fv=3 ;; esac
-          settings put secure location_mode "$_fv" </dev/null >/dev/null 2>&1
-          sleep 1
-          [ "$(_hc_fb_loc_now)" = on ] && [ "$(settings get secure location_mode 2>/dev/null)" = "$_fv" ] ||
+          # Location may already be on from a previous attempt that enabled it but did not
+          # restore the mode. Keep the record until both the state and the mode are right.
+          if [ "$_fl" = off ]; then
+            cmd location set-location-enabled true </dev/null >/dev/null 2>&1
+            sleep 1
+          fi
+          _fl_now=$(_hc_fb_loc_now)
+          _fm_now=$(settings get secure location_mode 2>/dev/null)
+          # Use the mode fallback when cmd was ignored as well as when only the mode differs.
+          if [ "$_fl_now" != on ] || [ "$_fm_now" != "$_fv" ]; then
+            settings put secure location_mode "$_fv" </dev/null >/dev/null 2>&1
+            sleep 1
+            _fm_now=$(settings get secure location_mode 2>/dev/null)
+            _fl_now=$(_hc_fb_loc_now)
+          fi
+          [ "$_fl_now" = on ] && [ "$_fm_now" = "$_fv" ] ||
             _fb_fail="${_fb_fail}loc|$_fv
 " ;;
         bt)
