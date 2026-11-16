@@ -968,7 +968,7 @@ html[data-style="mono"],html[data-style="mono"] body{
 
   var MODID = 'hypercool';
   var DATA = '/data/adb/hypercool';
-  var CFG_VER = '3';
+  var CFG_VER = '4';
   var ENV = 'export PATH=/system/bin:/system/xbin:/vendor/bin:/data/adb/ksu/bin:/data/adb/ap/bin:/data/adb/magisk:$PATH; ';
   var HAS_KSU = (typeof window.ksu !== 'undefined' && window.ksu && typeof window.ksu.exec === 'function');
 
@@ -2470,12 +2470,28 @@ html[data-style="mono"],html[data-style="mono"] body{
 
   // v1.0 stored levels instead of real values
   function migrate(c) {
-    if (c.cfg_ver) return c;
-    var cap = { '1': '95', '2': '88', '3': '80' };
-    var chg = { '1': '3000', '2': '2000', '3': '1500' };
-    if (cap[c.cpu_cap]) c.cpu_cap = cap[c.cpu_cap];
-    if (chg[c.charge_cool]) c.charge_cool = chg[c.charge_cool];
-    if (c.doze_aggr === '1') c.doze_aggr = '2';
+    if (!c.cfg_ver) {
+      var cap = { '1': '95', '2': '88', '3': '80' };
+      var chg = { '1': '3000', '2': '2000', '3': '1500' };
+      if (cap[c.cpu_cap]) c.cpu_cap = cap[c.cpu_cap];
+      if (chg[c.charge_cool]) c.charge_cool = chg[c.charge_cool];
+      if (c.doze_aggr === '1') c.doze_aggr = '2';
+    }
+    // v2.3.3 battery defaults: a value moves only while it still holds the old default,
+    // anything the user chose is kept exactly as it is
+    if (String(c.cfg_ver) !== '4') {
+      var mv = {
+        cpu_cap: ['95', '88'], gpu_idle_timer: ['64', '20'],
+        walt_hispeed_load: ['95', '99'], walt_up_rate: ['1000', '5000'],
+        bg_uclamp: ['30', '25'], soff_cpu: ['60', '30'],
+        soff_radio_min: ['15', '5'], soff_data_min: ['10', '5'],
+        vm_writeback: ['3000', '6000'], vm_stat_interval: ['10', '60'],
+        vm_dirty_bg: ['10', '20'], vm_dirty: ['30', '40']
+      };
+      Object.keys(mv).forEach(function (k) { if (String(c[k]) === mv[k][0]) c[k] = mv[k][1]; });
+      if (String(c.rr_active) === '120' && String(c.rr_idle) === '60') { c.rr_active = '0'; c.rr_idle = '0'; }
+      c.cfg_ver = '4';
+    }
     return c;
   }
 

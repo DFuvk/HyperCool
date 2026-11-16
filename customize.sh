@@ -5,6 +5,7 @@
 # shellcheck disable=SC2034
 SKIPUNZIP=0
 HC_DATA=/data/adb/hypercool
+. "$MODPATH/common/cfg_migrate.sh"
 
 ui_print " "
 ui_print "  HyperCool - Heat & Battery Fix"
@@ -66,6 +67,9 @@ if [ -f "$HC_DATA/config.conf" ]; then
     ui_print "- Wakelock list: removed notification wakelocks from the old default"
     sed -i 's/^wl_list=.*/wl_list=wlan_pno_wl;wlan_extscan_wl;wcnss_filter_lock/' "$C"
   fi
+  # v2.3.3 battery defaults: a value moves only while it still holds the old default,
+  # so anything the user chose is kept exactly as it is
+  hc_migrate_config "$C" && ui_print "- Battery input defaults updated (your own values are kept)"
   # make sure the last line ends with a newline before appending missing keys
   [ -s "$HC_DATA/config.conf" ] && [ -n "$(tail -c1 "$HC_DATA/config.conf")" ] && echo >> "$HC_DATA/config.conf"
   grep -E '^[a-z0-9_]+=' "$MODPATH/common/default.conf" | while IFS='=' read -r k v; do
