@@ -109,6 +109,50 @@ _hc_wait_boot() {
   sleep 10
 }
 
+# stop the touch-only refresh rate keeper before the restore: on its way out it writes the active
+# rate, which would land on top of the stock value restored below
+_hc_stop_rr() {
+  _rq=$(cat "$HC_DATA/rr_watch.pid" 2>/dev/null)
+  case "$_rq" in ''|*[!0-9]*) return 0 ;; esac
+  grep -q rr_watch "/proc/$_rq/cmdline" 2>/dev/null || return 0
+  kill "$_rq" 2>/dev/null
+  _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_rq" ]; do sleep 1; _i=$((_i + 1)); done
+  # do not let a keeper that ignored TERM write its active rate after the stock value is restored
+  if [ -d "/proc/$_rq" ] && grep -q rr_watch "/proc/$_rq/cmdline" 2>/dev/null; then
+    kill -9 "$_rq" 2>/dev/null
+    _i=0; while [ "$_i" -lt 2 ] && [ -d "/proc/$_rq" ]; do sleep 1; _i=$((_i + 1)); done
+  fi
+  return 0
+}
+
+# Locate the radio helper for standalone restore. The copy next to this script is preferred; the
+# installed module copy is used for an older install that has not copied it yet.
+_hc_radio_lib() {
+  for _l in "$HC_DATA/radio.sh" "${MODDIR:-/data/adb/modules/hypercool}/common/radio.sh"; do
+    [ -f "$_l" ] && { printf '%s\n' "$_l"; return 0; }
+  done
+  return 1
+}
+
+# Location / Bluetooth and mobile data / NFC left off by a screen-off keeper that did not stop
+# cleanly. Uses radio.sh (read back after each switch); what could not be put back stays in its
+# file and counts as a failure, so --purge keeps it for the next retry.
+_hc_radios() {
+  [ -s "$HC_DATA/soff_radio.save" ] || [ -s "$HC_DATA/soff_data.save" ] || return 0
+  _lib=$(_hc_radio_lib) || {
+    echo "Radio/mobile data records kept: radio.sh is missing" >&2
+    return 1
+  }
+  RSAVE=$HC_DATA/soff_radio.save
+  DSAVE=$HC_DATA/soff_data.save
+  # shellcheck source=/dev/null
+  . "$_lib"
+  radio_restore
+  data_restore
+  [ ! -s "$RSAVE" ] && [ ! -s "$DSAVE" ] || return 1
+  return 0
+}
+
 _hc_main() {
   _all=0; _wait=0; _purge=0; _feat=""
   while [ $# -gt 0 ]; do
@@ -127,6 +171,7 @@ _hc_main() {
   fi
   _rc=0
   if [ "$_all" = 1 ]; then
+    _hc_stop_rr
     # GMS sys-whitelist removal made by an older build that did not record it
     if ! grep -q "^gms_doze|syswl|" "$HC_ROMBAK" 2>/dev/null && \
        grep -q 'un-wl n="com.google.android.gms"' /data/system/deviceidle.xml 2>/dev/null && \
@@ -137,18 +182,15 @@ _hc_main() {
     # forced deep Doze left by a keeper that did not stop cleanly
     [ -f "$HC_DATA/doze_forced" ] && dumpsys deviceidle unforce </dev/null >/dev/null 2>&1
     rm -f "$HC_DATA/doze_forced"
-    # mobile data / NFC left off by a screen-off keeper that did not stop cleanly
-    if [ -s "$HC_DATA/soff_data.save" ]; then
-      grep -q '^data|' "$HC_DATA/soff_data.save" && { svc data enable </dev/null >/dev/null 2>&1 || cmd phone data enable </dev/null >/dev/null 2>&1; }
-      grep -q '^nfc|' "$HC_DATA/soff_data.save" && { svc nfc enable </dev/null >/dev/null 2>&1 || cmd nfc enable-nfc </dev/null >/dev/null 2>&1; }
-      : > "$HC_DATA/soff_data.save"
-    fi
+    # Location / Bluetooth and mobile data / NFC left off by a keeper that did not stop cleanly
+    _hc_radios || _rc=1
     if [ "$_rc" -eq 0 ]; then
       echo "All recorded system changes restored."
     else
       echo "Some changes could not be restored; their records were kept for a retry."
     fi
   elif [ -n "$_feat" ]; then
+    [ "$_feat" = "rr_adapt" ] && _hc_stop_rr
     restore_feature "$_feat" || _rc=1
     if [ "$_rc" -eq 0 ]; then
       echo "Restored: $_feat"

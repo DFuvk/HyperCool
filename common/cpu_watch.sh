@@ -55,11 +55,28 @@ while :; do
         _d=$_b
         [ -f "$_d/enable" ] && [ -f "$_d/max_cpus" ] || continue
         if [ "$(cat "$_d/enable" 2>/dev/null)" != 1 ] || [ "$(cat "$_d/max_cpus" 2>/dev/null)" != 0 ]; then
-          [ -f "$_d/min_cpus" ] && wr "$_d/min_cpus" 0
-          wr "$_d/max_cpus" 0
-          if wr "$_d/enable" 1; then
+          # limits before re-parking: a failed attempt must not leave them at 0
+          _pmin=$(cat "$_d/min_cpus" 2>/dev/null)
+          _pmax=$(cat "$_d/max_cpus" 2>/dev/null)
+          _pok=1
+          if [ -f "$_d/min_cpus" ]; then
+            wr "$_d/min_cpus" 0 || _pok=0
+            [ "$_pok" = 1 ] && [ "$(cat "$_d/min_cpus" 2>/dev/null)" = 0 ] || _pok=0
+          fi
+          if [ "$_pok" = 1 ]; then
+            wr "$_d/max_cpus" 0 || _pok=0
+            [ "$_pok" = 1 ] && [ "$(cat "$_d/max_cpus" 2>/dev/null)" = 0 ] || _pok=0
+          fi
+          if [ "$_pok" = 1 ]; then
+            wr "$_d/enable" 1 || _pok=0
+            [ "$_pok" = 1 ] && [ "$(cat "$_d/enable" 2>/dev/null)" = 1 ] || _pok=0
+          fi
+          if [ "$_pok" = 1 ]; then
             chmod 0444 "$_d/enable" "$_d/min_cpus" "$_d/max_cpus" 2>/dev/null
             _fix="$_fix park-cpu$_a"
+          else
+            case "$_pmin" in ''|*[!0-9]*) ;; *) [ -f "$_d/min_cpus" ] && wr "$_d/min_cpus" "$_pmin" ;; esac
+            case "$_pmax" in ''|*[!0-9]*) ;; *) wr "$_d/max_cpus" "$_pmax" ;; esac
           fi
         fi ;;
     esac

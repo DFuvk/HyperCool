@@ -49,6 +49,8 @@ wr() {
   [ -n "$_m" ] && chmod "$_m" "$1" 2>/dev/null
   return $_r
 }
+# node already in $SAVE: a value that could not be put back at screen-on is still the original
+saved_has() { [ -s "$SAVE" ] && awk -F'|' -v n="$1" '$1 == n { f = 1 } END { exit !f }' "$SAVE"; }
 # save the value to put back (default: the current one), then write the screen-off value
 # the original is only recorded when the write worked: a rejected write changes nothing
 put() {
@@ -57,7 +59,7 @@ put() {
   [ -n "$_cv" ] || return 1
   [ "$_cv" = "$2" ] && return 0
   wr "$1" "$2" || return 1
-  printf '%s|%s\n' "$1" "${3:-$_cv}" >> "$SAVE"
+  saved_has "$1" || printf '%s|%s\n' "$1" "${3:-$_cv}" >> "$SAVE"
   return 0
 }
 # highest frequency <= $2 in the policy table $1 (or $2 itself)
@@ -81,7 +83,8 @@ little_policy() {
 }
 
 apply_off() {
-  : > "$SAVE"
+  # entries left by a failed restore stay: they hold the real values to put back
+  [ -e "$SAVE" ] || : > "$SAVE"
   _al=""
   _lp=$(little_policy)
   for _p in /sys/devices/system/cpu/cpufreq/policy*; do

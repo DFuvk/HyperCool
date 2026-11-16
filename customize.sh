@@ -76,6 +76,7 @@ else
   cp -f "$MODPATH/common/default.conf" "$HC_DATA/config.conf"
 fi
 cp -f "$MODPATH/common/restore.sh" "$HC_DATA/restore.sh"
+cp -f "$MODPATH/common/radio.sh" "$HC_DATA/radio.sh"
 # guard: restores ROM changes even while the module is disabled (removes itself after uninstall)
 mkdir -p /data/adb/service.d
 cp -f "$MODPATH/common/hc_guard.sh" /data/adb/service.d/.hypercool_guard.sh

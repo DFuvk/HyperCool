@@ -243,6 +243,11 @@ hc_core_state() {
   [ -f "$2/global_state" ] || return 0
   awk -v c="CPU$1" '$1==c{f=1;next} /^CPU[0-9]+$/{f=0} f && ($1=="Paused:" || $1=="Isolated:"){print $2; exit}' "$2/global_state" 2>/dev/null
 }
+# hc_pp_back <core_ctl dir> <min_cpus> <max_cpus>: limits back to what they were before parking
+hc_pp_back() {
+  case "$2" in ''|*[!0-9]*) ;; *) wtry "$1/min_cpus" "$2" ;; esac
+  case "$3" in ''|*[!0-9]*) ;; *) wtry "$1/max_cpus" "$3" ;; esac
+}
 f_prime_park() {
   on prime_park || { st prime_park off; return; }
   on_qcom_ok || { st prime_park skipped "needs Qualcomm core_ctl (not on MediaTek)"; return; }
@@ -253,6 +258,8 @@ f_prime_park() {
     _c=$(rd "$_pp/related_cpus" | awk '{print $1}')
     _cc=/sys/devices/system/cpu/cpu$_c/core_ctl
     _en=""
+    # limits before any write: put back when parking does not work
+    _omin=$(rd "$_cc/min_cpus"); _omax=$(rd "$_cc/max_cpus")
     if [ -f "$_cc/enable" ] && [ "$(rd "$_cc/enable")" = 0 ]; then
       # core_ctl is off on this cluster: limits first, then switch it on (reverted below if it does not work)
       if [ ! -f "$_cc/max_cpus" ]; then
@@ -262,6 +269,7 @@ f_prime_park() {
       [ -f "$_cc/min_cpus" ] && wtry "$_cc/min_cpus" 0
       wtry "$_cc/max_cpus" 0
       if ! wtry "$_cc/enable" 1; then
+        hc_pp_back "$_cc" "$_omin" "$_omax"
         fin prime_park "" "core_ctl is disabled on this cluster (enable=0) and does not accept enable=1"
         return
       fi
@@ -294,6 +302,7 @@ f_prime_park() {
         [ -n "$_ok" ] || _why="cpu$_c was not parked (paused/isolated) by core_ctl"
       fi
       if [ -n "$_why" ]; then
+        hc_pp_back "$_cc" "$_omin" "$_omax"
         [ -n "$_en" ] && wtry "$_cc/enable" 0
         log "  prime_park: $_why${_en:+, core_ctl switched off again}"
         st prime_park skipped "$_why${_en:+ (core_ctl put back to off)}"

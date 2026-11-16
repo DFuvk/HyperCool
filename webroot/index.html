@@ -1615,6 +1615,7 @@ html[data-style="mono"],html[data-style="mono"] body{
     modal('Discard changes?', 'Your edits are not saved yet.', [
       { label: 'Keep editing', primary: true },
       { label: 'Discard', fn: function () {
+        dropCal();
         cfg = copy(saved);
         leaveGuard = false;
         syncInputs();
@@ -2116,7 +2117,7 @@ html[data-style="mono"],html[data-style="mono"] body{
   }
 
   function isDirty() {
-    return Object.keys(cfg).some(function (k) { return String(cfg[k]) !== String(saved[k]); });
+    return !!pendingCal || Object.keys(cfg).some(function (k) { return String(cfg[k]) !== String(saved[k]); });
   }
   function updateDirty() {
     var dirty = isDirty();
@@ -2424,6 +2425,22 @@ html[data-style="mono"],html[data-style="mono"] body{
   // Config is written as plain quoted lines (no base64: toybox base64 -d on
   // HyperOS could return an empty file silently). Values never contain a single
   // quote because every field is filtered, and quotes are stripped here anyway.
+  // charger calibration from an imported backup: written by Save, dropped by Discard
+  var pendingCal = null;
+  function writeCal() {
+    var lines = pendingCal;
+    return exec('printf "%s\\n" ' + lines.map(function (l) { return "'" + l + "'"; }).join(' ') + ' > ' + DATA + '/charge_levels.conf && echo CALOK')
+      .then(function (r) {
+        if (r.errno === 0 && /CALOK/.test(r.stdout || '')) { pendingCal = null; return true; }
+        snack('Settings saved, but the charger calibration could not be written. Press Save to try again.');
+        return false;
+      });
+  }
+  function dropCal() {
+    if (!pendingCal) return;
+    pendingCal = null;
+    exec('cat ' + DATA + '/charge_levels.conf 2>/dev/null').then(function (r) { renderCal(r.stdout || ''); });
+  }
   function save() {
     if (!HAS_KSU) return Promise.resolve(false);
     var lines = buildConfig().replace(/\n$/, '').split('\n').map(function (l) {
@@ -2442,8 +2459,9 @@ html[data-style="mono"],html[data-style="mono"] body{
       if (r.errno === 0 && /SAVED/.test(r.stdout)) {
         saved = copy(cfg);
         F.forEach(refreshItem);
-        updateDirty();
         snack('Saved. Restart to apply');
+        if (pendingCal) return writeCal().then(function (ok) { updateDirty(); return ok; });
+        updateDirty();
         return true;
       }
       var why = (r.stderr || r.stdout || '').trim().split('\n').pop();
@@ -3097,7 +3115,10 @@ html[data-style="mono"],html[data-style="mono"] body{
         exec('sh ' + DATA + '/restore.sh --all').then(function (r) {
           F.forEach(function (f) { if (f.src === 'rom') cfg[f.k] = '0'; });
           syncInputs();
-          save().then(function () { snack(r.errno === 0 ? 'System changes reverted' : 'Revert finished with errors. Check the boot log, then try again.'); });
+          save().then(function (ok) {
+            if (!ok) { snack('System changes ' + (r.errno === 0 ? 'reverted' : 'partly reverted') + ', but the switched-off options could not be saved. Press Save before you restart.'); return; }
+            snack(r.errno === 0 ? 'System changes reverted' : 'Revert finished with errors. Check the boot log, then try again.');
+          });
         });
       } }
     ]);
@@ -3507,12 +3528,19 @@ html[data-style="mono"],html[data-style="mono"] body{
     syncInputs();
     var cal = Object.keys(kv).filter(function (k) { return /^cal_\d+$/.test(k) && /^\d+$/.test(kv[k]); });
     var done = function () { snack('Backup loaded, check it and press Save'); updateDirty(); };
-    if (!cal.length || !HAS_KSU) { done(); return; }
+    if (!cal.length || !HAS_KSU) {
+      // a calibration imported earlier must not leak into this backup
+      dropCal();
+      done();
+      return;
+    }
     var lines = ['# HyperCool charge level calibration (restored from backup)'].concat(cal.sort(function (a, b) {
       return parseInt(a.slice(4), 10) - parseInt(b.slice(4), 10);
     }).map(function (k) { return k.slice(4) + '=' + kv[k]; }));
-    exec('printf "%s\\n" ' + lines.map(function (l) { return "'" + l + "'"; }).join(' ') + ' > ' + DATA + '/charge_levels.conf')
-      .then(function () { renderCal(lines.join('\n')); done(); });
+    // shown now, written to charge_levels.conf only when Save is pressed
+    pendingCal = lines;
+    renderCal(lines.join('\n'));
+    done();
   }
 
   function openImport() {

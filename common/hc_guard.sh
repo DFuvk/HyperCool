@@ -24,8 +24,16 @@ if [ -f "$D/chg_watch.set" ] || [ -f "$D/chg_watch.state" ]; then
     [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
   done
 fi
-if [ -s "$D/backup/rom.bak" ] && [ -f "$D/restore.sh" ]; then
-  sh "$D/restore.sh" --all --wait-boot >/dev/null 2>&1
-  echo "$(date '+%Y-%m-%d %H:%M:%S') module disabled: ROM changes restored by the guard" >> "$D/boot.log"
+_need=0
+[ -s "$D/backup/rom.bak" ] && _need=1
+[ -s "$D/soff_radio.save" ] && _need=1
+[ -s "$D/soff_data.save" ] && _need=1
+[ -e "$D/doze_forced" ] && _need=1
+if [ "$_need" = 1 ] && [ -f "$D/restore.sh" ]; then
+  if sh "$D/restore.sh" --all --wait-boot >/dev/null 2>&1; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S') module disabled: pending changes restored by the guard" >> "$D/boot.log"
+  else
+    echo "$(date '+%Y-%m-%d %H:%M:%S') module disabled: some pending changes kept for a retry" >> "$D/boot.log"
+  fi
 fi
 exit 0

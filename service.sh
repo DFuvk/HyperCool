@@ -207,6 +207,7 @@ f_soff_prof
 # ---------- bookkeeping ----------
 cp -f "$HC_BOOTCFG" "$HC_DATA/last_applied.conf"
 cp -f "$MODDIR/common/restore.sh" "$HC_DATA/restore.sh"
+cp -f "$MODDIR/common/radio.sh" "$HC_DATA/radio.sh"
 mkdir -p /data/adb/service.d
 cp -f "$MODDIR/common/hc_guard.sh" /data/adb/service.d/.hypercool_guard.sh && chmod 0755 /data/adb/service.d/.hypercool_guard.sh
 date '+%Y-%m-%d %H:%M:%S' > "$HC_DATA/last_boot"
