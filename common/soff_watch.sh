@@ -30,6 +30,7 @@ CDELAY=${HC_CDELAY:-90}; CCOOL=${HC_CCOOL:-1200}
 [ "$COMPACT" = 1 ] && . "$MODDIR/common/compact.sh"
 case "$RMIN" in ''|*[!0-9]*) RMIN=15 ;; esac
 RDELAY=${HC_RDELAY:-$((RMIN * 60))}
+RRETRY=${HC_RRETRY:-300}; RTRIES=${HC_RTRIES:-12}
 RSAVE=$HC_DATA/soff_radio.save
 DSAVE=$HC_DATA/soff_data.save
 case "$DMIN" in ''|*[!0-9]*) DMIN=10 ;; esac
@@ -88,10 +89,15 @@ apply_off() {
   # entries left by a failed restore stay: they hold the real values to put back
   [ -e "$SAVE" ] || : > "$SAVE"
   _al=""
+  _np=0
+  for _p in /sys/devices/system/cpu/cpufreq/policy*; do
+    [ -d "$_p" ] && _np=$((_np + 1))
+  done
   _lp=$(little_policy)
   for _p in /sys/devices/system/cpu/cpufreq/policy*; do
     _m=$(cat "$_p/cpuinfo_max_freq" 2>/dev/null); [ -n "$_m" ] || continue
-    [ "$_p" = "$_lp" ] && continue
+    # a single-policy kernel has no separate little cluster to skip
+    [ "$_np" -gt 1 ] && [ "$_p" = "$_lp" ] && continue
     _s=$(snap "$_p" $((_m * PCT / 100)))
     # put back the Big-core cap or the full range: scaling_max_freq reads the limit after thermal,
     # so the value read now may be a temporary thermal limit
@@ -163,12 +169,15 @@ wifi_check() {
     return 0
   fi
   svc wifi enable </dev/null >/dev/null 2>&1
+  # Android 13+ may ignore the legacy svc wrapper; use the Wi-Fi shell command too
+  sleep 1
+  [ "$(wifi_now)" = on ] || cmd wifi set-wifi-enabled enabled </dev/null >/dev/null 2>&1
   # every attempt counts for the limiter, even when the radio takes longer than 1 s to come up;
   # wait up to 5 s only to report a successful re-enable in the status
   _wi=0
   while [ "$_wi" -lt 5 ]; do
-    sleep 1
     [ "$(wifi_now)" = on ] && break
+    sleep 1
     _wi=$((_wi + 1))
   done
   _wrec="$_wk $_wn"
@@ -250,10 +259,11 @@ ev_start "$HC_DATA/soff_watch.fifo"
 [ "$WIFI" = 1 ] && ipm_start
 
 _csince=0; _cdone=1; _clast=0; _cruns=0
-_rsince=0; _rdone=1; _rcnt=0; _rlast=""
+_rsince=0; _rdone=1; _rtries=0; _rnext=0; _rcnt=0; _rlast=""
 _dnext=0; _ddone=1; _dtries=0; _dcnt=0; _dlast=""; _dseen=0
 _gnext=0; _gdone=1; _gtries=0; _gcnt=0; _glast=""
 _xnext=0; _xdone=1; _xtries=0; _xcnt=0; _xlast=""
+_pnext=0
 _on=1; _offs=0; _scr=on; _since=$(date '+%H:%M:%S'); _fd=""
 # feed: events = screen_toggled seen, events-wait = logcat runs but no event yet, polling = backlight
 feed_now() {
@@ -272,16 +282,25 @@ while :; do
   if scr_off; then
     if [ "$_on" = 1 ]; then
       _on=0; _offs=$((_offs + 1))
-      [ "$PROF" = 1 ] && apply_off
+      [ "$PROF" = 1 ] && { apply_off; _pnext=$(( $(date +%s) + 60 )); }
       [ "$WIFI" = 1 ] && { [ "$(wifi_now)" = on ] && _want=on || _want=off; }
       [ "$COMPACT" = 1 ] && { _csince=$(date +%s); _cdone=0; }
-      [ "$RADIO" = 1 ] && { _rsince=$(date +%s); _rdone=0; }
+      [ "$RADIO" = 1 ] && { _rsince=$(date +%s); _rdone=0; _rtries=0; _rnext=$((_rsince + RDELAY)); }
       [ "$DATA" = 1 ] && { _dnext=$(( $(date +%s) + DDELAY )); _ddone=0; _dtries=0; _dseen=0; }
       [ "$GCF" = 1 ] && { _gnext=$(( $(date +%s) + GCDELAY )); _gdone=0; _gtries=0; }
       [ "$DXF" = 1 ] && { _xnext=$(( $(date +%s) + DXDELAY )); _xdone=0; _xtries=0; }
       note off
     elif [ "$WIFI" = 1 ]; then
       wifi_tick
+    fi
+    # ROM power/perf services can raise the limits again after the screen-off transition.
+    # Re-check at most once a minute; put() only writes a node that actually changed.
+    if [ "$PROF" = 1 ]; then
+      _pn=$(date +%s)
+      if [ "$_pn" -ge "$_pnext" ]; then
+        apply_off
+        _pnext=$((_pn + 60))
+      fi
     fi
     _ew=60
     if [ "$COMPACT" = 1 ] && [ "$_cdone" = 0 ]; then
@@ -299,14 +318,23 @@ while :; do
       fi
     fi
     if [ "$RADIO" = 1 ] && [ "$_rdone" = 0 ]; then
-      _rn=$(date +%s); _rel=$((_rn - _rsince))
-      if [ "$_rel" -ge "$RDELAY" ]; then
-        _rdone=1
-        radio_off "$RBT"
+      _rn=$(date +%s)
+      if [ "$_rn" -ge "$_rnext" ]; then
+        radio_off "$RBT"; _rr=$?
+        # location/Bluetooth still on after the switch: look again in 5 min,
+        # give up for this screen-off period after 12 tries
+        if [ "$_rr" = 2 ]; then
+          _rtries=$((_rtries + 1))
+          if [ "$_rtries" -ge "$RTRIES" ]; then _rdone=1; else _rnext=$((_rn + RRETRY)); fi
+        else
+          _rdone=1
+        fi
         if [ -s "$RSAVE" ]; then _rcnt=$((_rcnt + 1)); _rlast=$(date '+%H:%M:%S'); fi
         note ""
-      else
-        _rw=$((RDELAY - _rel)); [ "$_rw" -lt "$_ew" ] && _ew=$_rw
+      fi
+      if [ "$_rdone" = 0 ]; then
+        _rw=$((_rnext - _rn)); [ "$_rw" -lt 1 ] && _rw=1
+        [ "$_rw" -lt "$_ew" ] && _ew=$_rw
       fi
     fi
     if [ "$DATA" = 1 ] && [ "$_ddone" = 0 ]; then

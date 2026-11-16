@@ -780,7 +780,7 @@ f_soff_prof() {
   while [ "$_i" -lt 5 ] && ! hc_soff_pid >/dev/null; do sleep 1; _i=$((_i + 1)); done
   if _sp=$(hc_soff_pid); then
     if [ "$_prof" = 1 ]; then
-      _w="big cores ${_sc}%$([ "$_sg" = 1 ] && echo ", GPU lowest")$([ "$_sb" = 1 ] && echo ", boosts off") while the screen is off"
+      _w="big cores ${_sc}%$([ "$_sg" = 1 ] && echo ", GPU lowest")$([ "$_sb" = 1 ] && echo ", boosts off") while the screen is off, rechecked every 60 s"
       st soff_prof applied "$_w (keeper pid $_sp, screen via screen events, fallback ${_bl:-dumpsys power})"
     fi
     [ "$_wfk" = 1 ] && st wifi_keep applied "Wi-Fi turned back on when the ROM switches it off while the screen is off, seen at once through Wi-Fi link events, timer every 60 s (keeper pid $_sp, shared with the screen-off profile; Wi-Fi you switch off yourself stays off)"
@@ -788,7 +788,7 @@ f_soff_prof() {
       _dwh="mobile data and NFC"; [ "$_dnfc" = 0 ] && _dwh="mobile data"; [ "$_dmob" = 0 ] && _dwh="NFC"
       st soff_data applied "$_dwh switched off after ${_dmin} min of screen-off and back on when the screen turns on; mobile data waits during calls, audio and tethering (keeper pid $_sp, shared with the screen-off profile)"
     fi
-    [ "$_rad" = 1 ] && st soff_radio applied "Location$([ "$_rbt" = 1 ] && echo " and Bluetooth") switched off after ${_rmin} min of screen-off and back on when the screen turns on (keeper pid $_sp, shared with the screen-off profile)"
+    [ "$_rad" = 1 ] && st soff_radio applied "Location$([ "$_rbt" = 1 ] && echo " and Bluetooth") switched off after ${_rmin} min of screen-off and back on when the screen turns on; if a switch is still on, it is retried every 5 min (keeper pid $_sp, shared with the screen-off profile)"
     if [ "$_gcf" = 1 ]; then
       _gw="F2FS garbage collection (gc_urgent, up to 7 min) when the screen was off 10 min, once a week, when unusable space is at least ${_gcb} GB; no charger needed (30% battery when not charging); battery under $((_gcm - 5)) C to start, stops at ${_gcm} C, under 20% battery or when the screen turns on"
       st f2fs_gc applied "$_gw$([ "$_gct" = 1 ] && echo ", fstrim at most weekly") (keeper pid $_sp, shared with the screen-off profile)"
@@ -1434,6 +1434,20 @@ f_gms_doze_verify() {
 f_scan_off() {
   on scan_off || { restore_feature scan_off; st scan_off off; return; }
   cnt_reset
+  # Android 12+ reads this from the Wi-Fi config store; the legacy global key alone is
+  # ignored on some ROMs. Record the original so restore_feature can put it back.
+  _ws_orig=?
+  if command -v cmd >/dev/null 2>&1; then
+    _ws=$(cmd wifi status </dev/null 2>/dev/null | grep -i -m1 'scanning is')
+    case "$_ws" in
+      *always*) _ws_orig=on ;;
+      *only*) _ws_orig=off ;;
+    esac
+  fi
+  if [ "$_ws_orig" = on ]; then
+    recv scan_off cmdwifi - scan "$_ws_orig"
+    if cmd wifi set-scan-always-available disabled </dev/null >/dev/null 2>&1; then cnt_ok; else cnt_fail; fi
+  fi
   set_s scan_off global wifi_scan_always_enabled 0
   set_s scan_off global ble_scan_always_enabled 0
   set_s scan_off global wifi_scan_throttle_enabled 1

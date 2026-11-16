@@ -42,29 +42,50 @@ bt_busy() {
 radio_save() {
   [ -e "$RSAVE" ] || : > "$RSAVE"
   _tmp="$RSAVE.tmp.$$"
-  grep -v "^$1|" "$RSAVE" > "$_tmp" 2>/dev/null
+  grep -v "^$1|" "$RSAVE" > "$_tmp" 2>/dev/null || :
   printf '%s\n' "$1|$2" >> "$_tmp"
   mv "$_tmp" "$RSAVE"
 }
+radio_unsave() { [ -s "$RSAVE" ] && sed -i "/^$1|/d" "$RSAVE" 2>/dev/null; return 0; }
 
 radio_off() {
   [ -e "$RSAVE" ] || : > "$RSAVE"
+  _rrc=0
   if [ "$(loc_now)" = on ]; then
     _lm=$(settings get secure location_mode 2>/dev/null)
+    # record first: a keeper killed right after the switch can still restore it
+    radio_save loc "$_lm"
     cmd location set-location-enabled false </dev/null >/dev/null 2>&1
+    sleep 1
     if [ "$(loc_now)" != off ]; then
       settings put secure location_mode 0 </dev/null >/dev/null 2>&1
-      # still on: put the mode back now, or it would stay changed without a record to restore it
+      sleep 1
+      # still on: put the mode back now, and drop the record that was just written
       if [ "$(loc_now)" != off ]; then
+        radio_unsave loc
         case "$_lm" in [1-9]) settings put secure location_mode "$_lm" </dev/null >/dev/null 2>&1 ;; esac
+        _rrc=2
       fi
     fi
-    [ "$(loc_now)" = off ] && radio_save loc "$_lm"
   fi
   if [ "$1" = 1 ] && [ "$(bt_now)" = on ] && ! bt_busy; then
-    bt_set disable
+    # record first for the same reason as location; verification below decides whether it stays
     radio_save bt ""
+    bt_set disable
+    _bi=0
+    while [ "$_bi" -lt 3 ]; do
+      sleep 1
+      [ "$(bt_now)" = off ] && break
+      _bi=$((_bi + 1))
+    done
+    case "$(bt_now)" in
+      off) ;;
+      # the switch can still be finishing; keep the record so a later off
+      # is undone at screen-on. If it is still on then, restore is a no-op.
+      *) _rrc=2 ;;
+    esac
   fi
+  return $_rrc
 }
 radio_restore() {
   [ -s "$RSAVE" ] || return 0

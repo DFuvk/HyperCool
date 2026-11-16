@@ -16,6 +16,14 @@ _hc_undo() {
       else
         settings put "$2" "$3" "$4" </dev/null >/dev/null 2>&1
       fi ;;
+    cmdwifi)
+      # Android 12+ reads scan-always-available from the Wi-Fi config store, not only
+      # the legacy Settings.Global key. The value is on|off from `cmd wifi status`.
+      case "$4" in
+        on|enabled) cmd wifi set-scan-always-available enabled </dev/null >/dev/null 2>&1 ;;
+        off|disabled) cmd wifi set-scan-always-available disabled </dev/null >/dev/null 2>&1 ;;
+        *) return 0 ;;
+      esac ;;
     devcfg)
       if [ "$4" = "null" ]; then
         device_config delete "$2" "$3" </dev/null >/dev/null 2>&1
