@@ -1,6 +1,14 @@
 # Changelog
 
-> Current build: **v2.3.2 (232)**.
+> Current build: **v2.3.3 (233)**.
+
+## v2.3.3 (233)
+
+- Changed: battery-tuned defaults for 12 numeric inputs (cpu_cap 95 to 88, gpu_idle_timer 64 to 20, walt_hispeed_load 95 to 99, walt_up_rate 1000 to 5000, bg_uclamp 30 to 25, soff_cpu 60 to 30, soff_radio_min 15 to 5, soff_data_min 10 to 5, vm_writeback 3000 to 6000, vm_stat_interval 10 to 60, vm_dirty_bg 10 to 20, vm_dirty 30 to 40). Feature switches and levels are unchanged.
+- New: adaptive refresh rate uses the panel's highest Hz while active and lowest Hz while idle (1 Hz on LTPO), with manual overrides and a 90/30 fallback.
+- Changed: updating the module applies the new battery defaults only where the value is still the old default, so user changes are kept (cfg_ver 4).
+- Fixed: Location restore returns the saved location_mode even when Location is already on, and the Wi-Fi scan-off and Doze writes are verified by reading them back.
+- WebUI: Source code link added after Telegram, and the soff_radio and scan_off descriptions match the module.
 
 ## v2.3.2 (232)
 
