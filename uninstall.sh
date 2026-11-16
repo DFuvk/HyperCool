@@ -10,6 +10,7 @@ MD=${0%/*}; [ -f "$MD/common/radio.sh" ] || MD=/data/adb/modules/hypercool
 mkdir -p "$HC_DATA" 2>/dev/null
 [ -f "$MD/common/restore.sh" ] && cp -f "$MD/common/restore.sh" "$HC_DATA/restore.sh" 2>/dev/null
 [ -f "$MD/common/radio.sh" ] && cp -f "$MD/common/radio.sh" "$HC_DATA/radio.sh" 2>/dev/null
+[ -f "$MD/common/soff_restore.sh" ] && cp -f "$MD/common/soff_restore.sh" "$HC_DATA/soff_restore.sh" 2>/dev/null
 # stop the cache keeper
 _cp=$(cat "$HC_DATA/cache_keeper.pid" 2>/dev/null)
 case "$_cp" in ''|*[!0-9]*) ;; *) grep -q cache_clean "/proc/$_cp/cmdline" 2>/dev/null && kill "$_cp" 2>/dev/null ;; esac
@@ -38,7 +39,19 @@ fi
 # stop the screen-off profile keeper (it writes the saved values back when it stops)
 _sp=$(cat "$HC_DATA/soff_watch.pid" 2>/dev/null)
 case "$_sp" in ''|*[!0-9]*) ;; *) grep -q soff_watch "/proc/$_sp/cmdline" 2>/dev/null && kill "$_sp" 2>/dev/null
-  _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_sp" ]; do sleep 1; _i=$((_i + 1)); done ;; esac
+  _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_sp" ]; do sleep 1; _i=$((_i + 1)); done
+  if [ -d "/proc/$_sp" ] && grep -q soff_watch "/proc/$_sp/cmdline" 2>/dev/null; then
+    kill -9 "$_sp" 2>/dev/null
+    _i=0; while [ "$_i" -lt 2 ] && [ -d "/proc/$_sp" ]; do sleep 1; _i=$((_i + 1)); done
+  fi ;; esac
+# CPU/GPU/boost values that the keeper could not put back before it stopped
+_SLIB=$HC_DATA/soff_restore.sh
+[ -f "$_SLIB" ] || _SLIB=$MD/common/soff_restore.sh
+if [ -f "$_SLIB" ]; then
+  # shellcheck source=/dev/null
+  . "$_SLIB"
+  [ -s "$HC_DATA/soff_watch.save" ] && hc_soff_restore "$HC_DATA/soff_watch.save"
+fi
 # Location / Bluetooth and mobile data / NFC the keeper switched off
 _RLIB=$HC_DATA/radio.sh
 [ -f "$_RLIB" ] || _RLIB=$MD/common/radio.sh
@@ -67,6 +80,11 @@ _rq=$(cat "$HC_DATA/rr_watch.pid" 2>/dev/null)
 case "$_rq" in ''|*[!0-9]*) ;; *) grep -q rr_watch "/proc/$_rq/cmdline" 2>/dev/null && kill "$_rq" 2>/dev/null
   _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_rq" ]; do sleep 1; _i=$((_i + 1)); done
   if [ -d "/proc/$_rq" ] && grep -q rr_watch "/proc/$_rq/cmdline" 2>/dev/null; then
+    for _ck in /proc/[0-9]*; do
+      _ck=${_ck##*/}
+      [ "$_ck" = "$_rq" ] && continue
+      [ "$(awk '/^PPid:/{print $2}' "/proc/$_ck/status" 2>/dev/null)" = "$_rq" ] && kill "$_ck" 2>/dev/null
+    done
     kill -9 "$_rq" 2>/dev/null
     _i=0; while [ "$_i" -lt 2 ] && [ -d "/proc/$_rq" ]; do sleep 1; _i=$((_i + 1)); done
   fi ;; esac
@@ -85,6 +103,7 @@ fi
 if [ -f "$HC_DATA/restore.sh" ]; then
   nohup sh -c 'sh /data/adb/hypercool/restore.sh --all --wait-boot --purge && rm -f /data/adb/service.d/.hypercool_guard.sh' >/dev/null 2>&1 &
 else
+  # Without a restorer, deleting the records would lose the only copy of the values. Keep
+  # HC_DATA for a later manual restore instead of removing it silently.
   rm -f /data/adb/service.d/.hypercool_guard.sh
-  rm -rf "$HC_DATA"
 fi

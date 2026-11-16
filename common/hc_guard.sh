@@ -4,6 +4,14 @@
 # HyperCool guard (installed to /data/adb/service.d by HyperCool)
 MOD=/data/adb/modules/hypercool
 D=/data/adb/hypercool
+# release the 80% charge cap only when HyperCool set it (marker / keeper state)
+_hc_release_cap() {
+  if [ -f "$D/chg_watch.set" ] || [ -f "$D/chg_watch.state" ]; then
+    for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
+      [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
+    done
+  fi
+}
 if [ ! -d "$MOD" ] || [ -f "$MOD/remove" ]; then
   # uninstall.sh normally restores everything; give it time, then clean up whatever is left
   sleep 180
@@ -11,6 +19,7 @@ if [ ! -d "$MOD" ] || [ -f "$MOD/remove" ]; then
   if [ -d "$MOD" ] && [ ! -f "$MOD/remove" ]; then
     exit 0
   fi
+  _hc_release_cap
   if [ -f "$D/restore.sh" ]; then
     sh "$D/restore.sh" --all --wait-boot --purge >/dev/null 2>&1 || exit 0
   fi
@@ -18,16 +27,12 @@ if [ ! -d "$MOD" ] || [ -f "$MOD/remove" ]; then
   exit 0
 fi
 [ -f "$MOD/disable" ] || exit 0
-# release the 80% charge cap only when HyperCool set it (marker / keeper state)
-if [ -f "$D/chg_watch.set" ] || [ -f "$D/chg_watch.state" ]; then
-  for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
-    [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
-  done
-fi
+_hc_release_cap
 _need=0
 [ -s "$D/backup/rom.bak" ] && _need=1
 [ -s "$D/soff_radio.save" ] && _need=1
 [ -s "$D/soff_data.save" ] && _need=1
+[ -s "$D/soff_watch.save" ] && _need=1
 [ -e "$D/doze_forced" ] && _need=1
 if [ "$_need" = 1 ] && [ -f "$D/restore.sh" ]; then
   if sh "$D/restore.sh" --all --wait-boot >/dev/null 2>&1; then

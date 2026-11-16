@@ -21,7 +21,6 @@ case "$_old" in ''|*[!0-9]*) ;; *)
   [ "$_old" != "$$" ] && grep -q cpu_watch "/proc/$_old/cmdline" 2>/dev/null && exit 0 ;;
 esac
 echo $$ > "$PIDF"
-trap 'rm -f "$PIDF"; exit 0' INT TERM
 
 num() { case "$1" in ''|*[!0-9]*) return 1 ;; esac; }
 # write even when the node is read-only (0444), then put the mode back
@@ -33,6 +32,20 @@ wr() {
   [ -n "$_m" ] && chmod "$_m" "$1" 2>/dev/null
   return $_r
 }
+
+# A parking attempt changes min_cpus/max_cpus/enable one by one. If it is interrupted (uninstall,
+# disable, reboot) in the middle, put the original values back instead of leaving the core restricted
+# with a half-applied state. Cleared after a successful attempt so later signals keep it parked.
+_pb_dir=""; _pb_min=""; _pb_max=""; _pb_enable=""
+park_rollback() {
+  [ -n "$_pb_dir" ] || return 0
+  _d=$_pb_dir
+  case "$_pb_min" in ''|*[!0-9]*) ;; *) [ -f "$_d/min_cpus" ] && wr "$_d/min_cpus" "$_pb_min" ;; esac
+  case "$_pb_max" in ''|*[!0-9]*) ;; *) [ -f "$_d/max_cpus" ] && wr "$_d/max_cpus" "$_pb_max" ;; esac
+  case "$_pb_enable" in 0|1) [ -f "$_d/enable" ] && wr "$_d/enable" "$_pb_enable" ;; esac
+  _pb_dir=""
+}
+trap 'park_rollback; rm -f "$PIDF"; exit 0' INT TERM
 
 TOT=0; WIN=0; WSTART=$(date +%s)
 while :; do
@@ -55,9 +68,11 @@ while :; do
         _d=$_b
         [ -f "$_d/enable" ] && [ -f "$_d/max_cpus" ] || continue
         if [ "$(cat "$_d/enable" 2>/dev/null)" != 1 ] || [ "$(cat "$_d/max_cpus" 2>/dev/null)" != 0 ]; then
-          # limits before re-parking: a failed attempt must not leave them at 0
-          _pmin=$(cat "$_d/min_cpus" 2>/dev/null)
-          _pmax=$(cat "$_d/max_cpus" 2>/dev/null)
+          # limits before re-parking: a failed or interrupted attempt must not leave them at 0
+          _pb_dir=$_d
+          _pb_min=$(cat "$_d/min_cpus" 2>/dev/null)
+          _pb_max=$(cat "$_d/max_cpus" 2>/dev/null)
+          _pb_enable=$(cat "$_d/enable" 2>/dev/null)
           _pok=1
           if [ -f "$_d/min_cpus" ]; then
             wr "$_d/min_cpus" 0 || _pok=0
@@ -73,10 +88,10 @@ while :; do
           fi
           if [ "$_pok" = 1 ]; then
             chmod 0444 "$_d/enable" "$_d/min_cpus" "$_d/max_cpus" 2>/dev/null
+            _pb_dir=""
             _fix="$_fix park-cpu$_a"
           else
-            case "$_pmin" in ''|*[!0-9]*) ;; *) [ -f "$_d/min_cpus" ] && wr "$_d/min_cpus" "$_pmin" ;; esac
-            case "$_pmax" in ''|*[!0-9]*) ;; *) wr "$_d/max_cpus" "$_pmax" ;; esac
+            park_rollback
           fi
         fi ;;
     esac

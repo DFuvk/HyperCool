@@ -645,8 +645,21 @@ f_soff_prof() {
     kill "$_sp" 2>/dev/null
     # it finishes its current sleep, writes the saved values back, then exits
     _i=0; while [ "$_i" -lt 6 ] && [ -d "/proc/$_sp" ]; do sleep 1; _i=$((_i + 1)); done
+    # a keeper stuck in a node write must not keep running next to the new one
+    if [ -d "/proc/$_sp" ] && grep -q soff_watch "/proc/$_sp/cmdline" 2>/dev/null; then
+      kill -9 "$_sp" 2>/dev/null
+      _i=0; while [ "$_i" -lt 2 ] && [ -d "/proc/$_sp" ]; do sleep 1; _i=$((_i + 1)); done
+    fi
   fi
   rm -f "$HC_DATA/soff_watch.pid"
+  # values a killed keeper left behind, or a restore that failed while the screen turned on
+  _slib=$MODDIR/common/soff_restore.sh
+  [ -f "$_slib" ] || _slib=$HC_DATA/soff_restore.sh
+  if [ -f "$_slib" ]; then
+    # shellcheck source=/dev/null
+    . "$_slib"
+    [ -s "$HC_DATA/soff_watch.save" ] && hc_soff_restore "$HC_DATA/soff_watch.save"
+  fi
   # Location / Bluetooth left off by a keeper that was killed (or a reboot) while the screen was off
   RSAVE=$HC_DATA/soff_radio.save
   DSAVE=$HC_DATA/soff_data.save

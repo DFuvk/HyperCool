@@ -3028,8 +3028,12 @@ html[data-style="mono"],html[data-style="mono"] body{
         clearInterval(calTimer); calTimer = null;
         $('cal-btn').disabled = false;
         if (p[0] === 'error') { el.textContent = 'Calibration stopped: ' + (p[1] || 'error'); snack('Calibration stopped. Check the note above, then start again.'); return; }
+        // A fresh calibration replaces the file: never let an older imported calibration
+        // remain queued and overwrite these new levels on Save.
+        pendingCal = null;
         exec('cat ' + DATA + '/charge_levels.conf 2>/dev/null').then(function (t) {
           renderCal(t.stdout);
+          updateDirty();
           snack('Calibration done, applied at next boot');
         });
       }
@@ -3048,6 +3052,9 @@ html[data-style="mono"],html[data-style="mono"] body{
              'rm -f ' + DATA + '/charge_cal.progress; ' +
              '(nohup sh /data/adb/modules/' + MODID + '/common/charge_cal.sh >/dev/null 2>&1 &); echo started').then(function (r) {
           if (/notcharging/.test(r.stdout)) { snack('Plug in the charger first, then start.'); return; }
+          // A calibration that starts now supersedes an imported calibration still waiting for Save.
+          pendingCal = null;
+          updateDirty();
           $('cal-btn').disabled = true;
           $('cal-info').textContent = 'Calibration started\u2026';
           if (calTimer) clearInterval(calTimer);

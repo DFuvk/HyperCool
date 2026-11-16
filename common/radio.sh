@@ -81,13 +81,18 @@ radio_restore() {
 "; continue; }
         cmd location set-location-enabled true </dev/null >/dev/null 2>&1
         sleep 1
-        if [ "$(loc_now)" != on ]; then
-          case "$_rv" in [1-9]) ;; *) _rv=3 ;; esac
-          settings put secure location_mode "$_rv" </dev/null >/dev/null 2>&1
-          sleep 1
-        fi
-        [ "$(loc_now)" = on ] || _fail="$_fail$_rk|$_rv
-" ;;
+        # How the location was enabled does not matter: put the exact saved mode back too.
+        # The old code only wrote it when enabling had failed, then dropped the loc record,
+        # leaving e.g. location_mode 0 after a successful enable.
+        case "$_rv" in [1-9]) ;; *) _rv=3 ;; esac
+        settings put secure location_mode "$_rv" </dev/null >/dev/null 2>&1
+        sleep 1
+        _lm_now=$(settings get secure location_mode 2>/dev/null)
+        if [ "$(loc_now)" != on ] || [ "$_lm_now" != "$_rv" ]; then
+          _fail="$_fail$_rk|$_rv
+"
+          continue
+        fi ;;
       bt)
         # airplane mode: Bluetooth stays as the user wants it, but the entry is kept so that
         # Bluetooth can be put back when the airplane mode is over

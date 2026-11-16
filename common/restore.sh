@@ -117,11 +117,58 @@ _hc_stop_rr() {
   grep -q rr_watch "/proc/$_rq/cmdline" 2>/dev/null || return 0
   kill "$_rq" 2>/dev/null
   _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_rq" ]; do sleep 1; _i=$((_i + 1)); done
-  # do not let a keeper that ignored TERM write its active rate after the stock value is restored
+  # do not let a keeper that ignored TERM write its active rate after the stock value is restored.
+  # kill -9 skips its trap, so stop its getevent children first.
   if [ -d "/proc/$_rq" ] && grep -q rr_watch "/proc/$_rq/cmdline" 2>/dev/null; then
+    for _ck in /proc/[0-9]*; do
+      _ck=${_ck##*/}
+      [ "$_ck" = "$_rq" ] && continue
+      [ "$(awk '/^PPid:/{print $2}' "/proc/$_ck/status" 2>/dev/null)" = "$_rq" ] && kill "$_ck" 2>/dev/null
+    done
     kill -9 "$_rq" 2>/dev/null
     _i=0; while [ "$_i" -lt 2 ] && [ -d "/proc/$_rq" ]; do sleep 1; _i=$((_i + 1)); done
   fi
+  [ -d "/proc/$_rq" ] && return 1
+  rm -f "$HC_DATA/rr_watch.pid"
+  return 0
+}
+
+# Stop the screen-off keeper before restoring. Its trap writes the saved values back; if it is
+# stuck, soff_restore.sh below still restores what it can and keeps the rest.
+_hc_stop_soff() {
+  _sq=$(cat "$HC_DATA/soff_watch.pid" 2>/dev/null)
+  case "$_sq" in ''|*[!0-9]*) return 0 ;; esac
+  grep -q soff_watch "/proc/$_sq/cmdline" 2>/dev/null || return 0
+  kill "$_sq" 2>/dev/null
+  _i=0; while [ "$_i" -lt 6 ] && [ -d "/proc/$_sq" ]; do sleep 1; _i=$((_i + 1)); done
+  if [ -d "/proc/$_sq" ] && grep -q soff_watch "/proc/$_sq/cmdline" 2>/dev/null; then
+    kill -9 "$_sq" 2>/dev/null
+    _i=0; while [ "$_i" -lt 2 ] && [ -d "/proc/$_sq" ]; do sleep 1; _i=$((_i + 1)); done
+  fi
+  [ -d "/proc/$_sq" ] && return 1
+  rm -f "$HC_DATA/soff_watch.pid"
+  return 0
+}
+
+# Locate the standalone screen-off restorer. The copy next to this script is preferred.
+_hc_soff_lib() {
+  for _l in "$HC_DATA/soff_restore.sh" "${MODDIR:-/data/adb/modules/hypercool}/common/soff_restore.sh"; do
+    [ -f "$_l" ] && { printf '%s\n' "$_l"; return 0; }
+  done
+  return 1
+}
+
+# Restore CPU/GPU/boost values saved by the screen-off keeper; keep records that still fail.
+_hc_soff() {
+  [ -s "$HC_DATA/soff_watch.save" ] || return 0
+  _lib=$(_hc_soff_lib) || {
+    echo "Screen-off records kept: soff_restore.sh is missing" >&2
+    return 1
+  }
+  # shellcheck source=/dev/null
+  . "$_lib"
+  hc_soff_restore "$HC_DATA/soff_watch.save" || return 1
+  [ ! -s "$HC_DATA/soff_watch.save" ] || return 1
   return 0
 }
 
@@ -137,12 +184,134 @@ _hc_radio_lib() {
 # Location / Bluetooth and mobile data / NFC left off by a screen-off keeper that did not stop
 # cleanly. Uses radio.sh (read back after each switch); what could not be put back stays in its
 # file and counts as a failure, so --purge keeps it for the next retry.
+# Standalone fallback used only when radio.sh is missing (for example after a partial upgrade).
+# It restores the same records with the same read-back checks; anything it cannot verify stays in
+# the save file. Keeping the records is more important than reporting a clean restore.
+_hc_fb_loc_now() {
+  case "$(cmd location is-location-enabled </dev/null 2>/dev/null | head -n 1)" in
+    true*) echo on; return ;;
+    false*) echo off; return ;;
+  esac
+  case "$(settings get secure location_mode 2>/dev/null)" in 0) echo off ;; [1-9]) echo on ;; *) echo ? ;; esac
+}
+_hc_fb_bt_now() {
+  case "$(settings get global bluetooth_on 2>/dev/null)" in 1) echo on ;; 0) echo off ;; *) echo ? ;; esac
+}
+_hc_fb_data_now() {
+  _dv=""
+  _dsid=$(settings get global multi_sim_data_call 2>/dev/null)
+  case "$_dsid" in ''|*[!0-9]*) ;; *) _dv=$(settings get global "mobile_data$_dsid" 2>/dev/null) ;; esac
+  case "$_dv" in 0|1) ;; *) _dv=$(settings get global mobile_data 2>/dev/null) ;; esac
+  case "$_dv" in 1) echo on ;; 0) echo off ;; *) echo ? ;; esac
+}
+_hc_fb_nfc_now() {
+  case "$(dumpsys nfc </dev/null 2>/dev/null | grep -m 1 'mState=')" in
+    *mState=on*) echo on ;;
+    *mState=off*) echo off ;;
+    *mState=turning*) echo turning ;;
+    *) echo ? ;;
+  esac
+}
+_hc_fb_bt_set() {
+  cmd bluetooth_manager "$1" </dev/null >/dev/null 2>&1
+  svc bluetooth "$1" </dev/null >/dev/null 2>&1
+  return 0
+}
+_hc_fb_data_set() {
+  svc data enable </dev/null >/dev/null 2>&1
+  sleep 1
+  [ "$(_hc_fb_data_now)" = on ] && return 0
+  cmd phone data enable </dev/null >/dev/null 2>&1
+  sleep 1
+  [ "$(_hc_fb_data_now)" = on ]
+}
+_hc_fb_nfc_set() {
+  svc nfc enable </dev/null >/dev/null 2>&1
+  sleep 1
+  [ "$(_hc_fb_nfc_now)" = on ] && return 0
+  cmd nfc enable-nfc </dev/null >/dev/null 2>&1
+  sleep 1
+  [ "$(_hc_fb_nfc_now)" = on ]
+}
+_hc_radios_fallback() {
+  _fb_rc=0
+  if [ -s "$HC_DATA/soff_radio.save" ]; then
+    _fb_fail=""
+    while IFS='|' read -r _fk _fv; do
+      case "$_fk" in
+        loc)
+          _fl=$(_hc_fb_loc_now)
+          [ "$_fl" = on ] && continue
+          if [ "$_fl" != off ]; then _fb_fail="${_fb_fail}loc|$_fv
+"; continue; fi
+          cmd location set-location-enabled true </dev/null >/dev/null 2>&1
+          sleep 1
+          case "$_fv" in [1-9]) ;; *) _fv=3 ;; esac
+          settings put secure location_mode "$_fv" </dev/null >/dev/null 2>&1
+          sleep 1
+          [ "$(_hc_fb_loc_now)" = on ] && [ "$(settings get secure location_mode 2>/dev/null)" = "$_fv" ] ||
+            _fb_fail="${_fb_fail}loc|$_fv
+" ;;
+        bt)
+          [ "$(settings get global airplane_mode_on 2>/dev/null)" = 1 ] && { _fb_fail="${_fb_fail}bt|$_fv
+"; continue; }
+          _fb=$(_hc_fb_bt_now)
+          [ "$_fb" = on ] && continue
+          [ "$_fb" = off ] || { _fb_fail="${_fb_fail}bt|$_fv
+"; continue; }
+          _hc_fb_bt_set enable
+          sleep 1
+          [ "$(_hc_fb_bt_now)" = on ] || _fb_fail="${_fb_fail}bt|$_fv
+" ;;
+        *) _fb_fail="${_fb_fail}$_fk|$_fv
+" ;;
+      esac
+    done < "$HC_DATA/soff_radio.save"
+    if [ -n "$_fb_fail" ]; then
+      printf '%s' "$_fb_fail" > "$HC_DATA/soff_radio.save" || _fb_rc=1
+    else
+      : > "$HC_DATA/soff_radio.save" || _fb_rc=1
+    fi
+    [ -n "$_fb_fail" ] && _fb_rc=1
+  fi
+  if [ -s "$HC_DATA/soff_data.save" ]; then
+    _fb_fail=""
+    while IFS='|' read -r _fk _fv; do
+      case "$_fk" in
+        data)
+          _fd=$(_hc_fb_data_now)
+          [ "$_fd" = on ] && continue
+          [ "$_fd" = off ] && _hc_fb_data_set && continue
+          _fb_fail="${_fb_fail}data|
+" ;;
+        nfc)
+          _fn=$(_hc_fb_nfc_now)
+          [ "$_fn" = turning ] && { sleep 2; _fn=$(_hc_fb_nfc_now); }
+          [ "$_fn" = on ] && continue
+          [ "$_fn" = off ] && _hc_fb_nfc_set && continue
+          _fb_fail="${_fb_fail}nfc|
+" ;;
+        *) _fb_fail="${_fb_fail}$_fk|$_fv
+" ;;
+      esac
+    done < "$HC_DATA/soff_data.save"
+    if [ -n "$_fb_fail" ]; then
+      printf '%s' "$_fb_fail" > "$HC_DATA/soff_data.save" || _fb_rc=1
+    else
+      : > "$HC_DATA/soff_data.save" || _fb_rc=1
+    fi
+    [ -n "$_fb_fail" ] && _fb_rc=1
+  fi
+  return "$_fb_rc"
+}
+
 _hc_radios() {
   [ -s "$HC_DATA/soff_radio.save" ] || [ -s "$HC_DATA/soff_data.save" ] || return 0
-  _lib=$(_hc_radio_lib) || {
-    echo "Radio/mobile data records kept: radio.sh is missing" >&2
-    return 1
-  }
+  if ! _lib=$(_hc_radio_lib); then
+    echo "radio.sh is missing; restoring the saved radios directly" >&2
+    _hc_radios_fallback
+    return
+  fi
   RSAVE=$HC_DATA/soff_radio.save
   DSAVE=$HC_DATA/soff_data.save
   # shellcheck source=/dev/null
@@ -171,7 +340,10 @@ _hc_main() {
   fi
   _rc=0
   if [ "$_all" = 1 ]; then
-    _hc_stop_rr
+    # Stop the screen-off keeper first: its trap writes back the values, and an old keeper must
+    # not reapply disabled Location/data/NFC options after a WebUI Revert.
+    _hc_stop_soff || _rc=1
+    _hc_stop_rr || _rc=1
     # GMS sys-whitelist removal made by an older build that did not record it
     if ! grep -q "^gms_doze|syswl|" "$HC_ROMBAK" 2>/dev/null && \
        grep -q 'un-wl n="com.google.android.gms"' /data/system/deviceidle.xml 2>/dev/null && \
@@ -182,6 +354,8 @@ _hc_main() {
     # forced deep Doze left by a keeper that did not stop cleanly
     [ -f "$HC_DATA/doze_forced" ] && dumpsys deviceidle unforce </dev/null >/dev/null 2>&1
     rm -f "$HC_DATA/doze_forced"
+    # CPU/GPU/boost values saved while the screen was off
+    _hc_soff || _rc=1
     # Location / Bluetooth and mobile data / NFC left off by a keeper that did not stop cleanly
     _hc_radios || _rc=1
     if [ "$_rc" -eq 0 ]; then
@@ -190,7 +364,9 @@ _hc_main() {
       echo "Some changes could not be restored; their records were kept for a retry."
     fi
   elif [ -n "$_feat" ]; then
-    [ "$_feat" = "rr_adapt" ] && _hc_stop_rr
+    if [ "$_feat" = "rr_adapt" ]; then
+      _hc_stop_rr || _rc=1
+    fi
     restore_feature "$_feat" || _rc=1
     if [ "$_rc" -eq 0 ]; then
       echo "Restored: $_feat"

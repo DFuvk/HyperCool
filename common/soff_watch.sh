@@ -14,6 +14,8 @@ MODDIR=/data/adb/modules/hypercool
 PIDF=$HC_DATA/soff_watch.pid
 STATE=$HC_DATA/soff_watch.state
 SAVE=$HC_DATA/soff_watch.save
+HC_SOFF_LIB_OK=0
+[ -f "$MODDIR/common/soff_restore.sh" ] && . "$MODDIR/common/soff_restore.sh" && HC_SOFF_LIB_OK=1
 
 case "$PCT" in ''|*[!0-9]*) exit 1 ;; esac
 case "$CAP" in ''|*[!0-9]*) CAP=0 ;; esac
@@ -214,8 +216,12 @@ jobs_stop() {
 }
 
 restore() {
+  if [ "$HC_SOFF_LIB_OK" = 1 ]; then
+    hc_soff_restore "$SAVE"
+    return
+  fi
   [ -s "$SAVE" ] || return 0
-  # what could not be put back stays in the file and is tried again later
+  # fallback for an old install that has not copied soff_restore.sh yet
   _fail=""
   while IFS='|' read -r _n _v; do
     [ -n "$_n" ] || continue

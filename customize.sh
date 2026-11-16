@@ -77,6 +77,7 @@ else
 fi
 cp -f "$MODPATH/common/restore.sh" "$HC_DATA/restore.sh"
 cp -f "$MODPATH/common/radio.sh" "$HC_DATA/radio.sh"
+cp -f "$MODPATH/common/soff_restore.sh" "$HC_DATA/soff_restore.sh"
 # guard: restores ROM changes even while the module is disabled (removes itself after uninstall)
 mkdir -p /data/adb/service.d
 cp -f "$MODPATH/common/hc_guard.sh" /data/adb/service.d/.hypercool_guard.sh
@@ -91,6 +92,7 @@ set_perm "$MODPATH/service.sh" 0 0 0755
 set_perm "$MODPATH/uninstall.sh" 0 0 0755
 set_perm "$MODPATH/action.sh" 0 0 0755
 set_perm "$MODPATH/common/restore.sh" 0 0 0755
+set_perm "$MODPATH/common/soff_restore.sh" 0 0 0755
 set_perm "$MODPATH/common/charge_cal.sh" 0 0 0755
 set_perm "$MODPATH/common/chg_watch.sh" 0 0 0755
 set_perm "$MODPATH/common/soff_watch.sh" 0 0 0755
