@@ -1,6 +1,19 @@
 # Changelog
 
-> Current build: **v2.3.3 (233)**.
+> Current build: **v2.3.4 (234)**.
+
+## v2.3.4 (234)
+
+- New: Heat guard (experimental, off by default) lowers the big-core CPU cap and the refresh rate while the battery is hot, then restores both after cool-down. Applied limits are also put back when the keeper stops, on reboot, when the module is disabled, or on uninstall.
+- New: `rr_hold` (1–5 s, default 2 s) replaces the fixed 2 s idle delay of the touch refresh keeper.
+- New: Recent activity on Home lists keeper actions, including CPU cap, charge limit, cache clean, calibration, screen-off, F2FS, dex2oat, and manual cache/RAM actions. It refreshes automatically when Home opens or becomes visible again, and the manual Refresh button is gone.
+- Changed: the existing tuning lists now include scheduler RT clamp, quiet-kernel entries, RAM compaction and page-cluster, more props, an extra GMS freeze component, and four more Dropbox tags. WebUI descriptions list the new entries.
+- Changed: `joyose_off` moved to the experimental risk group.
+- Fixed: invalid battery temperatures such as `-`, `--`, and `1-2` are rejected, so a hot CPU cap is not kept when the temperature cannot be read.
+- Fixed: with Adaptive refresh rate on, the heat guard also lowers `min_refresh_rate` when it is above the heat cap and restores it after cool-down.
+- Fixed: WebUI no longer downgrades `cfg_ver` when loading or importing a config from a newer build.
+- Fixed: "Battery hot" is logged only when a limit was actually lowered, and the cool-down log no longer ends with an empty detail.
+- Fixed: Wi-Fi pause and failure logs use titles that match the event, and module status only reports "heat guard running" when the keeper is applied or partial.
 
 ## v2.3.3 (233)
 
