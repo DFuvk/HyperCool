@@ -2440,7 +2440,10 @@ html[data-style="mono"],html[data-style="mono"] body{
   ];
 
   function buildConfig() {
-    var out = '# HyperCool configuration (written by WebUI)\n# 1 = ON, 0 = OFF. Applied ONCE at the next boot.\ncfg_ver=' + CFG_VER + '\n';
+    // an older WebUI must not downgrade a config written by a newer build
+    var cv = parseInt(cfg.cfg_ver, 10);
+    if (!(cv >= parseInt(CFG_VER, 10))) cv = parseInt(CFG_VER, 10);
+    var out = '# HyperCool configuration (written by WebUI)\n# 1 = ON, 0 = OFF. Applied ONCE at the next boot.\ncfg_ver=' + cv + '\n';
     ORDER.forEach(function (g) {
       out += '\n# ---------- ' + g[0] + ' ----------\n';
       g[1].forEach(function (k) { out += k + '=' + String(cfg[k] == null ? '' : cfg[k]).replace(/[\r\n]/g, '') + '\n'; });
@@ -2508,8 +2511,10 @@ html[data-style="mono"],html[data-style="mono"] body{
       if (c.doze_aggr === '1') c.doze_aggr = '2';
     }
     // v2.3.3 battery defaults: a value moves only while it still holds the old default,
-    // anything the user chose is kept exactly as it is
-    if (String(c.cfg_ver) !== '4') {
+    // anything the user chose is kept exactly as it is. cfg_ver 4 or newer is current,
+    // so a config from a newer build is never migrated backwards.
+    var cv = parseInt(c.cfg_ver, 10);
+    if (!(cv >= 4)) {
       var mv = {
         cpu_cap: ['95', '88'], gpu_idle_timer: ['64', '20'],
         walt_hispeed_load: ['95', '99'], walt_up_rate: ['1000', '5000'],
@@ -2566,6 +2571,9 @@ html[data-style="mono"],html[data-style="mono"] body{
         saved[k] = (v !== undefined && (v !== '' || LISTS[k])) ? v : d[k];
       });
       cfg = copy(saved);
+      // keep the version of a config from a newer build: Save must not downgrade it
+      cfg.cfg_ver = fileCfg.cfg_ver || CFG_VER;
+      saved.cfg_ver = cfg.cfg_ver;
       last = migrate(parseKV(sec.LAST));
       delete last.cfg_ver;
       status = {};
@@ -3627,6 +3635,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       if (kv[k] === undefined) return;
       cfg[k] = String(kv[k]).replace(/[^A-Za-z0-9_.,=;:@-]/g, '');
     });
+    cfg.cfg_ver = kv.cfg_ver || CFG_VER;
     F.forEach(function (f) {
       if (f.text && cfg[f.text.k] != null) cfg[f.text.k] = String(cfg[f.text.k]).replace(/\s+/g, '').replace(f.text.filter, '');
     });
