@@ -36,10 +36,13 @@ _need=0
 [ -s "$D/heat.save" ] && _need=1
 [ -e "$D/doze_forced" ] && _need=1
 if [ "$_need" = 1 ] && [ -f "$D/restore.sh" ]; then
+  [ -f "$MOD/common/klog.sh" ] && HC_DATA=$D . "$MOD/common/klog.sh" || klog() { :; }
   if sh "$D/restore.sh" --all --wait-boot >/dev/null 2>&1; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') module disabled: pending changes restored by the guard" >> "$D/boot.log"
+    klog restore "Values put back" "module disabled: every change HyperCool had left was restored"
   else
     echo "$(date '+%Y-%m-%d %H:%M:%S') module disabled: some pending changes kept for a retry" >> "$D/boot.log"
+    klog restore "Values put back (partly)" "module disabled: some changes were not accepted, tried again at the next boot"
   fi
 fi
 exit 0

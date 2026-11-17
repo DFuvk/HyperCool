@@ -11,7 +11,7 @@ HC_DATA=/data/adb/hypercool
 MODDIR=/data/adb/modules/hypercool
 S=$HC_DATA/bcal.state
 PIDF=$HC_DATA/bcal_watch.pid
-[ -f "$MODDIR/common/klog.sh" ] && . "$MODDIR/common/klog.sh" || klog() { :; }
+[ -f "$MODDIR/common/klog.sh" ] && . "$MODDIR/common/klog.sh" || { klog() { :; }; kstop() { :; }; }
 LOW=5
 HOLD=3600
 SETTLE=300
@@ -44,7 +44,7 @@ plugged() {
 capnow() { cat "$B/charge_full" 2>/dev/null || cat /sys/class/power_supply/bms/charge_full 2>/dev/null; }
 
 while :; do
-  [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ] || [ ! -d "$MODDIR" ] && break
+  [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ] || [ ! -d "$MODDIR" ] && { kstop calibration "module disabled or removed, the calibration goes on when the module runs again"; break; }
   _l=$(lvl); _now=$(date +%s)
   case "$(get phase)" in
     discharge)

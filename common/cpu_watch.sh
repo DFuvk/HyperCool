@@ -9,7 +9,7 @@
 export PATH=/system/bin:/system/xbin:/vendor/bin:/data/adb/ksu/bin:/data/adb/magisk:"$PATH"
 HC_DATA=${HC_DATA:-/data/adb/hypercool}
 MODDIR=${MODDIR:-/data/adb/modules/hypercool}
-[ -f "$MODDIR/common/klog.sh" ] && . "$MODDIR/common/klog.sh" || klog() { :; }
+[ -f "$MODDIR/common/klog.sh" ] && . "$MODDIR/common/klog.sh" || { klog() { :; }; kstop() { :; }; }
 LIST=$HC_DATA/cpu_keep.list
 PIDF=$HC_DATA/cpu_watch.pid
 STATE=$HC_DATA/cpu_watch.state
@@ -50,8 +50,8 @@ trap 'park_rollback; rm -f "$PIDF"; exit 0' INT TERM
 
 TOT=0; WIN=0; WSTART=$(date +%s)
 while :; do
-  [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ] || [ ! -d "$MODDIR" ] && break
-  [ -s "$LIST" ] || break
+  [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ] || [ ! -d "$MODDIR" ] && { _why="module disabled or removed"; break; }
+  [ -s "$LIST" ] || { _why="nothing left to keep (no CPU cap or parking in the list)"; break; }
   _fix=""
   while IFS='|' read -r _t _a _b _c; do
     case "$_t" in
@@ -115,4 +115,5 @@ while :; do
   fi
 done
 rm -f "$PIDF"
+kstop cpu "${_why:-stopped}"
 exit 0

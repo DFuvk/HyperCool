@@ -130,6 +130,19 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 .kp-log.all li{cursor:default}
 .kp-log.all .ka{white-space:normal}
 .kp-log.all .kd{display:block}
+.kp-log li.warn .ka{color:var(--warn)}
+.kp-log li.bad .ka{color:var(--bad)}
+.apseg.kp-flt{margin:0 0 6px;gap:6px}
+.apseg.kp-flt button{padding:8px 6px;min-height:38px;font-size:13px;white-space:nowrap}
+.ks-head{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:0 0 0 4px;color:var(--on);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.ks-head .ks-sum{flex:1;min-width:0}
+.ks-head .chev{width:28px;height:28px}
+.ks-head .chev svg{transition:transform .18s}
+.ks-head[aria-expanded="true"] .chev svg{transform:rotate(90deg)}
+#ks-body[hidden]{display:none}
+.ks-note{margin:10px 4px 0;font-size:13px;line-height:1.45;color:var(--on2)}
+.ks-list .kh{align-items:center}
+.ks-list .st{flex:none}
 .kp-empty{font-size:13px;color:var(--on2);padding:4px;cursor:default!important;border:0!important}
 .kp-log{display:flex;flex-direction:column;max-height:60vh;overflow:auto;margin:0 -4px;padding:0;list-style:none}
 .kp-log li{border-top:1px solid var(--line);padding:8px 4px;cursor:pointer}
@@ -804,9 +817,18 @@ html[data-style="mono"],html[data-style="mono"] body{
     </div>
 
     <h2 class="sh">Recent activity</h2>
-    <p class="ssub">What the background keepers and manual actions did last. Tap a line for details.</p>
+    <p class="ssub">What the background keepers and manual actions did last, plus the daily idle drain. Tap a line for details.</p>
     <div class="ccard kp-card"><ul class="kp-log" id="kp-list"><li class="kp-empty">Reading&hellip;</li></ul>
       <div class="kp-acts"><button class="btn tonal" id="kp-log">Show all</button></div></div>
+
+    <h2 class="sh">Keeper status</h2>
+    <div class="ccard kp-card ks-card">
+      <button class="ks-head" id="ks-head" aria-expanded="false" aria-controls="ks-body"><span class="ks-sum" id="ks-sum">Reading&hellip;</span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></button>
+      <div id="ks-body" hidden>
+        <ul class="kp-log ks-list" id="ks-list"></ul>
+        <p class="ks-note">Keepers are small scripts that hold your settings in place when the ROM changes them back. They sleep between checks and never wake the phone from deep sleep, so they use next to no battery.</p>
+      </div>
+    </div>
 
     <div class="group home-actions">
       <div class="item"><div class="row">
@@ -1033,14 +1055,14 @@ html[data-style="mono"],html[data-style="mono"] body{
   var F = [
     // heat
     { k: 'cpu_cap', s: 'heat', src: 'kernel', risk: 'safe', type: 'value', def: '88', unit: '%', min: 40, max: 99,
-      t: 'Big-core frequency cap',
-      d: 'Big cores stay between 40% and 99% of their rated maximum.',
+      t: 'CPU big-core frequency cap',
+      d: 'Big CPU cores stay between 40% and 99% of their rated maximum.',
       x: 'Little cores are left alone. On MediaTek the PPM limit is set too. Turn on Lock so the ROM cannot raise the limit again.',
       o: [['0', 'Off'], ['95', 'Light 95%'], ['88', 'Balanced 88%'], ['80', 'Strong 80%']],
       fields: [{ k: 'cpu_cap_lock', label: 'Lock the cap so the ROM cannot raise it', def: '1', bool: true, inline: true }] },
     { k: 'cpu_cap_little', s: 'heat', src: 'kernel', risk: 'moderate', type: 'value', def: '0', unit: '%', min: 50, max: 99,
-      t: 'Little-core frequency cap',
-      d: 'Little cores are slowed to a chosen share of their rated maximum.',
+      t: 'CPU little-core frequency cap',
+      d: 'Little CPU cores are slowed to a chosen share of their rated maximum.',
       x: 'Little cores run the UI and background work, so a strong cap can make the phone feel slow. Turn on Lock so the ROM cannot raise the limit again.',
       o: [['0', 'Off'], ['90', 'Light 90%'], ['80', 'Balanced 80%'], ['70', 'Strong 70%']],
       fields: [{ k: 'cpu_cap_little_lock', label: 'Lock the cap so the ROM cannot raise it', def: '1', bool: true, inline: true }] },
@@ -2470,6 +2492,26 @@ html[data-style="mono"],html[data-style="mono"] body{
     pendingCal = null;
     exec('cat ' + DATA + '/charge_levels.conf 2>/dev/null').then(function (r) { renderCal(r.stdout || ''); });
   }
+  // one activity line per Save: what changed, with the names shown in the WebUI
+  function kpSaved(a, b) {
+    kpMaps();
+    var ch = [];
+    Object.keys(b).forEach(function (k) {
+      if (k === 'cfg_ver' || String(a[k] == null ? '' : a[k]) === String(b[k] == null ? '' : b[k])) return;
+      var f = FK[k], lbl = FL[k] || (f ? f.t : k);
+      var v = function (x) {
+        x = String(x == null ? '' : x);
+        if ((f && f.type === 'toggle') || FB[k]) return x === '1' ? 'on' : x === '0' ? 'off' : x;
+        if (f && f.o) { for (var i = 0; i < f.o.length; i++) if (f.o[i][0] === x) return f.o[i][1]; }
+        if (x === '') return 'empty';
+        return x.length > 24 ? x.slice(0, 22) + '\u2026' : x;
+      };
+      ch.push(lbl + ': ' + v(a[k]) + ' \u2192 ' + v(b[k]));
+    });
+    if (!ch.length) return;
+    kpNote('Settings saved: ' + ch.length + (ch.length === 1 ? ' change' : ' changes'),
+      ch.slice(0, 8).join('; ') + (ch.length > 8 ? '; +' + (ch.length - 8) + ' more' : ''), 'settings');
+  }
   function save() {
     if (!HAS_KSU) return Promise.resolve(false);
     var lines = buildConfig().replace(/\n$/, '').split('\n').map(function (l) {
@@ -2484,10 +2526,13 @@ html[data-style="mono"],html[data-style="mono"] body{
       '[ "$n" = "' + nkeys + '" ] || { echo "incomplete write ($n of ' + nkeys + ' keys)" >&2; rm -f ' + D + '/.cfg.tmp; exit 4; }; ' +
       'mv -f ' + D + '/.cfg.tmp ' + D + '/config.conf || { echo "rename failed" >&2; exit 5; }; ' +
       'chmod 644 ' + D + '/config.conf; echo SAVED';
+    var before = copy(saved);
     return exec(cmd).then(function (r) {
       if (r.errno === 0 && /SAVED/.test(r.stdout)) {
         saved = copy(cfg);
+        kpSaved(before, saved);
         F.forEach(refreshItem);
+        ksRender();
         snack('Saved. Restart to apply');
         if (pendingCal) return writeCal().then(function (ok) { updateDirty(); return ok; });
         updateDirty();
@@ -2610,7 +2655,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       renderSummary(sec.BOOT);
       loadDrain();
       loadBcal();
-      loadKeepers();
+      loadKeepers(true);
       syncInputs();
       $('loaderr').hidden = true;
       // values normalised on load (clamping) are not "unsaved changes"
@@ -2654,9 +2699,12 @@ html[data-style="mono"],html[data-style="mono"] body{
   // since-last-charge totals, plus today's screen-off discharge steps (Android 16 prints the daily
   // step history first, so both are read with awk in one pass)
   var DRAIN_CMD = 'if command -v timeout >/dev/null 2>&1; then timeout 25 dumpsys batterystats 2>/dev/null; else dumpsys batterystats 2>/dev/null; fi | awk \'' +
+    // "Daily stats:" holds the step lists of past days: dst = 1 inside it, 2 after it
+    '/^Daily stats:/ { dst = 1; next } ' +
+    'dst == 1 && /^[^ \t]/ { dst = 2; dy = "" } ' +
     // every 1% drop since unplug with its duration; only steps spent fully with the screen off / AOD
-    '/^ *Discharge step durations:/ && !ds { ds = 1; ins = 1; print "steplist=1"; next } ' +
-    '/^ *Charge step durations:/ { print "steplist=1" } ' +
+    'dst != 1 && /^ *Discharge step durations:/ && !ds { ds = 1; ins = 1; print "steplist=1"; next } ' +
+    'dst != 1 && /^ *Charge step durations:/ { print "steplist=1" } ' +
     'ins && /^ *#[0-9]+:/ { print "step=" $0; next } ' +
     'ins { ins = 0 } ' +
     '/Current daily discharge step durations:/ { cur = 1; next } ' +
@@ -2666,7 +2714,14 @@ html[data-style="mono"],html[data-style="mono"] body{
     '!ads && /Amount discharged while screen off:/ { print; ads = 1 } ' +
     '!sod && /Screen off discharge:/ { print; sod = 1 } ' +
     '!cap && /Estimated battery capacity:/ { print; cap = 1 } ' +
-    'tso && ads && dso && ds && !ins { exit }\'; ' +
+    // past days (Android keeps about 10): every 1% step with the screen off / AOD, and Android's
+    // own per-day estimate as a fallback when a ROM prints no step list
+    '/^ *Daily from / { dy = $0; sub(/.*Daily from */, "", dy); sub(/:[ \t]*$/, "", dy); dyd = 0; next } ' +
+    'dy && /Discharge step durations:/ { dyd = 1; next } ' +
+    'dy && dyd && /^ *#[0-9]+:/ { if ($0 ~ /screen-(off|doze)/) print "dstep=" dy "|" $2; next } ' +
+    'dy && dyd { dyd = 0 } ' +
+    'dy && /Discharge screen (off|doze|doze-suspend) time:/ { l = $0; sub(/^ */, "", l); print "dday=" dy "|" l } ' +
+    'tso && ads && dso && ds && !ins && dst != 1 { exit }\'; ' +
     'echo "design=$(cat /sys/class/power_supply/battery/charge_full_design 2>/dev/null || cat /sys/class/power_supply/bms/charge_full_design 2>/dev/null)"; ' +
     'echo "bstat=$(cat /sys/class/power_supply/battery/status 2>/dev/null)"; ' +
     'echo "lvl=$(cat /sys/class/power_supply/battery/capacity 2>/dev/null)"; ' +
@@ -2691,6 +2746,15 @@ html[data-style="mono"],html[data-style="mono"] body{
       else if ((m = /^step=\s*#\d+:\s*(\S+)\s+to\s+(\d+)(.*)/.exec(l))) (o.st = o.st || []).push({ h: durH(m[1]), lv: +m[2], off: /screen-(off|doze)/.test(m[3]) });
       else if ((m = /^lvl=(\d+)/.exec(l))) o.lvl = +m[1];
       else if (/^steplist=1/.test(l)) o.stepsSeen = true;
+      else if ((m = /^dstep=(\S+) to (\S+)\|(\S+)/.exec(l))) {
+        var sk = m[1] + ' ' + m[2], sd = (o.days = o.days || {})[sk] = o.days[sk] || { from: m[1], to: m[2], n: 0, h: 0, en: 0, eh: 0 };
+        sd.n++; sd.h += durH(m[3]);
+      }
+      else if ((m = /^dday=(\S+) to (\S+)\|Discharge screen \S+ time:\s*([^(]+)\(from (\d+) steps?\)/.exec(l))) {
+        // Android: the time for 100% at the average step of that kind, so one step = time / 100
+        var dk = m[1] + ' ' + m[2], dd = (o.days = o.days || {})[dk] = o.days[dk] || { from: m[1], to: m[2], n: 0, h: 0, en: 0, eh: 0 };
+        dd.en += +m[4]; dd.eh += durH(m[3]) / 100 * +m[4];
+      }
       else if ((m = /^bstat=(.*)/.exec(l))) o.bstat = m[1].trim();
       else if ((m = /^plug=(.*)/.exec(l))) o.plug = /1/.test(m[1]);
     });
@@ -2782,7 +2846,11 @@ html[data-style="mono"],html[data-style="mono"] body{
   }
   function loadDrain() {
     if (!HAS_KSU) { showDrain(null); return; }
-    exec(DRAIN_CMD).then(function (r) { showDrain(parseDrain(r.stdout), r.errno ? (r.stderr || '').trim() : ''); });
+    exec(DRAIN_CMD).then(function (r) {
+      var o = parseDrain(r.stdout);
+      showDrain(o, r.errno ? (r.stderr || '').trim() : '');
+      kpDays(o.days);
+    });
   }
 
   /* battery calibration */
@@ -3176,6 +3244,9 @@ html[data-style="mono"],html[data-style="mono"] body{
           save().then(function (ok) {
             if (!ok) { snack('System changes ' + (r.errno === 0 ? 'reverted' : 'partly reverted') + ', but the switched-off options could not be saved. Press Save before you restart.'); return; }
             snack(r.errno === 0 ? 'System changes reverted' : 'Revert finished with errors. Check the boot log, then try again.');
+            kpNote(r.errno === 0 ? 'System changes reverted (manual)' : 'System changes reverted (partly)',
+              r.errno === 0 ? 'every setting, flag, whitelist entry and package changed by HyperCool was put back; system options switched off'
+                : 'some values were not accepted; see the boot log', 'restore');
           });
         });
       } }
@@ -3330,10 +3401,73 @@ html[data-style="mono"],html[data-style="mono"] body{
   };
 
   /* navigation */
-  /* keepers: which ones run, what each did last (keeper.log, last 30 lines) */
+  /* keepers: which ones run, what each did last (keeper.log, last 50 lines) */
   var KP_SRC = { 'screen-off': 'Screen-off keeper', cpu: 'CPU cap keeper', charge: 'Charge limit keeper', refresh: 'Touch refresh rate keeper',
-    heat: 'Heat guard', cache: 'Cache clean', calibration: 'Battery calibration', tools: 'Manual action' };
-  var kpLog = [];
+    heat: 'Heat guard', cache: 'Cache clean', calibration: 'Battery calibration', tools: 'Manual action', idle: 'Android daily battery stats',
+    drain: 'Screen-off keeper', boot: 'Boot', restore: 'Restore', settings: 'Settings' };
+  // feature / option names by config key (boot lines and Settings saved lines show names, not keys)
+  var FK = null, FL = {}, FB = {};
+  function kpMaps() {
+    if (FK) return;
+    FK = {};
+    F.forEach(function (f) {
+      FK[f.k] = f;
+      (f.fields || []).forEach(function (x) { if (x && x.k) { FL[x.k] = x.label; if (x.bool) FB[x.k] = 1; } });
+      if (f.text && f.text.k) FL[f.text.k] = f.text.label;
+    });
+  }
+  // Show all filters: which sources each one shows
+  var KP_FLT = [['all', 'All'], ['auto', 'Keepers'], ['manual', 'Manual'], ['drain', 'Idle drain']];
+  function kpGroup(e) {
+    if (e.k === 'idle' || e.k === 'drain') return 'drain';
+    if (e.k === 'tools' || e.k === 'settings' || /\(manual\)/.test(e.a)) return 'manual';
+    return 'auto';
+  }
+  // warn / bad colour for a line: high drain, failed or partly done work
+  function kpTone(e) {
+    var a = e.a || '', r = e.r || '', m;
+    if (e.k === 'idle' || e.k === 'drain') {
+      if (/<[\d.]+%\/h/.test(a)) return '';
+      m = /([\d.]+)%\/h/.exec(a);
+      return !m ? '' : +m[1] > 2 ? 'bad' : +m[1] > 1 ? 'warn' : '';
+    }
+    if (e.k === 'boot') {
+      m = /(\d+) partial, (\d+) failed/.exec(a);
+      return !m ? '' : +m[2] > 0 ? 'bad' : +m[1] > 0 ? 'warn' : '';
+    }
+    if (a === 'Stopped') return /turned off in the settings/.test(r) ? '' : 'warn';
+    if (/\bfailed\b|rejected|\(partly\)|Not started/i.test(a)) return 'warn';
+    if (/(^|[^0-9])[1-9][0-9]* (of [0-9]+ )?(failed|not accepted)|gave up|did not|not readable|with errors|could not/i.test(a + ' ' + r)) return 'warn';
+    return '';
+  }
+  function kpKeys(r) {
+    kpMaps();
+    return String(r).replace(/[a-z][a-z0-9_]{2,}/g, function (k) { var f = FK[k]; return f ? f.t : k; });
+  }
+  var kpLog = [], kpIdle = [], kpAll = [];
+  // keeper.log has no year: a month after this one is from last year
+  function kpKey(t, y) {
+    var n = new Date(), mo = +t.slice(0, 2);
+    return (y || (mo > n.getMonth() + 1 ? n.getFullYear() - 1 : n.getFullYear())) + '-' + t;
+  }
+  // "2026-11-16-03-12-40" -> year, "11-16 03:12:40"
+  function kpAt(d) {
+    var m = /^(\d{4})-(\d\d)-(\d\d)-(\d\d)-(\d\d)-(\d\d)/.exec(d || '');
+    return m ? { y: m[1], t: m[2] + '-' + m[3] + ' ' + m[4] + ':' + m[5] + ':' + m[6] } : null;
+  }
+  function kpDays(days) {
+    kpIdle = [];
+    Object.keys(days || {}).forEach(function (k) {
+      var d = days[k], a = kpAt(d.from), b = kpAt(d.to);
+      // the step list is exact; Android's estimate leaves out power saver + Doze steps on some days
+      if (!d.n && d.en) { d.n = d.en; d.h = d.eh; }
+      if (!a || !b || !d.n || !(d.h > 0)) return;
+      var rate = d.n / d.h;
+      kpIdle.push({ t: b.t, y: b.y, k: 'idle', a: 'Idle drain ' + rate.toFixed(2) + '%/h',
+        r: a.t.slice(0, 11) + ' to ' + b.t.slice(0, 11) + ': ' + d.n + '% lost in ' + d.h.toFixed(1) + ' h screen off' });
+    });
+    kpRender();
+  }
   function kpParseLog(txt) {
     return (txt || '').split('\n').map(function (l) {
       var a = l.split('|');
@@ -3342,43 +3476,131 @@ html[data-style="mono"],html[data-style="mono"] body{
   }
   function kpRows(list) {
     return list.slice().reverse().map(function (e) {
-      return '<li><div class="kh"><time>' + esc(e.t.slice(0, 11)) + '</time><span class="ka">' + esc(e.a) + '</span></div>' +
-        '<div class="kd">' + esc(KP_SRC[e.k] || e.k) + (e.r ? ': ' + esc(e.r) : '') + '</div></li>';
+      var tn = kpTone(e), r = e.k === 'boot' ? kpKeys(e.r) : e.r;
+      return '<li' + (tn ? ' class="' + tn + '"' : '') + '><div class="kh"><time>' + esc(e.t.slice(0, 11)) + '</time><span class="ka">' + esc(e.a) + '</span></div>' +
+        '<div class="kd">' + esc(KP_SRC[e.k] || e.k) + (r ? ': ' + esc(r) : '') + '</div></li>';
     }).join('');
   }
   function kpBind(root) {
     root.querySelectorAll('.kp-log li:not(.kp-empty)').forEach(function (li) { li.onclick = function () { li.classList.toggle('open'); }; });
   }
   function kpRender(out) {
-    kpLog = kpParseLog(out);
-    $('kp-list').innerHTML = kpLog.length ? kpRows(kpLog.slice(-5))
-      : '<li class="kp-empty">No activity yet. Cache cleans, app optimization, F2FS cleanup, heat events and manual actions show up here.</li>';
-    $('kp-log').disabled = !kpLog.length;
+    if (out !== undefined) kpLog = kpParseLog(out);
+    kpAll = kpLog.concat(kpIdle).map(function (e, i) { return { e: e, s: kpKey(e.t, e.y), i: i }; })
+      .sort(function (x, y) { return x.s < y.s ? -1 : x.s > y.s ? 1 : x.i - y.i; }).map(function (x) { return x.e; });
+    $('kp-list').innerHTML = kpAll.length ? kpRows(kpAll.slice(-3))
+      : '<li class="kp-empty">No activity yet. Cache cleans, app optimization, F2FS cleanup, heat events, manual actions and the daily idle drain show up here.</li>';
+    $('kp-log').disabled = !kpAll.length;
     kpBind($('kp-list').parentNode);
   }
+  /* keeper status: which background keepers run now (pid file + /proc), tap to open */
+  var KS = [
+    { p: 'soff_watch', n: 'soff_watch', st: 'soff_watch.state', k: 'screen-off', t: 'Screen-off keeper',
+      on: ['soff_prof', 'wifi_keep', 'x_compact', 'soff_radio', 'soff_data', 'f2fs_gc', 'x_dexopt_auto'] },
+    { p: 'cpu_watch', n: 'cpu_watch', st: 'cpu_watch.state', k: 'cpu', t: 'CPU cap keeper', list: 1 },
+    { p: 'chg_watch', n: 'chg_watch', st: 'chg_watch.state', k: 'charge', t: 'Charge limit keeper', on: ['charge_limit'], sk: 'charge_limit' },
+    { p: 'rr_watch', n: 'rr_watch', st: 'rr_watch.state', k: 'refresh', t: 'Touch refresh rate keeper', on: ['rr_adapt'], sk: 'rr_adapt' },
+    { p: 'heat_watch', n: 'heat_watch', st: 'heat_watch.state', k: 'heat', t: 'Heat guard', on: ['heat_guard'], sk: 'heat_guard' },
+    { p: 'cache_keeper', n: 'cache_clean', st: '', k: 'cache', t: 'Cache clean keeper', on: ['x_cache_auto'], sk: 'x_cache_auto' },
+    { p: 'bcal_watch', n: 'bcal_watch', st: 'bcal.state', k: 'calibration', t: 'Battery calibration' }
+  ];
+  var KS_CMD = 'D=' + DATA + '; for k in ' + KS.map(function (x) { return x.p + ':' + x.n + ':' + (x.st || '-'); }).join(' ') + '; do ' +
+    'p=${k%%:*}; r=${k#*:}; n=${r%%:*}; f=${r#*:}; q=$(cat "$D/$p.pid" 2>/dev/null); a=0; ' +
+    'case "$q" in ""|*[!0-9]*) q="" ;; *) grep -q "$n" "/proc/$q/cmdline" 2>/dev/null && a=1 ;; esac; ' +
+    's=""; [ "$f" != - ] && s=$(head -c 240 "$D/$f" 2>/dev/null | tr "\\n|" "  "); echo "ks|$p|$a|$q|$s"; done; ' +
+    '[ -s "$D/cpu_keep.list" ] && echo "ks|cpu_list|1"; true';
+  var ksOpen = false, ksRaw = '';
+  function ksOn(x, c) { return (x.on || []).some(function (k) { return String(c[k]) === '1'; }); }
+  function ksRender(out) {
+    if (out === undefined) out = ksRaw; else ksRaw = out;
+    var run = {}, cpuList = false;
+    String(out || '').split('\n').forEach(function (l) {
+      var a = l.split('|');
+      if (a[0] !== 'ks') return;
+      if (a[1] === 'cpu_list') { cpuList = true; return; }
+      run[a[1]] = { a: a[2] === '1', q: a[3] || '', s: (a.slice(4).join('|') || '').trim() };
+    });
+    // what the last boot applied decides what should run; the saved config only adds "next boot"
+    var useLast = Object.keys(last || {}).length > 0, base = useLast ? last : saved;
+    var nRun = 0, nDown = 0, rows = [];
+    KS.forEach(function (x) {
+      // a keeper that the saved settings turned off stops by itself (some at once): that is "Off"
+      var r = run[x.p] || { a: false }, next = ksOn(x, saved), want = x.list ? cpuList : ksOn(x, base) && next;
+      var bs = x.sk && status[x.sk] ? status[x.sk] : null;
+      var lastEv = null;
+      for (var i = kpLog.length - 1; i >= 0; i--) if (kpLog[i].k === x.k) { lastEv = kpLog[i]; break; }
+      var cls, lbl, det;
+      if (r.a) {
+        nRun++; cls = 'applied'; lbl = 'Running';
+        det = 'pid ' + esc(r.q) + (r.s ? ' &middot; ' + esc(r.s) : '');
+      } else if (want && bs && (bs.state === 'skipped' || bs.state === 'failed')) {
+        // the last boot did not start it, and says why
+        cls = bs.state === 'failed' ? 'failed' : ''; lbl = bs.state === 'failed' ? 'Failed' : 'Skipped';
+        if (bs.state === 'failed') nDown++;
+        det = bs.det ? esc(bs.det) : 'Not started at the last boot.';
+      } else if (want) {
+        nDown++; cls = 'partial'; lbl = 'Not running';
+        det = 'Turned on but not running: it stopped after the last boot. A reboot starts it again.';
+      } else {
+        if (!x.on && !x.list) return; // calibration: listed only while it runs
+        cls = ''; lbl = 'Off';
+        det = x.list ? 'No CPU cap or prime-core parking was applied at the last boot.' :
+          next ? 'Turned on in the settings: starts at the next boot.' : 'Off in the settings.';
+      }
+      if (lastEv) det += '<br>Last: ' + esc(lastEv.t.slice(0, 11)) + ' ' + esc(lastEv.a) + (lastEv.r ? ', ' + esc(lastEv.r) : '');
+      rows.push('<li><div class="kh"><span class="ka">' + esc(x.t) + '</span><span class="st ' + cls + '">' + lbl + '</span></div><div class="kd">' + det + '</div></li>');
+    });
+    $('ks-sum').textContent = !HAS_KSU ? 'Preview only' : (nRun || nDown) ?
+      nRun + ' running' + (nDown ? ', ' + nDown + ' not running' : '') : 'No keeper is running';
+    $('ks-list').innerHTML = rows.join('') || '<li class="kp-empty">No keeper is turned on.</li>';
+    kpBind($('ks-list').parentNode);
+  }
+  $('ks-head').onclick = function () {
+    ksOpen = !ksOpen;
+    this.setAttribute('aria-expanded', ksOpen ? 'true' : 'false');
+    $('ks-body').hidden = !ksOpen;
+  };
+
   // Loaded on the first page load, whenever Home is opened and when the page becomes visible
   // again. A 3 s floor stops tab switches from starting one read after another.
   var kpBusy = false, kpLast = 0;
   function loadKeepers(force) {
-    if (!HAS_KSU) { kpRender(''); return Promise.resolve(); }
+    if (!HAS_KSU) { kpRender(''); ksRender(''); return Promise.resolve(); }
     var now = Date.now();
     if (!force && (kpBusy || now - kpLast < 3000)) return Promise.resolve();
     kpBusy = true; kpLast = now;
-    return exec('tail -n 30 ' + DATA + '/keeper.log 2>/dev/null').then(function (r) {
-      kpRender(r.stdout || '');
+    return exec('tail -n 50 ' + DATA + '/keeper.log 2>/dev/null; echo @@KS; ' + KS_CMD).then(function (r) {
+      var o = String(r.stdout || ''), i = o.indexOf('@@KS');
+      kpRender(i < 0 ? o : o.slice(0, i));
+      ksRender(i < 0 ? '' : o.slice(i + 4));
     }, function () { /* keep the list that is already shown */ }).then(function () { kpBusy = false; });
   }
   // a manual action from this page goes into the same activity log
-  function kpNote(action, result) {
+  function kpNote(action, result, src) {
     if (!HAS_KSU) return;
-    exec('[ -f /data/adb/modules/' + MODID + '/common/klog.sh ] && HC_DATA=' + DATA + ' . /data/adb/modules/' + MODID + '/common/klog.sh && klog tools ' +
+    exec('[ -f /data/adb/modules/' + MODID + '/common/klog.sh ] && HC_DATA=' + DATA + ' . /data/adb/modules/' + MODID + '/common/klog.sh && klog ' + (src || 'tools') + ' ' +
       "'" + String(action).replace(/'/g, '') + "' '" + String(result).replace(/'/g, '') + "'").then(function () { loadKeepers(true); });
   }
   function kpShowLog() {
-    modal('Activity log', '<p class="desc">Last ' + kpLog.length + ' of at most 30, newest first.</p><ul class="kp-log all">' + kpRows(kpLog) + '</ul>', [
+    var n = { all: kpAll.length, auto: 0, manual: 0, drain: 0 };
+    kpAll.forEach(function (e) { n[kpGroup(e)]++; });
+    modal('Activity log', '<p class="desc">Newest first: the last ' + kpLog.length + ' keeper and manual actions (at most 50)' +
+      (kpIdle.length ? ' and ' + kpIdle.length + ' days of idle drain from Android\'s daily battery stats (Clear does not remove those)' : '') +
+      '.</p><div class="apseg kp-flt">' + KP_FLT.map(function (x, i) {
+        return '<button data-f="' + x[0] + '" aria-pressed="' + (i ? 'false' : 'true') + '"' + (i ? '' : ' class="on"') + (n[x[0]] ? '' : ' disabled') + '>' + x[1] + '</button>';
+      }).join('') + '</div><ul class="kp-log all" id="kp-all">' + kpRows(kpAll) + '</ul>', [
       { label: 'Clear', fn: function () { exec(': > ' + DATA + '/keeper.log').then(function () { loadKeepers(true); snack('Activity log cleared'); }); } },
       { label: 'Close', primary: true }
     ]);
+    var bs = $('m-body').querySelectorAll('.kp-flt button');
+    bs.forEach(function (b) {
+      b.onclick = function () {
+        var f = b.getAttribute('data-f');
+        bs.forEach(function (x) { var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+        var l = f === 'all' ? kpAll : kpAll.filter(function (e) { return kpGroup(e) === f; });
+        $('kp-all').innerHTML = l.length ? kpRows(l) : '<li class="kp-empty">Nothing here yet.</li>';
+      };
+    });
   }
   $('kp-log').onclick = function () { loadKeepers(true).then(kpShowLog); };
 

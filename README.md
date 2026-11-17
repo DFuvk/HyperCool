@@ -95,8 +95,8 @@ Everything is configured via WebUI and applied on the next boot. Only lightweigh
 `Unsupported features are skipped`
 
 **Heat control**
-- Big-core frequency cap (with lock)
-- Little-core frequency cap (default off, with lock)
+- CPU big-core frequency cap (with lock)
+- CPU little-core frequency cap (default off, with lock)
 - GPU frequency cap (from your own GPU table, with lock)
 - GPU power collapse
 - Less aggressive CPU governor (WALT / schedutil)
@@ -116,7 +116,8 @@ Everything is configured via WebUI and applied on the next boot. Only lightweigh
 - Location and Bluetooth off after a long screen-off (both come back when the screen turns on; off by default)
 - Mobile data and NFC off during screen-off (back on when the screen turns on; waits during calls, audio and hotspot; off by default)
 - Heat guard (experimental, off by default): lower refresh rate and big-core limit while the battery is hot, back after it cools down
-- Recent activity on Home: which background keeper runs and what it did last, plus an activity log (last 30 events: cache clean, app optimization, F2FS cleanup, heat guard, manual actions)
+- Recent activity on Home: the 3 newest events, and Show all with filters (All, Keepers, Manual, Idle drain) for the last 50: boot result with the features that failed, saved setting changes, cache clean, app optimization, F2FS cleanup, heat guard, keepers that stopped and why, Revert and restore, screen-off drain per period and daily idle drain from Android's battery stats. High drain and failed work are coloured
+- Keeper status on Home: a small table (tap to open) with every background keeper, Running / Off / Not running / Skipped / Failed, its pid, state and last event
 - F2FS garbage collection with the screen off (Storage; frees space that only GC can give back; once a week at most, no charger needed; off by default)
 - Auto optimize apps (dex2oat) once a week with the screen off (Storage; speed-profile, no force recompile, result as a notification; off by default)
 - Top battery use (Home; read only: user apps, system apps, system services and hardware, from Android battery stats)

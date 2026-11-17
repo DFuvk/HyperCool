@@ -16,7 +16,7 @@ STATE=$HC_DATA/soff_watch.state
 SAVE=$HC_DATA/soff_watch.save
 HC_SOFF_LIB_OK=0
 [ -f "$MODDIR/common/soff_restore.sh" ] && . "$MODDIR/common/soff_restore.sh" && HC_SOFF_LIB_OK=1
-[ -f "$MODDIR/common/klog.sh" ] && . "$MODDIR/common/klog.sh" || klog() { :; }
+[ -f "$MODDIR/common/klog.sh" ] && . "$MODDIR/common/klog.sh" || { klog() { :; }; kstop() { :; }; }
 
 case "$PCT" in ''|*[!0-9]*) exit 1 ;; esac
 case "$CAP" in ''|*[!0-9]*) CAP=0 ;; esac
@@ -219,6 +219,36 @@ ipm_start() {
 _cj=""; _gj=""
 # number of lines in a file, 0 when it is missing or empty (safe inside $(( )))
 lines() { _ln=$(grep -c . "$1" 2>/dev/null); echo "${_ln:-0}"; }
+# battery level and charging state, for the drain of each screen-off period
+BATP=/sys/class/power_supply/battery
+bat_lv() { _bl=$(cat "$BATP/capacity" 2>/dev/null); case "$_bl" in ''|*[!0-9]*) echo "" ;; *) echo "$_bl" ;; esac; }
+# on the charger counts too: with the 80% charge limit the status is "Not charging" while plugged in
+bat_chg() {
+  case "$(cat "$BATP/status" 2>/dev/null)" in Charging|Full) return 0 ;; esac
+  for _bo in /sys/class/power_supply/usb/online /sys/class/power_supply/ac/online \
+             /sys/class/power_supply/wireless/online /sys/class/power_supply/dc/online; do
+    [ "$(cat "$_bo" 2>/dev/null)" = 1 ] && return 0
+  done
+  return 1
+}
+_lv0=""; _chg0=0
+# one line for a screen-off period of 30 min or more without charging: % lost and % per hour
+drain_note() {
+  _dl1=$(bat_lv); _dsec=$(( $(date +%s) - _toff ))
+  [ -n "$_lv0" ] && [ -n "$_dl1" ] && [ "$_chg0" = 0 ] && [ "$_dsec" -ge "${HC_DRAIN_MIN:-1800}" ] || return 0
+  bat_chg && return 0
+  # the level went up: it was charged in between
+  [ "$_dl1" -le "$_lv0" ] || return 0
+  _dd=$((_lv0 - _dl1))
+  _dh=$(awk -v s="$_dsec" 'BEGIN { printf "%.1f", s / 3600 }')
+  if [ "$_dd" -gt 0 ]; then
+    _dr=$(awk -v d="$_dd" -v s="$_dsec" 'BEGIN { printf "%.2f", d * 3600 / s }')
+    klog drain "Screen-off drain ${_dr}%/h" "${_dh} h screen off: ${_lv0}% to ${_dl1}% (${_dd}% lost)"
+  else
+    _dr=$(awk -v s="$_dsec" 'BEGIN { printf "%.2f", 3600 / s }')
+    klog drain "Screen-off drain <${_dr}%/h" "${_dh} h screen off: still ${_dl1}% (less than 1% lost)"
+  fi
+}
 # a job that already ended may have had its pid reused: only kill a process that is still this keeper's child
 job_kill() { [ -n "$1" ] && grep -q soff_watch "/proc/$1/cmdline" 2>/dev/null && kill "$1" 2>/dev/null; return 0; }
 jobs_stop() {
@@ -283,12 +313,13 @@ note() {
 }
 note on
 while :; do
-  [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ] || [ ! -d "$MODDIR" ] && break
+  [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ] || [ ! -d "$MODDIR" ] && { _why="module disabled or removed"; break; }
   feed_now; [ "$_fn" != "$_fd" ] && note ""
   [ "$SCR_BLBAD" != "${_bb:-0}" ] && { _bb=$SCR_BLBAD; note ""; }
   if scr_off; then
     if [ "$_on" = 1 ]; then
       _on=0; _offs=$((_offs + 1)); _toff=$(date +%s)
+      _lv0=$(bat_lv); if bat_chg; then _chg0=1; else _chg0=0; fi
       [ "$PROF" = 1 ] && { apply_off; _pnext=$(( $(date +%s) + 60 )); }
       [ "$WIFI" = 1 ] && { [ "$(wifi_now)" = on ] && _want=on || _want=off; }
       [ "$COMPACT" = 1 ] && { _csince=$(date +%s); _cdone=0; }
@@ -417,6 +448,7 @@ while :; do
   else
     if [ "$_on" = 0 ]; then
       _on=1
+      drain_note
       # the screen is on: do not keep any intent to turn Wi-Fi back on
       [ "$WIFI" = 1 ] && _want=off
       # a compaction still running stops with the screen-off period
@@ -450,4 +482,5 @@ radio_restore
 data_restore
 ev_stop
 rm -f "$PIDF"
+kstop screen-off "${_why:-stopped}, values put back"
 exit 0

@@ -21,7 +21,7 @@ SAVE=$HC_DATA/heat.save
 RRF=$HC_DATA/heat.rr
 TNODE=${HC_TNODE:-$HC_SYS/class/power_supply/battery/temp}
 STEP=${HC_HSTEP:-30}; HSTEP=${HC_HSTEP_HOT:-20}; MINHOT=${HC_HMIN:-120}
-[ -f "$MODDIR/common/klog.sh" ] && . "$MODDIR/common/klog.sh" || klog() { :; }
+[ -f "$MODDIR/common/klog.sh" ] && . "$MODDIR/common/klog.sh" || { klog() { :; }; kstop() { :; }; }
 
 MODE=run; [ "$1" = restore ] && MODE=restore
 if [ "$MODE" = run ]; then
@@ -182,6 +182,10 @@ esac
 echo $$ > "$PIDF"
 
 HOT=0; SINCE=0; NHOT=0
+# HLOG = 1 once "Battery hot" is in the log for this hot period: the matching cool-down / put-back
+# line is written only then (no "Cooled down" for a hot period that lowered nothing)
+HLOG=0
+hot_log() { klog heat "Battery hot" "$(fmt "$1"): big cores ${PCT}%$([ "$RR" -gt 0 ] && echo ", ${RR} Hz") until $(fmt "$COOL")"; HLOG=1; }
 # state file: written when hot/cool changes and at most every 10 min otherwise (no write every tick)
 _nlast=0; _nhot=x
 note() {
@@ -190,8 +194,20 @@ note() {
   _nhot=$HOT; _nlast=$_nn
   echo "hot=$HOT temp=${1:-?} limit=$LIM back_at=$COOL hot_times=$NHOT last=$(date '+%H:%M:%S')" > "$STATE"
 }
+# HWHY: why the keeper stopped by itself (empty = asked to stop by a signal)
+HWHY=""
 stop() {
-  if [ "$HOT" = 1 ]; then hot_leave; klog heat "Limits put back" "keeper stopped while hot${HL_MSG:+: $HL_MSG}"; else hot_leave; fi
+  if [ "$HOT" = 1 ]; then
+    hot_leave
+    if [ -n "$HWHY" ]; then
+      if [ "$HLOG" = 1 ]; then kstop heat "$HWHY, hot limits put back${HL_MSG:+: $HL_MSG}"; else kstop heat "$HWHY"; fi
+    elif [ "$HLOG" = 1 ] || [ "${HL_BACK:-0}" -gt 0 ]; then
+      klog heat "Limits put back" "keeper stopped while hot${HL_MSG:+: $HL_MSG}"
+    fi
+  else
+    hot_leave
+    [ -n "$HWHY" ] && kstop heat "$HWHY"
+  fi
   [ "$(cat "$PIDF" 2>/dev/null)" = "$$" ] && rm -f "$PIDF"
   exit 0
 }
@@ -201,13 +217,17 @@ trap stop TERM INT HUP
 hot_leave
 _bad=0
 while :; do
-  [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ] || [ ! -d "$MODDIR" ] && stop
-  grep -q '^heat_guard=1' "$HC_DATA/config.conf" 2>/dev/null || stop
+  [ -f "$MODDIR/disable" ] || [ -f "$MODDIR/remove" ] || [ ! -d "$MODDIR" ] && { HWHY="module disabled or removed"; stop; }
+  grep -q '^heat_guard=1' "$HC_DATA/config.conf" 2>/dev/null || { HWHY="Heat guard turned off in the settings"; stop; }
   if ! _t=$(temp); then
     _bad=$((_bad + 1))
     # the temperature cannot be read: never keep the limits on blind
     if [ "$_bad" -ge 3 ]; then
-      [ "$HOT" = 1 ] && { HOT=0; hot_leave; klog heat "Temperature not readable" "${HL_MSG:-no hot limits were applied}"; }
+      if [ "$HOT" = 1 ]; then
+        HOT=0; hot_leave
+        { [ "$HLOG" = 1 ] || [ "${HL_BACK:-0}" -gt 0 ]; } && klog heat "Temperature not readable" "${HL_MSG:-no hot limits were applied}"
+        HLOG=0
+      fi
     fi
     sleep "$STEP"; continue
   fi
@@ -218,17 +238,21 @@ while :; do
     [ -s "$SAVE" ] && [ "$_t" -lt "$LIM" ] && hot_leave
     if [ "$_t" -ge "$LIM" ]; then
       HOT=1; SINCE=$_now; NHOT=$((NHOT + 1))
+      HLOG=0
       hot_apply
       # only say "Battery hot" when the keeper really lowered something
-      [ "$HAPPLIED" = 1 ] && klog heat "Battery hot" "$(fmt "$_t"): big cores ${PCT}%$([ "$RR" -gt 0 ] && echo ", ${RR} Hz") until $(fmt "$COOL")"
+      [ "$HAPPLIED" = 1 ] && hot_log "$_t"
     fi
   elif [ "$_t" -le "$COOL" ] && [ $((_now - SINCE)) -ge "$MINHOT" ]; then
     HOT=0
     hot_leave
     _hd=$((_now - SINCE)); if [ "$_hd" -lt 90 ]; then _hd="$_hd s"; else _hd="$(( (_hd + 30) / 60 )) min"; fi
-    klog heat "Cooled down" "$(fmt "$_t") after $_hd${HL_MSG:+: $HL_MSG}"
+    [ "$HLOG" = 1 ] && klog heat "Cooled down" "$(fmt "$_t") after $_hd${HL_MSG:+: $HL_MSG}"
+    HLOG=0
   else
     hot_apply
+    # nothing was lowered at first (thermal was already lower), but now it is: say so once
+    [ "$HLOG" = 0 ] && [ "$HAPPLIED" = 1 ] && hot_log "$_t"
   fi
   note "$_t"
   if [ "$HOT" = 1 ]; then sleep "$HSTEP"; else sleep "$STEP"; fi
