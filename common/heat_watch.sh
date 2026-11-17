@@ -58,7 +58,9 @@ little_policy() {
 # battery temperature in 0.1 C (some kernels report millidegrees)
 temp() {
   _t=$(cat "$TNODE" 2>/dev/null)
-  case "$_t" in ''|*[!0-9-]*) return 1 ;; esac
+  # a bare "-", "--" or "1-2" must not pass: only an optional leading minus and digits
+  case "$_t" in ''|-) return 1 ;; esac
+  case "${_t#-}" in *[!0-9]*) return 1 ;; esac
   [ "$_t" -gt 2000 ] && _t=$((_t / 100))
   echo "$_t"
 }
@@ -71,7 +73,7 @@ rr_alive() {
   grep -q rr_watch "/proc/$_rq/cmdline" 2>/dev/null
 }
 sget() { settings get "$1" "$2" 2>/dev/null; }
-sput() { cmd settings put "$1" "$2" "$3" </dev/null >/dev/null 2>&1 || settings put "$1" "$2" "$3" </dev/null >/dev/null 2>&1; [ "$(sget "$1" "$2")" = "$3" ]; }
+sput() { cmd settings put "$1" "$2" "$3" </dev/null >/dev/null 2>&1 || settings put "$1" "$2" "$3" </dev/null >/dev/null 2>&1; [ "$(hz "$(sget "$1" "$2")")" = "$(hz "$3")" ]; }
 hz() { _h=${1%%.*}; case "$_h" in ''|*[!0-9]*) echo 0 ;; *) echo "$_h" ;; esac; }
 # set_low <ns> <key> <value>: lower a refresh setting and record what to put back
 set_low() {
@@ -109,6 +111,9 @@ hot_apply() {
       sput system peak_refresh_rate "$RR.0"
       [ "$MIUI" = 1 ] && sput secure miui_refresh_rate "$RR"
     fi
+    # the touch keeper owns peak, not min: a min above the cap is an invalid range, so lower
+    # it too and record it (cool-down puts it back; the keeper does not touch min)
+    set_low system min_refresh_rate "$RR.0"
   else
     set_low system peak_refresh_rate "$RR.0"
     set_low system min_refresh_rate "$RR.0"
@@ -120,7 +125,8 @@ hot_apply() {
 # cooled down / stopping: put back what is still as this keeper left it
 hot_leave() {
   rm -f "$RRF"
-  [ -s "$SAVE" ] || return 0
+  HL_BACK=0
+  [ -s "$SAVE" ] || { HL_MSG=""; return 0; }
   _hk=""; _hn=0; _hs=0
   while IFS='|' read -r _ty _a _b _c _d; do
     case "$_ty" in
@@ -141,7 +147,7 @@ hot_leave() {
         fi ;;
       set)
         _hn=$((_hn + 1))
-        if [ "$(sget "$_a" "$_b")" = "$_d" ]; then
+        if [ "$(hz "$(sget "$_a" "$_b")")" = "$(hz "$_d")" ]; then
           sput "$_a" "$_b" "$_c" || _hk="$_hk$_ty|$_a|$_b|$_c|$_d
 "
         else
@@ -182,7 +188,7 @@ note() {
   echo "hot=$HOT temp=${1:-?} limit=$LIM back_at=$COOL hot_times=$NHOT last=$(date '+%H:%M:%S')" > "$STATE"
 }
 stop() {
-  if [ "$HOT" = 1 ]; then hot_leave; klog heat "Limits put back" "keeper stopped while hot: $HL_MSG"; else hot_leave; fi
+  if [ "$HOT" = 1 ]; then hot_leave; klog heat "Limits put back" "keeper stopped while hot${HL_MSG:+: $HL_MSG}"; else hot_leave; fi
   [ "$(cat "$PIDF" 2>/dev/null)" = "$$" ] && rm -f "$PIDF"
   exit 0
 }
@@ -198,7 +204,7 @@ while :; do
     _bad=$((_bad + 1))
     # the temperature cannot be read: never keep the limits on blind
     if [ "$_bad" -ge 3 ]; then
-      [ "$HOT" = 1 ] && { HOT=0; hot_leave; klog heat "Temperature not readable" "limits put back: $HL_MSG"; }
+      [ "$HOT" = 1 ] && { HOT=0; hot_leave; klog heat "Temperature not readable" "${HL_MSG:-no hot limits were applied}"; }
     fi
     sleep "$STEP"; continue
   fi
@@ -216,7 +222,7 @@ while :; do
     HOT=0
     hot_leave
     _hd=$((_now - SINCE)); if [ "$_hd" -lt 90 ]; then _hd="$_hd s"; else _hd="$(( (_hd + 30) / 60 )) min"; fi
-    klog heat "Cooled down" "$(fmt "$_t") after $_hd: $HL_MSG"
+    klog heat "Cooled down" "$(fmt "$_t") after $_hd${HL_MSG:+: $HL_MSG}"
   else
     hot_apply
   fi

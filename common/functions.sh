@@ -1752,9 +1752,16 @@ f_heat_guard() {
   [ -s "$HC_DATA/heat.save" ] && sh "$MODDIR/common/heat_watch.sh" restore </dev/null >/dev/null 2>&1
   on heat_guard || { st heat_guard off; return; }
   _tn=/sys/class/power_supply/battery/temp
-  case "$(cat "$_tn" 2>/dev/null)" in
-    ''|*[!0-9-]*) st heat_guard skipped "battery temperature not readable ($_tn)"; return ;;
+  _tv=$(cat "$_tn" 2>/dev/null)
+  _tbad=0
+  case "$_tv" in
+    ''|-) _tbad=1 ;;
+    *) case "${_tv#-}" in *[!0-9]*) _tbad=1 ;; esac ;;
   esac
+  if [ "$_tbad" = 1 ]; then
+    st heat_guard skipped "battery temperature not readable (${_tv:-empty} at $_tn)"
+    return
+  fi
   _ht=$(rng heat_guard_temp 42 38 50); [ "$_ht" = 0 ] && _ht=42
   _hc=$(rng heat_guard_cpu 70 40 95); [ "$_hc" = 0 ] && _hc=70
   _hr=$(rng heat_guard_rr 60 0 165)
