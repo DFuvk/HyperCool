@@ -806,7 +806,7 @@ html[data-style="mono"],html[data-style="mono"] body{
     <h2 class="sh">Recent activity</h2>
     <p class="ssub">What the background keepers and manual actions did last. Tap a line for details.</p>
     <div class="ccard kp-card"><ul class="kp-log" id="kp-list"><li class="kp-empty">Reading&hellip;</li></ul>
-      <div class="kp-acts"><button class="btn tonal" id="kp-refresh">Refresh</button><button class="btn tonal" id="kp-log">Show all</button></div></div>
+      <div class="kp-acts"><button class="btn tonal" id="kp-log">Show all</button></div></div>
 
     <div class="group home-actions">
       <div class="item"><div class="row">
@@ -3348,24 +3348,31 @@ html[data-style="mono"],html[data-style="mono"] body{
     $('kp-log').disabled = !kpLog.length;
     kpBind($('kp-list').parentNode);
   }
-  function loadKeepers() {
+  // Loaded on the first page load, whenever Home is opened and when the page becomes visible
+  // again. A 3 s floor stops tab switches from starting one read after another.
+  var kpBusy = false, kpLast = 0;
+  function loadKeepers(force) {
     if (!HAS_KSU) { kpRender(''); return Promise.resolve(); }
-    return exec('tail -n 30 ' + DATA + '/keeper.log 2>/dev/null').then(function (r) { kpRender(r.stdout || ''); });
+    var now = Date.now();
+    if (!force && (kpBusy || now - kpLast < 3000)) return Promise.resolve();
+    kpBusy = true; kpLast = now;
+    return exec('tail -n 30 ' + DATA + '/keeper.log 2>/dev/null').then(function (r) {
+      kpRender(r.stdout || '');
+    }, function () { /* keep the list that is already shown */ }).then(function () { kpBusy = false; });
   }
   // a manual action from this page goes into the same activity log
   function kpNote(action, result) {
     if (!HAS_KSU) return;
     exec('[ -f /data/adb/modules/' + MODID + '/common/klog.sh ] && HC_DATA=' + DATA + ' . /data/adb/modules/' + MODID + '/common/klog.sh && klog tools ' +
-      "'" + String(action).replace(/'/g, '') + "' '" + String(result).replace(/'/g, '') + "'").then(loadKeepers);
+      "'" + String(action).replace(/'/g, '') + "' '" + String(result).replace(/'/g, '') + "'").then(function () { loadKeepers(true); });
   }
   function kpShowLog() {
     modal('Activity log', '<p class="desc">Last ' + kpLog.length + ' of at most 30, newest first.</p><ul class="kp-log all">' + kpRows(kpLog) + '</ul>', [
-      { label: 'Clear', fn: function () { exec(': > ' + DATA + '/keeper.log').then(function () { loadKeepers(); snack('Activity log cleared'); }); } },
+      { label: 'Clear', fn: function () { exec(': > ' + DATA + '/keeper.log').then(function () { loadKeepers(true); snack('Activity log cleared'); }); } },
       { label: 'Close', primary: true }
     ]);
   }
-  $('kp-log').onclick = function () { loadKeepers().then(kpShowLog); };
-  $('kp-refresh').onclick = function () { loadKeepers().then(function () { snack('Activity refreshed'); }); };
+  $('kp-log').onclick = function () { loadKeepers(true).then(kpShowLog); };
 
   function showPage(p) {
     document.querySelectorAll('.page').forEach(function (s) { s.classList.toggle('active', s.id === 'page-' + p); });
@@ -3375,6 +3382,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
     });
     window.scrollTo(0, 0);
+    if (p === 'home') loadKeepers();
   }
   document.querySelectorAll('.tab').forEach(function (t) {
     t.addEventListener('click', function () { showPage(t.getAttribute('data-page')); });
@@ -3982,7 +3990,12 @@ html[data-style="mono"],html[data-style="mono"] body{
   $('ap-mono-txt').onclick = function () { var s = $('ap-mono-sw'); s.checked = !s.checked; s.onchange(); };
   $('ap-blur-sw').onchange = function () { window.HCTheme.set({ b: this.checked ? 1 : 0 }); };
   $('ap-blur-txt').onclick = function () { var s = $('ap-blur-sw'); s.checked = !s.checked; s.onchange(); };
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) monetRefresh(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) return;
+    monetRefresh();
+    var h = document.getElementById('page-home');
+    if (h && h.classList.contains('active')) loadKeepers();
+  });
   apRefresh();
   monetRefresh();
 
