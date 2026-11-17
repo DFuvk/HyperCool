@@ -81,11 +81,14 @@ set_low() {
   case "$_cv" in ''|null) return 0 ;; esac
   [ "$(hz "$_cv")" -gt "$(hz "$3")" ] || return 0
   sput "$1" "$2" "$3" || return 1
+  HAPPLIED=1
   saved set "$1" "$2" || echo "set|$1|$2|$_cv|$3" >> "$SAVE"
 }
 
 # apply / keep the hot limits (also every tick while hot: the ROM or another keeper may raise them)
 hot_apply() {
+  # 1 when this call really lowered something: the hot log is only for a real change
+  HAPPLIED=0
   [ -e "$SAVE" ] || : > "$SAVE"
   _np=0
   for _p in "$HC_SYS"/devices/system/cpu/cpufreq/policy*; do [ -d "$_p" ] && _np=$((_np + 1)); done
@@ -100,7 +103,7 @@ hot_apply() {
     _n=$_p/scaling_max_freq
     _c=$(cat "$_n" 2>/dev/null); case "$_c" in ''|*[!0-9]*) continue ;; esac
     [ "$_c" -gt "$_s" ] || continue
-    wrf "$_n" "$_s" && { saved cpu "$_n" || echo "cpu|$_n|$_b|$_s" >> "$SAVE"; }
+    wrf "$_n" "$_s" && { HAPPLIED=1; saved cpu "$_n" || echo "cpu|$_n|$_b|$_s" >> "$SAVE"; }
   done
   [ "$RR" -gt 0 ] || return 0
   if rr_alive; then
@@ -108,8 +111,8 @@ hot_apply() {
     [ "$(cat "$RRF" 2>/dev/null)" = "$RR" ] || echo "$RR" > "$RRF"
     _cv=$(sget system peak_refresh_rate)
     if [ "$(hz "$_cv")" -gt "$RR" ]; then
-      sput system peak_refresh_rate "$RR.0"
-      [ "$MIUI" = 1 ] && sput secure miui_refresh_rate "$RR"
+      sput system peak_refresh_rate "$RR.0" && HAPPLIED=1
+      [ "$MIUI" = 1 ] && { sput secure miui_refresh_rate "$RR" && HAPPLIED=1; }
     fi
     # the touch keeper owns peak, not min: a min above the cap is an invalid range, so lower
     # it too and record it (cool-down puts it back; the keeper does not touch min)
@@ -216,7 +219,8 @@ while :; do
     if [ "$_t" -ge "$LIM" ]; then
       HOT=1; SINCE=$_now; NHOT=$((NHOT + 1))
       hot_apply
-      klog heat "Battery hot" "$(fmt "$_t"): big cores ${PCT}%$([ "$RR" -gt 0 ] && echo ", ${RR} Hz") until $(fmt "$COOL")"
+      # only say "Battery hot" when the keeper really lowered something
+      [ "$HAPPLIED" = 1 ] && klog heat "Battery hot" "$(fmt "$_t"): big cores ${PCT}%$([ "$RR" -gt 0 ] && echo ", ${RR} Hz") until $(fmt "$COOL")"
     fi
   elif [ "$_t" -le "$COOL" ] && [ $((_now - SINCE)) -ge "$MINHOT" ]; then
     HOT=0
