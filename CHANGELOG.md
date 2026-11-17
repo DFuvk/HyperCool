@@ -1,6 +1,17 @@
 # Changelog
 
-> Current build: **v2.3.5 (235)**.
+> Current build: **v2.3.6 (236)**.
+
+## v2.3.6 (236)
+
+- Changed: The WebUI now always uses the Mono look. The Mono theme switch is gone, and Colors changes only the accent used by switches, buttons, the active tab and icons; backgrounds and text stay black and white.
+- Changed: Each accent color now has its own dark and light palette. System (Dynamic) uses the wallpaper palette, or the preset closest to the wallpaper color, with Blue as the fallback for a grey wallpaper.
+- Changed: Existing theme settings migrate automatically. Mono on or the old Glacier color becomes Mono, a color chosen with Mono off stays as the accent, new installs follow the system dark/light setting, and installs that already used the WebUI keep the Dark default.
+- New: Tapping "N unsaved changes" opens a review with every changed setting and its old to new value before Save.
+- Changed: "Saved, restart to apply" hides after 5 seconds; tap the "Restart to apply" pill in the header to show the bar again.
+- New: Temperature, idle drain and battery health show a loading placeholder until their first reading arrives.
+- Changed: The "Applies after restart" tag now has an icon, the old risk dot is gone, and the risk line is shown in the feature details.
+- New: More feature details explain how the option works, including CPU idle states, UFS power saving, I/O accounting, Wi-Fi/Bluetooth scanning, network standby, telemetry, logging, Battery Saver trigger, refresh rate, animation scale, apply delay, boot notification, network stack tuning, cache-clean notification and background memory work.
 
 ## v2.3.5 (235)
 
