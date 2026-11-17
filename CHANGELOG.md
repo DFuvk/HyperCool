@@ -1,6 +1,15 @@
 # Changelog
 
-> Current build: **v2.3.4 (234)**.
+> Current build: **v2.3.5 (235)**.
+
+## v2.3.5 (235)
+
+- New: Keeper status on Home: a tap-to-open table with every background keeper, its Running / Off / Not running / Skipped / Failed state, pid, detail and last event.
+- New: Show all activity view with All, Keepers, Manual and Idle drain filters. The 3 newest events stay on Home, and high drain or failed work is coloured.
+- New: The activity log keeps the last 50 events (was 30) and now includes the boot result with the features that failed or were partial, saved setting changes, and Revert and restore actions.
+- New: Screen-off drain is recorded for each screen-off period of at least 30 minutes, and daily idle drain history comes from Android's battery stats.
+- Changed: Keepers record why they stopped; the guard records restores when the module is disabled; stop events are skipped during reboot and shutdown to keep the log clean.
+- Changed: The heat guard records a late application once, notes why it stopped, and no longer writes a cool-down line for a hot period that lowered nothing.
 
 ## v2.3.4 (234)
 
