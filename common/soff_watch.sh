@@ -167,7 +167,7 @@ wifi_check() {
   done
   if [ "$_wc" -ge 3 ]; then
     _whold=$((_wn + 300)); _wrec=""; _wpause=$((${_wpause:-0} + 1)); note ""
-    klog screen-off "Wi-Fi back on" "the ROM switched it off 3 times in 10 min, pausing 5 min"
+    klog screen-off "Wi-Fi keep paused" "the ROM switched it off 3 times in 10 min, pausing 5 min"
     return 0
   fi
   svc wifi enable </dev/null >/dev/null 2>&1
@@ -187,7 +187,7 @@ wifi_check() {
     _wcnt=$((_wcnt + 1)); _wlast=$(date '+%H:%M:%S')
     klog screen-off "Wi-Fi back on" "the ROM had switched it off"
   else
-    klog screen-off "Wi-Fi back on" "did not come on within 5 s"
+    klog screen-off "Wi-Fi did not come back" "still off after 5 s"
   fi
   note ""
 }
