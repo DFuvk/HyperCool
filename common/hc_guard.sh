@@ -33,6 +33,7 @@ _need=0
 [ -s "$D/soff_radio.save" ] && _need=1
 [ -s "$D/soff_data.save" ] && _need=1
 [ -s "$D/soff_watch.save" ] && _need=1
+[ -s "$D/heat.save" ] && _need=1
 [ -e "$D/doze_forced" ] && _need=1
 if [ "$_need" = 1 ] && [ -f "$D/restore.sh" ]; then
   if sh "$D/restore.sh" --all --wait-boot >/dev/null 2>&1; then

@@ -8,6 +8,7 @@ MODDIR=/data/adb/modules/hypercool
 LAST=$HC_DATA/cache_clean.last     # cleared_kb|apps_cleaned|epoch|apps_scanned
 CHECK=$HC_DATA/cache_clean.check   # epoch of the last daily check
 PIDF=$HC_DATA/cache_keeper.pid
+[ -f "$MODDIR/common/klog.sh" ] && . "$MODDIR/common/klog.sh" || klog() { :; }
 
 cfgv() { sed -n "s/^$1=//p" "$HC_DATA/config.conf" 2>/dev/null | tail -n 1 | tr -d '\r'; }
 
@@ -113,9 +114,10 @@ run_clean() {
   echo "${_res%\|*}|$(date +%s)|${_res##*\|}" > "$LAST"
   rm -f "$_b" "$_a" "$HC_DATA/cache_clean.skip"
   rmdir "$_lk" 2>/dev/null
+  _kb=${_res%%\|*}; _ap=${_res#*\|}; _ap=${_ap%%\|*}
+  klog cache "App cache cleaned ($([ "$1" = force ] && echo manual || echo auto))" "$(awk -v k="${_kb:-0}" 'BEGIN { if (k >= 1024) printf "%.0f MB", k / 1024; else printf "%d KB", k }') from ${_ap:-0} apps"
   # daily or manual clean: tell the user (Cache clean notification)
   if [ "$(cfgv x_cache_notify)" != 0 ]; then
-    _kb=${_res%%\|*}; _ap=${_res#*\|}; _ap=${_ap%%\|*}
     notify "App cache cleaned: $(awk -v k="${_kb:-0}" 'BEGIN { if (k >= 1024) printf "%.0f MB", k / 1024; else printf "%d KB", k }') from ${_ap:-0} apps"
   fi
 }

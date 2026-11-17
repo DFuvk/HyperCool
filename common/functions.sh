@@ -1717,8 +1717,8 @@ f_rr_adapt() {
   esac
   _rp=$(cat "$HC_DATA/.rr_props" 2>/dev/null)
   _rd="${_mx} Hz on touch, ${_mn} Hz when idle"
-  # active rate only while touching: small keeper, idle rate again 2 s after the last touch
-  _rh=2
+  # active rate only while touching: small keeper, idle rate again rr_hold s (1-5) after the last touch
+  _rh=$(rng rr_hold 2 1 5); [ "$_rh" = 0 ] && _rh=2
   if command -v getevent >/dev/null 2>&1 && command -v mkfifo >/dev/null 2>&1; then
     nohup sh "$MODDIR/common/rr_watch.sh" "$_mx" "$_mn" "$_rh" "$_mi" >/dev/null 2>&1 &
     _i=0; while [ "$_i" -lt 5 ] && ! hc_rr_pid >/dev/null; do sleep 1; _i=$((_i + 1)); done
@@ -1731,6 +1731,49 @@ f_rr_adapt() {
   fin rr_adapt "$_rd$([ "${_rp:-0}" -gt 0 ] && echo ", touch timer 500 ms, idle timer 1 s")${_ml:+ (panel modes: $_ml)}"
   # the touch-only part is the point of this feature: without the keeper only the rate range is set
   if [ -z "$(hc_rr_pid)" ]; then sed -i 's/^rr_adapt=applied|/rr_adapt=partial|/' "${HC_STATUS_OUT:-$HC_STATUS}"; fi
+}
+
+# heat_guard (experimental) - common/heat_watch.sh: battery at or above heat_guard_temp C lowers the
+# big / prime core limit to heat_guard_cpu % and the refresh rate to heat_guard_rr Hz (0 = leave it);
+# both go back 3 C below the limit. Default off.
+hc_heat_pid() {
+  _hq=$(cat "$HC_DATA/heat_watch.pid" 2>/dev/null)
+  case "$_hq" in ''|*[!0-9]*) return 1 ;; esac
+  grep -q heat_watch "/proc/$_hq/cmdline" 2>/dev/null && echo "$_hq"
+}
+f_heat_guard() {
+  # an old keeper puts its limits back when it stops
+  if _hq=$(hc_heat_pid); then
+    kill "$_hq" 2>/dev/null
+    _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_hq" ]; do sleep 1; _i=$((_i + 1)); done
+  fi
+  rm -f "$HC_DATA/heat_watch.pid" "$HC_DATA/heat.rr"
+  # leftovers of a keeper that was killed while hot (refresh settings survive a reboot)
+  [ -s "$HC_DATA/heat.save" ] && sh "$MODDIR/common/heat_watch.sh" restore </dev/null >/dev/null 2>&1
+  on heat_guard || { st heat_guard off; return; }
+  _tn=/sys/class/power_supply/battery/temp
+  case "$(cat "$_tn" 2>/dev/null)" in
+    ''|*[!0-9-]*) st heat_guard skipped "battery temperature not readable ($_tn)"; return ;;
+  esac
+  _ht=$(rng heat_guard_temp 42 38 50); [ "$_ht" = 0 ] && _ht=42
+  _hc=$(rng heat_guard_cpu 70 40 95); [ "$_hc" = 0 ] && _hc=70
+  _hr=$(rng heat_guard_rr 60 0 165)
+  if [ "$_hr" -gt 0 ]; then
+    _ml=$(dumpsys display 2>/dev/null | grep -m 1 -i 'supportedModes' | grep -o 'fps=[0-9]*' | cut -d= -f2 | sort -un | tr '\n' ' ' | sed 's/ *$//')
+    # shellcheck disable=SC2086
+    if [ -n "$_ml" ]; then _hr=$(hc_near "$_hr" $_ml); else _hr=60; fi
+  fi
+  _mi=0
+  case "$(settings get secure miui_refresh_rate </dev/null 2>/dev/null)" in ''|null) ;; *) _mi=1 ;; esac
+  _cp=$(num cpu_cap 0); case "$_cp" in 1) _cp=95 ;; 2) _cp=88 ;; 3) _cp=80 ;; esac
+  { [ "$_cp" -lt 40 ] || [ "$_cp" -ge 100 ]; } && _cp=0
+  nohup sh "$MODDIR/common/heat_watch.sh" "$((_ht * 10))" "$_hc" "$_hr" "$_mi" "$_cp" >/dev/null 2>&1 &
+  _i=0; while [ "$_i" -lt 5 ] && ! hc_heat_pid >/dev/null; do sleep 1; _i=$((_i + 1)); done
+  if _hq=$(hc_heat_pid); then
+    st heat_guard applied "battery at ${_ht} C or more: big cores ${_hc}%$([ "$_hr" -gt 0 ] && echo ", ${_hr} Hz"); back at $((_ht - 3)) C (keeper pid $_hq)"
+  else
+    st heat_guard failed "keeper did not start"
+  fi
 }
 
 f_refresh_rate() {

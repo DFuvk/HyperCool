@@ -29,19 +29,25 @@ _hz_now() { # -> the peak rate that is really set right now (Hz, without decimal
   case "$_hz" in ''|*[!0-9]*) return 1 ;; esac
   echo "$_hz"
 }
+# put <Hz> [raw]: raw = no Heat guard cap (used when the keeper stops, so Heat guard records the real value)
 put() {
-  [ "$CUR" = "$1" ] && return 0
-  cmd settings put system peak_refresh_rate "$1.0" </dev/null >/dev/null 2>&1 ||
-    settings put system peak_refresh_rate "$1.0" </dev/null >/dev/null 2>&1
+  _pv=$1
+  # Heat guard: while the battery is hot every rate is capped at its value
+  _hg=$(cat "$HC_DATA/heat.rr" 2>/dev/null)
+  [ "$2" = raw ] && _hg=""
+  case "$_hg" in ''|*[!0-9]*) ;; *) [ "$_pv" -gt "$_hg" ] && _pv=$_hg ;; esac
+  [ "$CUR" = "$_pv" ] && return 0
+  cmd settings put system peak_refresh_rate "$_pv.0" </dev/null >/dev/null 2>&1 ||
+    settings put system peak_refresh_rate "$_pv.0" </dev/null >/dev/null 2>&1
   _ok=0
-  [ "$(_hz_now)" = "$1" ] && _ok=1
+  [ "$(_hz_now)" = "$_pv" ] && _ok=1
   if [ "$MIUI" = 1 ] && [ "$_ok" = 1 ]; then
-    cmd settings put secure miui_refresh_rate "$1" </dev/null >/dev/null 2>&1 ||
-      settings put secure miui_refresh_rate "$1" </dev/null >/dev/null 2>&1
-    [ "$(settings get secure miui_refresh_rate 2>/dev/null)" = "$1" ] || _ok=0
+    cmd settings put secure miui_refresh_rate "$_pv" </dev/null >/dev/null 2>&1 ||
+      settings put secure miui_refresh_rate "$_pv" </dev/null >/dev/null 2>&1
+    [ "$(settings get secure miui_refresh_rate 2>/dev/null)" = "$_pv" ] || _ok=0
   fi
   [ "$_ok" = 1 ] || return 1
-  CUR=$1
+  CUR=$_pv
   return 0
 }
 PIDS=""
@@ -50,7 +56,7 @@ stop() {
   [ -n "$PIDS" ] && kill $PIDS 2>/dev/null
   rm -f "$F1" "$F2"
   # back to the normal adaptive range (the boot apply or the restore takes it from here)
-  put "$ACT" || { sleep 1; put "$ACT"; }
+  put "$ACT" raw || { sleep 1; put "$ACT" raw; }
   [ "$(cat "$PIDF" 2>/dev/null)" = "$$" ] && rm -f "$PIDF"
   exit 0
 }

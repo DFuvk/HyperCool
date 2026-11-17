@@ -38,7 +38,6 @@ gcf_post() {
 }
 # gcf_notify <result> <trim>: needs _u0 _u1 _t0 _te
 gcf_notify() {
-  [ "$(sed -n 's/^f2fs_gc_notify=//p' "$GCD/config.conf" 2>/dev/null | tail -n 1 | tr -d '\r')" = 0 ] && return 0
   _gnb=$(awk -v m=$((_u0 / 256)) 'BEGIN { printf "%.1f", m / 1024 }')
   _gna=$(awk -v m=$((_u1 / 256)) 'BEGIN { printf "%.1f", m / 1024 }')
   _gns=$((_te - _t0)); if [ "$_gns" -lt 90 ]; then _gnt="${_gns} s"; else _gnt="$(((_gns + 30) / 60)) min"; fi
@@ -51,6 +50,8 @@ gcf_notify() {
     failed:*) _gnm="F2FS cleanup could not start: this kernel did not accept gc_urgent" ;;
     *) return 0 ;;
   esac
+  command -v klog >/dev/null 2>&1 && klog screen-off "F2FS cleanup (auto)" "${_gnm#F2FS cleanup }"
+  [ "$(sed -n 's/^f2fs_gc_notify=//p' "$GCD/config.conf" 2>/dev/null | tail -n 1 | tr -d '\r')" = 0 ] && return 0
   gcf_post "$_gnm"
 }
 

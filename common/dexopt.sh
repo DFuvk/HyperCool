@@ -256,5 +256,10 @@ else
   esac
 fi
 [ "$AUTO" = 1 ] && _msg="Auto optimize: $_msg"
+if [ -f "${MODDIR:-/data/adb/modules/hypercool}/common/klog.sh" ]; then
+  HC_DATA=${HC_DATA:-/data/adb/hypercool} . "${MODDIR:-/data/adb/modules/hypercool}/common/klog.sh"
+  if [ "$AUTO" = 1 ]; then klog screen-off "App optimization (auto)" "${_msg#Auto optimize: }"
+  else klog tools "App optimization (manual)" "$_msg"; fi
+fi
 notify "$_msg"
 exit 0

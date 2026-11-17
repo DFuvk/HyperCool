@@ -124,6 +124,22 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 .riskline{font-size:13px;color:var(--on2);margin:0 0 8px}
 .st{display:inline-flex;align-items:center;font-size:13px;font-weight:500;line-height:1;padding:4px 9px;border-radius:6px;background:var(--surf3);color:var(--on2)}
 .st.applied{background:rgba(var(--c-safe),var(--ta));color:var(--ok)}
+.kp-card{display:flex;flex-direction:column;gap:10px}
+.kp-acts{display:flex;gap:8px}
+.kp-acts .btn{flex:1}
+.kp-log.all li{cursor:default}
+.kp-log.all .ka{white-space:normal}
+.kp-log.all .kd{display:block}
+.kp-empty{font-size:13px;color:var(--on2);padding:4px;cursor:default!important;border:0!important}
+.kp-log{display:flex;flex-direction:column;max-height:60vh;overflow:auto;margin:0 -4px;padding:0;list-style:none}
+.kp-log li{border-top:1px solid var(--line);padding:8px 4px;cursor:pointer}
+.kp-log li:first-child{border-top:0}
+.kp-log .kh{display:flex;gap:10px;align-items:baseline;font-size:13px}
+.kp-log time{color:var(--on2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.kp-log .ka{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kp-log li.open .ka{white-space:normal}
+.kp-log .kd{display:none;margin-top:4px;font-size:13px;color:var(--on2);overflow-wrap:anywhere;padding-left:2px}
+.kp-log li.open .kd{display:block}
 .st.partial{background:rgba(var(--c-mod),var(--ta));color:var(--warn)}
 .st.failed{background:rgba(var(--c-exp),var(--ta));color:var(--bad)}
 .st.pending{background:rgba(var(--c-rom),var(--ta));color:var(--info)}
@@ -787,6 +803,11 @@ html[data-style="mono"],html[data-style="mono"] body{
       <div class="demo" id="demo" hidden>Preview only. Open this page from the KernelSU manager to change settings.</div>
     </div>
 
+    <h2 class="sh">Recent activity</h2>
+    <p class="ssub">What the background keepers and manual actions did last. Tap a line for details.</p>
+    <div class="ccard kp-card"><ul class="kp-log" id="kp-list"><li class="kp-empty">Reading&hellip;</li></ul>
+      <div class="kp-acts"><button class="btn tonal" id="kp-refresh">Refresh</button><button class="btn tonal" id="kp-log">Show all</button></div></div>
+
     <div class="group home-actions">
       <div class="item"><div class="row">
         <div class="txt"><div class="ttl">Battery health</div><div class="desc">Health, cycle count, capacity and live kernel readings</div></div>
@@ -1061,6 +1082,13 @@ html[data-style="mono"],html[data-style="mono"] body{
       t: 'Disable UI blur',
       d: 'Blur is off in the UI, Xiaomi Control Center, recents and folders.',
       x: 'Blur costs GPU time whenever it is drawn, so turning it off can smooth the UI.' },
+    { k: 'heat_guard', s: 'heat', src: 'kernel', risk: 'exp', type: 'toggle', def: '0',
+      t: 'Heat guard',
+      d: 'When the battery gets hot, the refresh rate and the CPU limit drop, then come back once it cools down.',
+      x: 'Checks the battery temperature every 30 s while the phone is awake. At the limit you pick, the big cores are held lower and the screen runs at a lower refresh rate, so the phone heats up less while gaming, charging or using the camera. Everything goes back 3 °C below the limit. Values changed in the meantime by the ROM or another feature are left alone. Some games may run with fewer FPS while it is hot.',
+      fields: [{ k: 'heat_guard_temp', label: 'Battery temperature limit', def: '42', min: 38, max: 50, unit: '°C' },
+               { k: 'heat_guard_cpu', label: 'Big-core limit while hot', def: '70', min: 40, max: 95, unit: '%' },
+               { k: 'heat_guard_rr', label: 'Refresh rate while hot', def: '60', sel: [['0', 'Don’t change'], ['60', '60 Hz'], ['90', '90 Hz']] }] },
     { k: 'charge_cool', s: 'heat', src: 'kernel', risk: 'exp', type: 'value', def: '0', unit: 'mA', min: 500, max: 12000,
       t: 'Cooler charging (current limit)',
       d: 'Charging current is limited by charger temperature or a chosen mA value.',
@@ -1195,7 +1223,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       t: 'Disable analytics and ad packages',
       d: 'Xiaomi measurement, MSA promos and the bug report uploader are silenced.',
       x: 'This also disables the Facebook stub services. Use Disable apps for anything else.' },
-    { k: 'joyose_off', s: 'rdrain', src: 'rom', risk: 'moderate', type: 'toggle', def: '0', only: 'XIAOMI',
+    { k: 'joyose_off', s: 'rdrain', src: 'rom', risk: 'exp', type: 'toggle', def: '0', only: 'XIAOMI',
       t: 'Disable Joyose',
       d: 'Xiaomi\'s cloud game and thermal profile service is stopped.',
       x: 'Joyose wakes up often to apply cloud game and thermal profiles, so turning it off saves power. Game Turbo profiles may change.' },
@@ -1232,9 +1260,10 @@ html[data-style="mono"],html[data-style="mono"] body{
     { k: 'rr_adapt', s: 'saver', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Adaptive refresh rate',
       d: 'The screen refresh rate drops when you stop touching the screen.',
-      x: 'The active rate is the highest mode the panel supports; the idle rate is the lowest. Both can be overridden. Pressing a button raises the refresh rate again. The low rate returns 2 s after the last touch, so status bar and notification changes stay at the low rate. It saves battery and replaces Peak refresh rate while on.',
+      x: 'The active rate is the highest mode the panel supports; the idle rate is the lowest. Both can be overridden. Pressing a button raises the refresh rate again. The low rate returns a set time after the last touch (1–5 s, 2 s by default), so status bar and notification changes stay at the low rate. It saves battery and replaces Peak refresh rate while on.',
       fields: [{ k: 'rr_active', label: 'Active refresh rate', def: '0', sel: [['0', 'Auto (panel max)'], ['90', 'Medium (90 Hz)'], ['120', 'High (120 Hz)'], ['144', 'Very high (144 Hz)']] },
-               { k: 'rr_idle', label: 'Idle refresh rate', def: '0', sel: [['0', 'Auto (panel min)'], ['30', 'Lowest (30 Hz)'], ['48', 'Very low (48 Hz)'], ['60', 'Low (60 Hz)'], ['90', 'Medium (90 Hz)']] },] },
+               { k: 'rr_idle', label: 'Idle refresh rate', def: '0', sel: [['0', 'Auto (panel min)'], ['30', 'Lowest (30 Hz)'], ['48', 'Very low (48 Hz)'], ['60', 'Low (60 Hz)'], ['90', 'Medium (90 Hz)']] },
+               { k: 'rr_hold', label: 'Back to idle rate after the last touch', def: '2', min: 1, max: 5, unit: 's' }] },
     { k: 'anim_scale', s: 'saver', src: 'rom', risk: 'safe', type: 'value', def: '0', unit: '%', min: 10, max: 100,
       t: 'Animation scale',
       d: 'Transitions are shortened to a percentage, with less graphics work.',
@@ -1416,12 +1445,13 @@ html[data-style="mono"],html[data-style="mono"] body{
  "tracking_off": "settings global network_watchlist_enabled, tron_enabled, gmscorestat_enabled, clearcut_enabled, analytics_enabled, uploading_enabled, ga_collection_enabled = 0|settings global limit_ad_tracking = 1",
  "debloat": "pm disable-user --user 0: com.miui.analytics, com.miui.daemon, com.miui.bugreport, com.miui.msa.global, com.miui.systemAdSolution, com.facebook.appmanager, com.facebook.services, com.facebook.system (if installed)|off / uninstall: enabled again (only what this feature disabled)",
  "joyose_off": "pm disable-user --user 0 com.xiaomi.joyose",
+ "heat_guard": "keeper common/heat_watch.sh reads /sys/class/power_supply/battery/temp every 30 s (20 s while hot, not in deep sleep)|at heat_guard_temp (38-50 C): scaling_max_freq of the big / prime clusters = heat_guard_cpu % of their max, nearest step|refresh rate = heat_guard_rr Hz (nearest panel mode): with Adaptive refresh rate the touch keeper caps every rate it sets (heat.rr), otherwise settings system peak_refresh_rate / min_refresh_rate and secure miui_refresh_rate are lowered|3 C below the limit and at least 2 min later: the values written come back (big-core cap or full range); a value the ROM or another feature changed meanwhile is left alone|records in heat.save: put back when the keeper stops, at the next boot, on Revert, when the module is off, on uninstall",
  "log_reduce": "runtime prop log.tag = W (not saved)",
  "saver_policy": "settings global battery_saver_constants = chosen profile (only used while Battery Saver is on)|disable_vibration / vibration_disabled = false (Battery Saver keeps vibration and haptics), true only with the sub-option",
  "saver_trigger": "settings global automatic_power_save_mode = 0, low_power_trigger_level = %",
  "saver_dim": "settings global battery_saver_constants: enable_brightness_adjustment=true, adjust_brightness_disabled=false, adjust_brightness_factor = 0.9 / 0.8 / 0.7 / 0.6 (other keys kept)|Android applies it only while Battery Saver is on|off: the original string comes back (or the Stronger Battery Saver string when that is on)",
  "smart_px": "checks that the ROM has Smart Pixels (SystemUI)|On Battery Saver: settings system smart_pixels_on_power_save = 1|Always: settings system smart_pixels_enable = 1|off: original values back|skipped when the ROM has no Smart Pixels",
- "rr_adapt": "post-fs-data: ro.surface_flinger.set_touch_timer_ms = 500, set_idle_timer_ms = 1000, use_content_detection_for_refresh_rate = true (resetprop -n, gone after a reboot when off)|settings system peak_refresh_rate = active rate, min_refresh_rate = idle rate (nearest panel modes from dumpsys display)|HyperOS / MIUI (when secure miui_refresh_rate exists): miui_refresh_rate = active rate, switched by the keeper like peak_refresh_rate|keeper common/rr_watch.sh blocks on getevent -ql of the touchscreen and power / volume key devices (BTN_TOUCH, ABS_MT_TRACKING_ID, KEY_* lines only); peak_refresh_rate = idle rate, active rate on touch down or key press, idle rate again 2 s after the last finger is lifted; stops when off or the module is disabled|Peak refresh rate is skipped while this is on|ROM values come back when off",
+ "rr_adapt": "post-fs-data: ro.surface_flinger.set_touch_timer_ms = 500, set_idle_timer_ms = 1000, use_content_detection_for_refresh_rate = true (resetprop -n, gone after a reboot when off)|settings system peak_refresh_rate = active rate, min_refresh_rate = idle rate (nearest panel modes from dumpsys display)|HyperOS / MIUI (when secure miui_refresh_rate exists): miui_refresh_rate = active rate, switched by the keeper like peak_refresh_rate|keeper common/rr_watch.sh blocks on getevent -ql of the touchscreen and power / volume key devices (BTN_TOUCH, ABS_MT_TRACKING_ID, KEY_* lines only); peak_refresh_rate = idle rate, active rate on touch down or key press, idle rate again rr_hold s (1-5, default 2) after the last finger is lifted; stops when off or the module is disabled|Peak refresh rate is skipped while this is on|ROM values come back when off",
  "refresh_rate": "settings system peak_refresh_rate (min_refresh_rate only lowered if peak < 60, given back otherwise)|settings secure user_refresh_rate, miui_refresh_rate",
  "anim_scale": "settings global window_animation_scale, transition_animation_scale, animator_duration_scale",
  "apply_delay": "nothing - only controls when the one-shot apply starts",
@@ -1729,7 +1759,7 @@ html[data-style="mono"],html[data-style="mono"] body{
     bg_cpuset: 'layers', blur_off: 'blur', charge_cool: 'bolt', charge_limit: 'batt80', cpu_idle: 'moon', soff_prof: 'moon', wifi_keep: 'signal', soff_radio: 'bed', soff_data: 'dataoff', f2fs_gc: 'disk', x_dexopt_auto: 'disk', ufs_pm: 'disk',
     vm_tune: 'mem', io_tune: 'pulse', debug_off: 'bug', debug_props: 'term', wakelock_block: 'lock', protect_apps: 'shield',
     app_bucket: 'apps', bg_block: 'ban', app_disable: 'warn', app_freezer: 'snow', doze_aggr: 'bed', devcfg_lock: 'sync', gms_doze: 'gms', scan_off: 'wifioff', loc_throttle: 'pulse',
-    net_save: 'signal', standby: 'hour', stats_reduce: 'chart', tracking_off: 'eyeoff', debloat: 'trash', joyose_off: 'game',
+    net_save: 'signal', standby: 'hour', stats_reduce: 'chart', tracking_off: 'eyeoff', debloat: 'trash', joyose_off: 'game', heat_guard: 'warn',
     log_reduce: 'log', saver_policy: 'saver', saver_trigger: 'percent', refresh_rate: 'monitor', rr_adapt: 'monitor', saver_dim: 'leaf', smart_px: 'layers', anim_scale: 'film', apply_delay: 'clock',
     x_sched: 'gauge', x_kquiet: 'bug', x_net: 'signal', x_io: 'disk', x_xiaomi_fw: 'game', x_balanced: 'sliders', x_kcommon: 'signal', x_ram_opt: 'mem',
     x_multitask: 'layers', x_zram: 'mem', x_gms_freeze: 'gms', x_track: 'eyeoff', x_log_nuke: 'log', x_diag: 'term',
@@ -2393,13 +2423,13 @@ html[data-style="mono"],html[data-style="mono"] body{
   /* io */
   var ORDER = [
     ['Heat control (kernel)', ['cpu_cap', 'cpu_cap_lock', 'cpu_cap_little', 'cpu_cap_little_lock', 'prime_park', 'gpu_cap', 'gpu_cap_lock', 'gpu_idle', 'gpu_idle_timer', 'gpu_throttle', 'walt_tune', 'walt_hispeed_load',
-      'walt_up_rate', 'walt_sched_boost_off', 'walt_task_util', 'input_boost_off', 'bg_cpuset', 'bg_uclamp', 'bg_daemons', 'blur_off', 'charge_cool', 'charge_cool_level', 'charge_limit']],
+      'walt_up_rate', 'walt_sched_boost_off', 'walt_task_util', 'input_boost_off', 'bg_cpuset', 'bg_uclamp', 'bg_daemons', 'blur_off', 'heat_guard', 'heat_guard_temp', 'heat_guard_cpu', 'heat_guard_rr', 'charge_cool', 'charge_cool_level', 'charge_limit']],
     ['Battery drain (kernel)', ['soff_prof', 'soff_cpu', 'soff_gpu', 'soff_boost', 'wifi_keep', 'soff_radio', 'soff_radio_min', 'soff_radio_bt', 'soff_data', 'soff_data_min', 'soff_data_mobile', 'soff_data_nfc', 'cpu_idle', 'ufs_pm', 'vm_tune', 'vm_writeback', 'vm_stat_interval', 'vm_dirty_bg', 'vm_dirty', 'io_tune', 'debug_off',
       'debug_props', 'wakelock_block', 'wl_list']],
     ['Protected apps', ['protect_apps', 'protect_pkgs', 'app_bucket', 'bg_block', 'bg_block_pkgs', 'app_disable', 'app_disable_pkgs']],
     ['Battery drain (HyperOS / ROM)', ['app_freezer', 'doze_aggr', 'doze_custom', 'devcfg_lock', 'gms_doze', 'scan_off', 'loc_throttle', 'net_save',
       'standby', 'stats_reduce', 'tracking_off', 'debloat', 'joyose_off', 'log_reduce']],
-    ['Long battery / saver', ['saver_policy', 'saver_vib', 'saver_constants', 'saver_trigger', 'saver_dim', 'smart_px', 'refresh_rate', 'rr_adapt', 'rr_active', 'rr_idle', 'anim_scale']],
+    ['Long battery / saver', ['saver_policy', 'saver_vib', 'saver_constants', 'saver_trigger', 'saver_dim', 'smart_px', 'refresh_rate', 'rr_adapt', 'rr_active', 'rr_idle', 'rr_hold', 'anim_scale']],
     ['Advanced', ['apply_delay', 'boot_notify']],
     ['More: extra kernel', ['x_sched', 'x_kquiet', 'x_net', 'x_io', 'x_xiaomi_fw', 'x_balanced', 'x_bal_bus', 'x_kcommon']],
     ['More: RAM', ['x_ram_opt', 'x_ram_level', 'x_multitask', 'x_compact', 'x_zram', 'x_zram_size', 'x_zram_custom', 'x_zram_alg']],
@@ -2572,6 +2602,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       renderSummary(sec.BOOT);
       loadDrain();
       loadBcal();
+      loadKeepers();
       syncInputs();
       $('loaderr').hidden = true;
       // values normalised on load (clamping) are not "unsaved changes"
@@ -3089,7 +3120,7 @@ html[data-style="mono"],html[data-style="mono"] body{
   $('refresh').onclick = function () {
     exec(sensCmd()).then(function (r) {
       if (r.errno) { snack('Could not read the sensors. Try again in a moment.'); return; }
-      showSens(parseKV(r.stdout)); loadDrain(); loadBcal(); snack('Readings refreshed');
+      showSens(parseKV(r.stdout)); loadDrain(); loadBcal(); loadKeepers(); snack('Readings refreshed');
     });
   };
   $('loaderr-retry').onclick = function () {
@@ -3258,6 +3289,7 @@ html[data-style="mono"],html[data-style="mono"] body{
             var freed = parseInt(m[2], 10);
             snack('RAM cleaned' + (mode === 'safe' ? '' : ', ' + m[1] + ' apps stopped') +
               (freed > 0 ? ', +' + freed + ' MB free' : ''));
+            kpNote('RAM cleaned (manual, ' + mode + ')', (mode === 'safe' ? 'cached processes released' : m[1] + ' apps stopped') + (freed > 0 ? ', +' + freed + ' MB free' : ''));
           } else {
             snack('Clean finished with errors. Check the boot log, then try again.');
           }
@@ -3281,13 +3313,60 @@ html[data-style="mono"],html[data-style="mono"] body{
         ].join('\n');
         snack('Cleaning junk…');
         exec(script).then(function (r) {
-          snack(/JUNKDONE/.test(r.stdout || '') ? 'Junk cleaned' : 'Clean finished with errors');
+          var ok = /JUNKDONE/.test(r.stdout || '');
+          snack(ok ? 'Junk cleaned' : 'Clean finished with errors');
+          kpNote('Junk files cleaned (manual)', ok ? 'crash dumps, ANR traces, old logs removed, fstrim done' : 'finished with errors');
         });
       } }
     ]);
   };
 
   /* navigation */
+  /* keepers: which ones run, what each did last (keeper.log, last 30 lines) */
+  var KP_SRC = { 'screen-off': 'Screen-off keeper', cpu: 'CPU cap keeper', charge: 'Charge limit keeper', refresh: 'Touch refresh rate keeper',
+    heat: 'Heat guard', cache: 'Cache clean', calibration: 'Battery calibration', tools: 'Manual action' };
+  var kpLog = [];
+  function kpParseLog(txt) {
+    return (txt || '').split('\n').map(function (l) {
+      var a = l.split('|');
+      return a.length >= 4 ? { t: a[0], k: a[1], a: a[2], r: a.slice(3).join('|') } : null;
+    }).filter(Boolean);
+  }
+  function kpRows(list) {
+    return list.slice().reverse().map(function (e) {
+      return '<li><div class="kh"><time>' + esc(e.t.slice(0, 11)) + '</time><span class="ka">' + esc(e.a) + '</span></div>' +
+        '<div class="kd">' + esc(KP_SRC[e.k] || e.k) + (e.r ? ': ' + esc(e.r) : '') + '</div></li>';
+    }).join('');
+  }
+  function kpBind(root) {
+    root.querySelectorAll('.kp-log li:not(.kp-empty)').forEach(function (li) { li.onclick = function () { li.classList.toggle('open'); }; });
+  }
+  function kpRender(out) {
+    kpLog = kpParseLog(out);
+    $('kp-list').innerHTML = kpLog.length ? kpRows(kpLog.slice(-5))
+      : '<li class="kp-empty">No activity yet. Cache cleans, app optimization, F2FS cleanup, heat events and manual actions show up here.</li>';
+    $('kp-log').disabled = !kpLog.length;
+    kpBind($('kp-list').parentNode);
+  }
+  function loadKeepers() {
+    if (!HAS_KSU) { kpRender(''); return Promise.resolve(); }
+    return exec('tail -n 30 ' + DATA + '/keeper.log 2>/dev/null').then(function (r) { kpRender(r.stdout || ''); });
+  }
+  // a manual action from this page goes into the same activity log
+  function kpNote(action, result) {
+    if (!HAS_KSU) return;
+    exec('[ -f /data/adb/modules/' + MODID + '/common/klog.sh ] && HC_DATA=' + DATA + ' . /data/adb/modules/' + MODID + '/common/klog.sh && klog tools ' +
+      "'" + String(action).replace(/'/g, '') + "' '" + String(result).replace(/'/g, '') + "'").then(loadKeepers);
+  }
+  function kpShowLog() {
+    modal('Activity log', '<p class="desc">Last ' + kpLog.length + ' of at most 30, newest first.</p><ul class="kp-log all">' + kpRows(kpLog) + '</ul>', [
+      { label: 'Clear', fn: function () { exec(': > ' + DATA + '/keeper.log').then(function () { loadKeepers(); snack('Activity log cleared'); }); } },
+      { label: 'Close', primary: true }
+    ]);
+  }
+  $('kp-log').onclick = function () { loadKeepers().then(kpShowLog); };
+  $('kp-refresh').onclick = function () { loadKeepers().then(function () { snack('Activity refreshed'); }); };
+
   function showPage(p) {
     document.querySelectorAll('.page').forEach(function (s) { s.classList.toggle('active', s.id === 'page-' + p); });
     document.querySelectorAll('.tab').forEach(function (t) {

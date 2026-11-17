@@ -11,6 +11,7 @@ mkdir -p "$HC_DATA" 2>/dev/null
 [ -f "$MD/common/restore.sh" ] && cp -f "$MD/common/restore.sh" "$HC_DATA/restore.sh" 2>/dev/null
 [ -f "$MD/common/radio.sh" ] && cp -f "$MD/common/radio.sh" "$HC_DATA/radio.sh" 2>/dev/null
 [ -f "$MD/common/soff_restore.sh" ] && cp -f "$MD/common/soff_restore.sh" "$HC_DATA/soff_restore.sh" 2>/dev/null
+[ -f "$MD/common/heat_watch.sh" ] && cp -f "$MD/common/heat_watch.sh" "$HC_DATA/heat_watch.sh" 2>/dev/null
 # stop the cache keeper
 _cp=$(cat "$HC_DATA/cache_keeper.pid" 2>/dev/null)
 case "$_cp" in ''|*[!0-9]*) ;; *) grep -q cache_clean "/proc/$_cp/cmdline" 2>/dev/null && kill "$_cp" 2>/dev/null ;; esac
@@ -36,6 +37,13 @@ if [ -f "$HC_DATA/chg_watch.set" ] || [ -f "$HC_DATA/chg_watch.state" ]; then
     [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
   done
 fi
+# stop the Heat guard keeper (it puts its refresh rate / CPU limits back when it stops)
+_hp=$(cat "$HC_DATA/heat_watch.pid" 2>/dev/null)
+case "$_hp" in ''|*[!0-9]*) ;; *) grep -q heat_watch "/proc/$_hp/cmdline" 2>/dev/null && kill "$_hp" 2>/dev/null
+  _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_hp" ]; do sleep 1; _i=$((_i + 1)); done
+  [ -d "/proc/$_hp" ] && grep -q heat_watch "/proc/$_hp/cmdline" 2>/dev/null && kill -9 "$_hp" 2>/dev/null ;; esac
+[ -s "$HC_DATA/heat.save" ] && [ -f "$HC_DATA/heat_watch.sh" ] && env HC_DATA="$HC_DATA" sh "$HC_DATA/heat_watch.sh" restore </dev/null >/dev/null 2>&1
+rm -f "$HC_DATA/heat_watch.pid" "$HC_DATA/heat.rr"
 # stop the screen-off profile keeper (it writes the saved values back when it stops)
 _sp=$(cat "$HC_DATA/soff_watch.pid" 2>/dev/null)
 case "$_sp" in ''|*[!0-9]*) ;; *) grep -q soff_watch "/proc/$_sp/cmdline" 2>/dev/null && kill "$_sp" 2>/dev/null

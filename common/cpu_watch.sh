@@ -9,6 +9,7 @@
 export PATH=/system/bin:/system/xbin:/vendor/bin:/data/adb/ksu/bin:/data/adb/magisk:"$PATH"
 HC_DATA=${HC_DATA:-/data/adb/hypercool}
 MODDIR=${MODDIR:-/data/adb/modules/hypercool}
+[ -f "$MODDIR/common/klog.sh" ] && . "$MODDIR/common/klog.sh" || klog() { :; }
 LIST=$HC_DATA/cpu_keep.list
 PIDF=$HC_DATA/cpu_watch.pid
 STATE=$HC_DATA/cpu_watch.state
@@ -99,12 +100,14 @@ while :; do
   if [ -n "$_fix" ]; then
     TOT=$((TOT + 1)); WIN=$((WIN + 1))
     echo "fixed=$TOT last=$(date '+%Y-%m-%d %H:%M:%S') what=${_fix# }" > "$STATE"
+    klog cpu "cap put back" "the ROM had raised:${_fix}"
   fi
   # the ROM keeps undoing it: do not fight it every 30 s
   _now=$(date +%s)
   if [ $((_now - WSTART)) -gt 600 ]; then WIN=0; WSTART=$_now; fi
   if [ "$WIN" -ge "$MAXFIX" ]; then
     echo "fixed=$TOT last=$(date '+%Y-%m-%d %H:%M:%S') backoff=${BACKOFF}s (undone $WIN times in 10 min)" > "$STATE"
+    klog cpu "pausing" "the ROM undid the cap $WIN times in 10 min, next check in $((BACKOFF / 60)) min"
     sleep "$BACKOFF"
     WIN=0; WSTART=$(date +%s)
   else

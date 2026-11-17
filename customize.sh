@@ -81,6 +81,7 @@ else
 fi
 cp -f "$MODPATH/common/restore.sh" "$HC_DATA/restore.sh"
 cp -f "$MODPATH/common/radio.sh" "$HC_DATA/radio.sh"
+cp -f "$MODPATH/common/heat_watch.sh" "$HC_DATA/heat_watch.sh"
 cp -f "$MODPATH/common/soff_restore.sh" "$HC_DATA/soff_restore.sh"
 # guard: restores ROM changes even while the module is disabled (removes itself after uninstall)
 mkdir -p /data/adb/service.d

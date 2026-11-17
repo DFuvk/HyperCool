@@ -164,6 +164,19 @@ _hc_stop_soff() {
   return 0
 }
 
+# Heat guard limits left by a keeper that is gone. A running keeper keeps them (it puts them back
+# itself when the battery cools down or when it stops), so only leftovers are handled here.
+_hc_heat() {
+  [ -s "$HC_DATA/heat.save" ] || { rm -f "$HC_DATA/heat.rr"; return 0; }
+  _hq=$(cat "$HC_DATA/heat_watch.pid" 2>/dev/null)
+  case "$_hq" in ''|*[!0-9]*) ;; *) grep -q heat_watch "/proc/$_hq/cmdline" 2>/dev/null && return 0 ;; esac
+  for _hl in "$HC_DATA/heat_watch.sh" "${MODDIR:-/data/adb/modules/hypercool}/common/heat_watch.sh"; do
+    [ -f "$_hl" ] && { HC_DATA=$HC_DATA sh "$_hl" restore </dev/null >/dev/null 2>&1; break; }
+  done
+  [ -s "$HC_DATA/heat.save" ] && return 1
+  return 0
+}
+
 # Locate the standalone screen-off restorer. The copy next to this script is preferred.
 _hc_soff_lib() {
   for _l in "$HC_DATA/soff_restore.sh" "${MODDIR:-/data/adb/modules/hypercool}/common/soff_restore.sh"; do
@@ -384,6 +397,8 @@ _hc_main() {
     _hc_soff || _rc=1
     # Location / Bluetooth and mobile data / NFC left off by a keeper that did not stop cleanly
     _hc_radios || _rc=1
+    # refresh rate / CPU limits of a Heat guard keeper that did not stop cleanly
+    _hc_heat || _rc=1
     if [ "$_rc" -eq 0 ]; then
       echo "All recorded system changes restored."
     else
