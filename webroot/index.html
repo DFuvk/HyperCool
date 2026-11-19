@@ -904,7 +904,7 @@ html[data-style="mono"],html[data-style="mono"] body{
         <button class="btn tonal" id="wk-run">Show sources</button>
       </div></div>
       <div class="item"><div class="row">
-        <div class="txt"><div class="ttl">CPU use now</div><div class="desc">Which processes use the CPU over the next few seconds</div></div>
+        <div class="txt"><div class="ttl">CPU use now</div><div class="desc">Which processes use the CPU over the next 2 seconds</div></div>
         <button class="btn tonal" id="cn-run">Measure</button>
       </div></div>
     </div>
@@ -3453,10 +3453,17 @@ html[data-style="mono"],html[data-style="mono"] body{
     if (+uid >= 10000 && /\./.test(name)) return ['App: ' + name.replace(/:.*$/, ''), name];
     return [base, name];
   }
+  // measuring window in seconds (cpunow.sh accepts 2 to 10); the button counts it down
+  var CN_WIN = 2;
   function runCpuNow() {
-    $('cn-run').disabled = true;
-    $('cn-run').textContent = 'Measuring…';
-    exec('sh /data/adb/modules/' + MODID + '/common/cpunow.sh 3').then(function (r) {
+    var btn = $('cn-run'), left = CN_WIN;
+    btn.disabled = true;
+    btn.textContent = 'Measuring… ' + left + NB + 's';
+    var tick = setInterval(function () {
+      left--;
+      btn.textContent = left > 0 ? 'Measuring… ' + left + NB + 's' : 'Reading…';
+    }, 1000);
+    exec('sh /data/adb/modules/' + MODID + '/common/cpunow.sh ' + CN_WIN).then(function (r) {
       if (r.errno) throw new Error((r.stderr || '').trim() || 'The command did not answer.');
       var kv = {}, rows = [];
       r.stdout.split('\n').forEach(function (l) {
@@ -3478,7 +3485,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       var max = rows.length ? rows[0].tot : 1;
       var fmt = function (v) { return v >= 10 ? Math.round(v) + '%' : v >= 0.1 ? v.toFixed(1) + '%' : '<0.1%'; };
       var h = '<div class="bcpop tdpop"><div class="wk-sum"><span class="wk-v ' + cls + '">' + esc(sumTxt) + '</span>' +
-        ' <span class="wk-n">Measured for ' + esc(kv.win || '3') + NB + 's. 100% means all ' + nc + ' cores fully busy.</span></div>' +
+        ' <span class="wk-n">Measured for ' + esc(kv.win || String(CN_WIN)) + NB + 's. 100% means all ' + nc + ' cores fully busy.</span></div>' +
         (rows.length ? rows.map(function (x, i) {
           var nm = cpuName(x.name, x.uid), u = +x.uid, kind = x.uid === '-' ? 'Process' : u >= 10000 ? 'App' : 'System';
           var core = x.pct >= 95 ? 'about ' + Math.round(x.pct / 100) + (Math.round(x.pct / 100) === 1 ? ' full core' : ' full cores') : Math.round(x.pct) + '% of one core';
@@ -3493,8 +3500,9 @@ html[data-style="mono"],html[data-style="mono"] body{
         '</p><p>Check that HyperCool is installed and the KernelSU manager is working, then try again.</p>',
         [{ label: 'Close' }, { label: 'Try again', primary: true, fn: runCpuNow }]);
     }).then(function () {
-      $('cn-run').disabled = false;
-      $('cn-run').textContent = 'Measure';
+      clearInterval(tick);
+      btn.disabled = false;
+      btn.textContent = 'Measure';
     });
   }
   $('cn-run').onclick = function () {

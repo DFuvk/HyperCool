@@ -33,12 +33,16 @@ snap() {
   }'
 }
 # this script and every shell above it up to the root daemon that ran the WebUI command
-ppid_of() { sed -n 's/^.*) [A-Za-z] \([0-9][0-9]*\) .*$/\1/p' "$PR/$1/stat" 2>/dev/null; }
+# (shell builtins only: every fork here adds to the wait in the WebUI)
 SELF=$$; EX=" $$ "; p=$$; i=0
 while [ "$i" -lt 8 ]; do
-  p=$(ppid_of "$p"); case "$p" in ''|0|1|*[!0-9]*) break ;; esac
+  l=""; { read -r l < "$PR/$p/stat"; } 2>/dev/null
+  # fields after the last ")": state ppid ...
+  set -- ${l##*) }; p=$2
+  case "$p" in ''|0|1|*[!0-9]*) break ;; esac
   EX="$EX$p "; i=$((i + 1))
-  case "$(tr '\0' ' ' < "$PR/$p/cmdline" 2>/dev/null)" in *ksud*|*magiskd*|*apd\ *|*/su*|su\ *) break ;; esac
+  c=""; { read -d '' -r c < "$PR/$p/cmdline"; } 2>/dev/null
+  case "$c" in *ksud*|*magiskd*|*/apd|apd|*/su|su) break ;; esac
 done
 snap > "$W/a"; T0=$(up)
 sleep "$S"
@@ -59,15 +63,24 @@ awk -v T0="${T0:-0}" -v T1="${T1:-0}" -v S="$S" -v TCK="$TCK" -v EX="$EX" -v SEL
     if ($2 > b) { dt = T1 - T0; if (dt <= 0) dt = S; printf "%d %.1f\n", $1, ($2 - b) * 100 / TCK / dt }
   }' A="$W/a" "$W/a" "$W/b" | sort -k2,2 -nr | head -n 25 > "$W/top"
 
+NL='
+'
 echo "win=$S"; echo "ncpu=$NCPU"
 c=0
 while read -r pid pct; do
   [ -d "$PR/$pid" ] || continue
-  name=$(tr '\0' '\n' < "$PR/$pid/cmdline" 2>/dev/null | head -n 1 | cut -d' ' -f1 | cut -c1-80)
-  [ -n "$name" ] || name=$(sed -n '1s/^[^(]*(\(.*\)).*$/\1/p' "$PR/$pid/stat" 2>/dev/null)
+  # first argument of the command line (up to the first NUL), builtins only
+  name=""; { read -d '' -r name < "$PR/$pid/cmdline"; } 2>/dev/null
+  name=${name%%[ $NL]*}; name=${name:0:80}
+  if [ -z "$name" ]; then
+    # kernel thread: the name in brackets from stat
+    l=""; { read -r l < "$PR/$pid/stat"; } 2>/dev/null
+    l=${l#*\(}; name=${l%\)*}
+  fi
   [ -n "$name" ] || name="pid $pid"
-  uid=$(sed -n 's/^Uid:[ \t]*\([0-9]*\).*/\1/p' "$PR/$pid/status" 2>/dev/null)
-  echo "R|$pct|$pid|${uid:--}|$(echo "$name" | tr -d '|')"
+  uid=""
+  { while read -r k v x; do [ "$k" = Uid: ] && { uid=$v; break; }; done < "$PR/$pid/status"; } 2>/dev/null
+  echo "R|$pct|$pid|${uid:--}|${name//|/}"
   c=$((c + 1))
 done < "$W/top"
 echo "n=$c"

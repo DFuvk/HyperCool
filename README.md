@@ -160,7 +160,7 @@ Everything is configured via WebUI and applied on the next boot. Only lightweigh
 - Idle drain: battery drop per hour with the screen off since the last unplug (shows after a 1% drop)
 - Battery check: health, capacity, cycle count, temperature and more
 - Wake sources: which wakeup sources kept the CPU awake or cut its sleep short, in plain names (Mobile data, Wi-Fi, Apps and Android…), with how much of the time the phone was awake since "Mark start"; "Apps and Android" opens the apps that held wake locks (Android battery stats, read with `dumpsys batterystats -c`; read only)
-- CPU use now: the busiest processes over 3 seconds as a share of the whole CPU, in plain names; the measurement and the root manager are left out (read only)
+- CPU use now: the busiest processes over 2 seconds as a share of the whole CPU, in plain names; the measurement and the root manager are left out (read only)
 - Battery calibration: guided full cycle (5% → 100% → until charging finishes) so the battery % is accurate (optionally deletes batterystats.bin)
 
 ## Requirements
