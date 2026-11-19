@@ -260,6 +260,19 @@ textarea:disabled{opacity:.45}
 .tdpop .tdr .t1 span+span{flex:none;font-weight:500}
 .tdpop .tdr .t2{font-size:13px;color:var(--dim);margin-top:2px}
 .tdpop .tdr i{display:block;height:4px;border-radius:2px;background:var(--pri);margin-top:5px;opacity:.7}
+.wk-sum{font-size:13px;line-height:1.5;color:var(--on2);margin:0 0 10px}
+.wk-sum b{font-weight:500;color:var(--on)}
+.wk-steps{margin:6px 0 0;padding-left:20px}
+.wk-steps li{margin:2px 0}
+.wk-v{display:inline;font-weight:500;color:var(--on)}
+.wk-v.warn{color:var(--warn)}
+.wk-v.bad{color:var(--bad)}
+.wk-n{color:var(--dim)}
+.tdpop .tdr.hi .t1 span+span{color:var(--warn)}
+.tdpop .tdr.wk-apps{cursor:pointer}
+.wk-link{font-size:13px;color:var(--pri);margin-top:3px;font-weight:500}
+[data-style="mono"] .wk-link{color:var(--on);text-decoration:underline;text-underline-offset:3px}
+.tdpop .tdr .t3{font-size:12.5px;line-height:1.45;color:var(--warn);margin-top:3px}
 .summary .lbl{font-size:13px;color:var(--on2);margin-right:2px}
 .iconbtn{background:var(--surf2);border:0;color:var(--on);width:44px;height:44px;border-radius:var(--r-btn);display:grid;place-items:center;cursor:pointer;flex:none}
 .iconbtn svg{width:20px;height:20px}
@@ -885,6 +898,14 @@ html[data-style="mono"],html[data-style="mono"] body{
       <div class="item"><div class="row">
         <div class="txt"><div class="ttl">Top battery use</div><div class="desc">Apps, system apps and hardware since the last charge</div></div>
         <button class="btn tonal" id="td-run">Show usage</button>
+      </div></div>
+      <div class="item"><div class="row">
+        <div class="txt"><div class="ttl">Wake sources</div><div class="desc">Kernel sources that keep the CPU awake or cut its sleep short</div></div>
+        <button class="btn tonal" id="wk-run">Show sources</button>
+      </div></div>
+      <div class="item"><div class="row">
+        <div class="txt"><div class="ttl">CPU use now</div><div class="desc">Which processes use the CPU over the next few seconds</div></div>
+        <button class="btn tonal" id="cn-run">Measure</button>
       </div></div>
     </div>
 
@@ -3190,6 +3211,295 @@ html[data-style="mono"],html[data-style="mono"] body{
   $('td-run').onclick = function () {
     if (!HAS_KSU) return;
     runTop();
+  };
+
+  /* wake sources (kernel wakeup statistics, read only; "Mark start" remembers the counters) */
+  var wk = { rows: [], base: 'boot', age: 0, awake: -1, filter: 'time' };
+  var NB = ' ';
+  // kernel names -> what they are, most specific first; anything else is "Other (kernel)"
+  var WK_GROUPS = [
+    [/^PowerManagerService\.WakeLocks$/, 'Apps and Android', 'An app or Android itself held a wake lock. Top battery use shows which app.'],
+    [/^PowerManager(Service)?\.(Display|SuspendLockout)/i, 'Screen', ''],
+    [/fingerprint|goodix_fp|fpc|_fp_/i, 'Fingerprint', ''],
+    [/qcom_rx_wakelock|ipa|rmnet|qmi|mhi|modem|smp2p|glink|ssr|diag|qrtr|cnss_ipa/i, 'Mobile data and modem', 'Often a weak signal or apps syncing over mobile data. Wi-Fi or a better signal helps.'],
+    [/radio|^ril|_ril|telephony|^ims|_ims/i, 'Mobile network', 'The phone keeps talking to the network. A weak or changing signal (4G/5G) makes this go up.'],
+    [/wlan|wifi|cnss|wcnss|wpa/i, 'Wi-Fi', 'Apps are using Wi-Fi in the background. Top battery use shows which app.'],
+    [/xhci|dwc3|ehci|usb|typec|ucsi|pd_|_pd\b/i, 'USB and cable', 'Normal while a cable or USB device is plugged in.'],
+    [/bluetooth|^bt[_-]|[_-]bt([_-]|$)|^bt$|btpower|bluedroid|^hci[0-9_]|[_-]hci([0-9_-]|$)/i, 'Bluetooth', 'A connected Bluetooth device (watch, earbuds) keeps sending data.'],
+    [/vib|haptic/i, 'Vibration', ''],
+    [/alarm/i, 'Alarms and timers', 'Apps wake the phone on a timer. Restrict other user apps can calm this down.'],
+    [/timerfd/i, 'App timers', 'Apps wake the phone on a timer. Restrict other user apps can calm this down.'],
+    [/batt|charg|chg|bms|fg_|_fg|fuel|power_supply|^qg|_qg|smb[0-9]/i, 'Battery and charging', 'Normal while charging or when a cable is plugged in.'],
+    [/gps|gnss|location|^loc_|_loc_/i, 'Location', 'An app asks for your location. Check the location permission of your apps.'],
+    [/sensor|ssc|sns|sensors/i, 'Sensors', ''],
+    [/audio|snd|spk|wsa|aud|codec/i, 'Audio', ''],
+    [/nfc/i, 'NFC', ''],
+    [/cam/i, 'Camera', ''],
+    [/touch|tp_|fts|goodix|input|gpio_key|pwrkey|keys/i, 'Touch and buttons', ''],
+    [/eventpoll/i, 'System events', '']
+  ];
+  function wkGroup(n) {
+    for (var i = 0; i < WK_GROUPS.length; i++) if (WK_GROUPS[i][0].test(n)) return WK_GROUPS[i];
+    return [null, 'Other (kernel)', ''];
+  }
+  function fmtMs(v) {
+    v = +v;
+    if (v >= 3600000) return Math.floor(v / 3600000) + NB + 'h ' + Math.round(v % 3600000 / 60000) + NB + 'min';
+    if (v >= 60000) return Math.round(v / 60000) + NB + 'min';
+    if (v >= 1000) return (v / 1000).toFixed(1) + NB + 's';
+    return Math.round(v) + NB + 'ms';
+  }
+  function fmtAge(s) {
+    s = +s;
+    return s >= 3600 ? Math.floor(s / 3600) + NB + 'h ' + Math.round(s % 3600 / 60) + NB + 'min' : s >= 60 ? Math.round(s / 60) + NB + 'min' : s + NB + 's';
+  }
+  // one line on top: how much of the time the phone was awake (only after Mark start, where the screen was meant to be off)
+  function wkSummary() {
+    if (wk.base !== 'mark') {
+      return '<div class="wk-sum"><b>Totals since the phone started</b> (up ' + esc(fmtAge(wk.age)) + '), screen-on time included. For a fair reading:' +
+        '<ol class="wk-steps"><li>Press <b>Mark start</b></li><li>Lock the phone for 30 minutes</li><li>Open this again</li></ol></div>';
+    }
+    var h = '<div class="wk-sum">Counted since you pressed Mark start, ' + esc(fmtAge(wk.age)) + ' ago.';
+    if (wk.awake >= 0 && wk.age >= 60) {
+      var pct = Math.min(100, wk.awake / 10 / wk.age), cls = pct > 25 ? 'bad' : pct > 10 ? 'warn' : 'ok';
+      var verdict = pct > 25 ? 'That is high.' : pct > 10 ? 'That is a bit high.' : 'That is normal.';
+      h += ' <span class="wk-v ' + cls + '">The phone was awake ' + (pct >= 10 ? Math.round(pct) : pct.toFixed(1)) + '% of the time. ' + verdict + '</span>' +
+        ' <span class="wk-n">(If the screen was on in between, a high number is expected.)</span>';
+    }
+    return h + '</div>';
+  }
+  function wkShow() {
+    var byTime = wk.filter === 'time', rows = wk.rows.slice().sort(function (a, b) {
+      return byTime ? b.ms - a.ms : b.wake - a.wake;
+    }).filter(function (r) { return byTime ? r.ms > 0 : r.wake > 0; }).slice(0, 25);
+    var max = rows.length ? (byTime ? rows[0].ms : rows[0].wake) : 1;
+    var h = '<div class="tdf">' + [['time', 'Awake time'], ['wake', 'Wake-ups']].map(function (x) {
+      return '<button data-f="' + x[0] + '"' + (x[0] === wk.filter ? ' class="on"' : '') + '>' + x[1] + '</button>';
+    }).join('') + '</div>' + wkSummary();
+    var tipped = {};
+    h += rows.length ? rows.map(function (r, i) {
+      var g = wkGroup(r.name), val = byTime ? fmtMs(r.ms) : r.wake + (r.wake === 1 ? ' wake-up' : ' wake-ups');
+      // high: kept the phone awake for 10% or more of the counted time (only after Mark start)
+      var hi = wk.base === 'mark' && wk.age >= 60 && r.ms >= wk.age * 100;
+      var sub = byTime ? r.wake + (r.wake === 1 ? ' wake-up' : ' wake-ups') + (r.prev > 0 ? ', blocked sleep ' + fmtMs(r.prev) : '')
+        : 'Awake ' + fmtMs(r.ms);
+      var tip = hi && g[2] && !tipped[g[1]] ? (tipped[g[1]] = 1, g[2]) : '';
+      var apps = r.name === 'PowerManagerService.WakeLocks';
+      return '<div class="tdr' + (hi ? ' hi' : '') + (apps ? ' wk-apps" data-apps="1" role="button" tabindex="0' : '') + '"><div class="t1"><span>' + (i + 1) + '. ' + esc(g[1]) + '</span><span>' + esc(val) + '</span></div>' +
+        '<div class="t2">' + esc(r.name) + ' &middot; ' + esc(sub) + '</div>' +
+        (apps ? '<div class="wk-link">Show which apps &rsaquo;</div>' : '') +
+        (tip ? '<div class="t3">' + esc(tip) + '</div>' : '') +
+        '<i style="width:' + Math.max(2, Math.round((byTime ? r.ms : r.wake) / max * 100)) + '%"></i></div>';
+    }).join('') : '<div class="hint">Nothing counted' + (wk.base === 'mark' ? ' since the mark.' : ' yet.') + '</div>';
+    h += '<div class="hint">Awake time: how long a source kept the CPU from sleeping. Wake-ups: how often it stopped or ended deep sleep. ' +
+      'The small grey text is the kernel name.</div>';
+    return h;
+  }
+  function runWake() {
+    $('wk-run').disabled = true;
+    $('wk-run').textContent = 'Reading…';
+    exec('sh /data/adb/modules/' + MODID + '/common/wakeups.sh').then(function (r) {
+      if (r.errno) throw new Error((r.stderr || '').trim() || 'The command did not answer.');
+      var kv = {}, rows = [];
+      r.stdout.split('\n').forEach(function (l) {
+        l = l.replace(/\r$/, '');
+        if (l.indexOf('W|') === 0) {
+          var p = l.split('|');
+          rows.push({ name: p[1], ms: +p[2] || 0, act: +p[3] || 0, wake: +p[4] || 0, prev: +p[5] || 0 });
+        } else { var m = /^([a-z]+)=(.*)$/.exec(l); if (m) kv[m[1]] = m[2]; }
+      });
+      if (kv.src !== 'wakeup') {
+        modal('Wake sources', '<div class="bcpop"><div class="hint" style="font-size:14px">This kernel does not list wakeup sources (no /sys/class/wakeup).</div></div>',
+          [{ label: 'Close', primary: true }]);
+        return;
+      }
+      wk.rows = rows; wk.base = kv.base === 'mark' ? 'mark' : 'boot'; wk.age = +kv.age || 0; wk.filter = 'time';
+      wk.awake = /^[0-9]+$/.test(kv.awake || '') ? +kv.awake : -1;
+      modal('Wake sources', '<div class="bcpop tdpop" id="wk-body">' + wkShow() + '</div>', [
+        { label: 'Close' },
+        { label: wk.base === 'mark' ? 'Start over' : 'Mark start', fn: function () {
+          // reading the app stats takes a few seconds: show it on the button and block a second tap
+          $('wk-run').disabled = true;
+          $('wk-run').textContent = 'Marking…';
+          snack('Marking the start, this takes a few seconds…');
+          exec('sh /data/adb/modules/' + MODID + '/common/wakeups.sh mark').then(function (m) {
+            if (m.errno) throw new Error('mark');
+            snack('Counting from now'); runWake();
+          })
+            .catch(function () {
+              snack('Couldn\'t save the mark. Check free space, then try again.');
+              $('wk-run').disabled = false;
+              $('wk-run').textContent = 'Show sources';
+            });
+        } },
+        { label: 'Refresh', primary: true, fn: runWake }
+      ]);
+      $('wk-body').onkeydown = function (e) {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('[data-apps]')) { e.preventDefault(); runWakeApps(); }
+      };
+      $('wk-body').onclick = function (e) {
+        if (e.target.closest && e.target.closest('[data-apps]')) { runWakeApps(); return; }
+        var b = e.target.closest ? e.target.closest('button[data-f]') : null;
+        if (!b) return;
+        wk.filter = b.getAttribute('data-f');
+        $('wk-body').innerHTML = wkShow();
+      };
+    }).catch(function (e) {
+      modal('Wake sources unavailable', '<p>Couldn\'t read the wakeup statistics. ' + esc(e && e.message ? e.message : 'The command did not answer.') +
+        '</p><p>Check that HyperCool is installed and the KernelSU manager is working, then try again.</p>',
+        [{ label: 'Close' }, { label: 'Try again', primary: true, fn: runWake }]);
+    }).then(function () {
+      $('wk-run').disabled = false;
+      $('wk-run').textContent = 'Show sources';
+    });
+  }
+  /* what "Apps and Android" is made of: partial wake locks per app from Android's battery stats */
+  var UID_NAMES = { 0: 'Kernel and root', 1000: 'Android system', 1001: 'Phone and mobile network', 1002: 'Bluetooth', 1010: 'Wi-Fi',
+    1013: 'Media', 1041: 'Audio', 1047: 'Camera', 1021: 'Location (GPS)', 1027: 'NFC', 1073: 'Network stack' };
+  function wlTag(t) {
+    var m;
+    // "*job*/", and since Android 14 "*job*r/" (regular), "*job*e/" (expedited), "*job*u/" (user-initiated)
+    if ((m = /^\*job\*[a-z]?\/[^\/]+\/(.+)$/.exec(t))) return 'Background job ' + m[1].replace(/^.*\./, '');
+    if (/^\*sync\*/.test(t)) return 'Account sync';
+    if (/^\*alarm\*/.test(t)) return 'Alarms';
+    if (/^\*launch\*/.test(t)) return 'App start';
+    if (/^\*gms_scheduler\*|GCM|fcm|Gcm/.test(t)) return 'Push messages';
+    if (/^Nlp|NetworkLocation|UlrDispatcher/i.test(t)) return 'Network location';
+    if (/^RILJ|RIL_|Telephony/.test(t)) return 'Mobile network';
+    if (/AudioMix|AudioIn|AudioDup/.test(t)) return 'Playing or recording audio';
+    if (/WifiSuspend|WifiStateMachine|wifi/i.test(t)) return 'Wi-Fi';
+    return t.length > 40 ? t.slice(0, 38) + '\u2026' : t;
+  }
+  function wlApp(uid, pkg) {
+    if (UID_NAMES.hasOwnProperty(uid)) return UID_NAMES[uid];
+    if (pkg && pkg !== '-') { var n = cpuName(pkg, uid)[0]; return /^App: /.test(n) ? pkg : n; }
+    return 'uid ' + uid;
+  }
+  function runWakeApps() {
+    exec('sh /data/adb/modules/' + MODID + '/common/wakeups.sh apps').then(function (r) {
+      if (r.errno) throw new Error((r.stderr || '').trim() || 'The command did not answer.');
+      var kv = {}, by = {};
+      r.stdout.split('\n').forEach(function (l) {
+        l = l.replace(/\r$/, '');
+        if (l.indexOf('A|') === 0) {
+          var p = l.split('|'), uid = p[1], ms = +p[p.length - 2] || 0, n = +p[p.length - 1] || 0, tag = p.slice(3, p.length - 2).join('|');
+          var a = by[uid] = by[uid] || { uid: uid, pkg: p[2], ms: 0, n: 0, tags: [] };
+          a.ms += ms; a.n += n; a.tags.push({ t: tag, ms: ms, n: n });
+        } else { var m = /^([a-z]+)=(.*)$/.exec(l); if (m) kv[m[1]] = m[2]; }
+      });
+      if (kv.src !== 'bstats') {
+        modal('Apps holding wake locks', '<div class="bcpop"><div class="hint" style="font-size:14px">Android\'s battery stats did not answer, so the apps behind this cannot be listed.</div></div>',
+          [{ label: 'Back', fn: runWake }, { label: 'Close', primary: true }]);
+        return;
+      }
+      var list = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.ms - a.ms; }).slice(0, 20);
+      var max = list.length ? list[0].ms : 1;
+      var head = kv.base === 'mark' ? 'Since you pressed Mark start, ' + fmtAge(kv.age) + ' ago.'
+        : kv.reset === '1' ? 'Android reset its battery stats after a full charge since your mark, so this counts from that reset.'
+        : 'Since the last full charge (Android battery stats). For a fair reading press Mark start first.';
+      var h = '<div class="bcpop tdpop"><div class="wk-sum">' + esc(head) + '</div>' +
+        (list.length ? list.map(function (a, i) {
+          var tags = a.tags.sort(function (x, y) { return y.ms - x.ms; }).slice(0, 3).map(function (t) {
+            return esc(wlTag(t.t)) + ' ' + fmtMs(t.ms);
+          }).join(', ');
+          var who = wlApp(a.uid, a.pkg), sub = (a.pkg !== '-' && who !== a.pkg ? esc(a.pkg) + ' &middot; ' : '') + a.n + (a.n === 1 ? ' time' : ' times');
+          return '<div class="tdr"><div class="t1"><span>' + (i + 1) + '. ' + esc(who) + '</span><span>' + fmtMs(a.ms) + '</span></div>' +
+            '<div class="t2">' + sub + '</div><div class="t2">' + tags + '</div>' +
+            '<i style="width:' + Math.max(2, Math.round(a.ms / max * 100)) + '%"></i></div>';
+        }).join('') : '<div class="hint">No app held a wake lock' + (kv.base === 'mark' ? ' since the mark.' : ' yet.') + '</div>') +
+        '<div class="hint">Time an app kept the CPU awake with a wake lock, screen-on time included. When several apps hold one at once, Android splits the time between them.</div></div>';
+      modal('Apps holding wake locks', h, [{ label: 'Back', fn: runWake }, { label: 'Close', primary: true }]);
+    }).catch(function (e) {
+      modal('Apps unavailable', '<p>Couldn\'t read the battery stats. ' + esc(e && e.message ? e.message : 'The command did not answer.') + '</p>',
+        [{ label: 'Back', fn: runWake }, { label: 'Close', primary: true }]);
+    });
+  }
+  $('wk-run').onclick = function () {
+    if (!HAS_KSU) return;
+    runWake();
+  };
+
+  /* CPU use now (two samples of /proc/<pid>/stat a few seconds apart, read only) */
+  // process names -> what they are; app packages keep their package name
+  var CPU_NAMES = [
+    [/^system_server$/, 'Android system'],
+    [/surfaceflinger$/, 'Screen drawing'],
+    [/^com\.android\.systemui$/, 'Status bar and notifications'],
+    [/^com\.(miui\.home|mi\.android\.globallauncher|android\.launcher3?)$/, 'Home screen'],
+    [/^com\.google\.android\.gms(\.persistent|\.unstable|:.*)?$/, 'Google Play services'],
+    [/^com\.android\.vending/, 'Play Store'],
+    [/^com\.android\.phone$/, 'Phone and mobile network'],
+    [/webview.*sandboxed_process|sandboxed_process.*webview/i, 'Web pages inside apps'],
+    [/^(media\.codec|media\.swcodec|mediaserver|media\.extractor)/, 'Video and media'],
+    [/^(audioserver|android\.hardware\.audio)/, 'Audio'],
+    [/^cameraserver|android\.hardware\.camera/, 'Camera'],
+    [/^(kswapd|kcompactd)/, 'Memory cleanup (kernel)'],
+    [/^lmkd$/, 'Memory manager'],
+    [/^(irq\/|ksoftirqd)/, 'Hardware interrupts (kernel)'],
+    [/^(kworker|rcu|migration|cpuhp|watchdog|kthreadd|ksmd|writeback|jbd2|f2fs|dm[-_]|loop|mmc|scsi|ufs|binder|crtc|kgsl|mdss|msm|qcom|sugov|walt|cfinteractive)/i, 'Kernel work'],
+    [/^logd$/, 'System log'],
+    [/^init$/, 'Android init'],
+    [/^(android\.hardware|vendor\.)/, 'Hardware service'],
+    [/thermal|thermald|mi_thermald/i, 'Thermal control'],
+    [/^\/?(system|vendor|apex)\//, null]
+  ];
+  // the root manager (and its web view) runs this window: left out of the list
+  var CPU_SELF = /kernelsu|ksunext|resukisu|sukisu|apatch|magisk/i;
+  function cpuName(name, uid) {
+    var base = name.replace(/^.*\//, '');
+    for (var i = 0; i < CPU_NAMES.length; i++) {
+      if (CPU_NAMES[i][0].test(name) || CPU_NAMES[i][0].test(base)) return CPU_NAMES[i][1] ? [CPU_NAMES[i][1], name] : [base, name];
+    }
+    if (+uid >= 10000 && /\./.test(name)) return ['App: ' + name.replace(/:.*$/, ''), name];
+    return [base, name];
+  }
+  function runCpuNow() {
+    $('cn-run').disabled = true;
+    $('cn-run').textContent = 'Measuring…';
+    exec('sh /data/adb/modules/' + MODID + '/common/cpunow.sh 3').then(function (r) {
+      if (r.errno) throw new Error((r.stderr || '').trim() || 'The command did not answer.');
+      var kv = {}, rows = [];
+      r.stdout.split('\n').forEach(function (l) {
+        l = l.replace(/\r$/, '');
+        if (l.indexOf('R|') === 0) {
+          var p = l.split('|');
+          rows.push({ pct: +p[1] || 0, pid: p[2], uid: p[3], name: p.slice(4).join('|') });
+        } else { var m = /^([a-z]+)=(.*)$/.exec(l); if (m) kv[m[1]] = m[2]; }
+      });
+      rows = rows.filter(function (x) { return !CPU_SELF.test(x.name); });
+      // percent of the whole CPU (all cores together = 100%)
+      var nc = Math.max(1, +kv.ncpu || 8);
+      rows.forEach(function (x) { x.tot = x.pct / nc; });
+      var sum = rows.reduce(function (a, x) { return a + x.tot; }, 0), top = rows[0];
+      var cls = sum > 30 ? 'bad' : sum > 10 ? 'warn' : 'ok', sumTxt;
+      if (!rows.length || sum < 10) sumTxt = 'The phone is quiet: ' + (sum < 1 ? 'under 1' : Math.round(sum)) + '% of the CPU is in use.';
+      else sumTxt = (sum > 30 ? 'The phone is busy: ' : 'The phone is a bit busy: ') + Math.round(sum) + '% of the CPU is in use' +
+        (top && top.tot >= 5 ? ', most of it by ' + cpuName(top.name, top.uid)[0] + '.' : '.');
+      var max = rows.length ? rows[0].tot : 1;
+      var fmt = function (v) { return v >= 10 ? Math.round(v) + '%' : v >= 0.1 ? v.toFixed(1) + '%' : '<0.1%'; };
+      var h = '<div class="bcpop tdpop"><div class="wk-sum"><span class="wk-v ' + cls + '">' + esc(sumTxt) + '</span>' +
+        ' <span class="wk-n">Measured for ' + esc(kv.win || '3') + NB + 's. 100% means all ' + nc + ' cores fully busy.</span></div>' +
+        (rows.length ? rows.map(function (x, i) {
+          var nm = cpuName(x.name, x.uid), u = +x.uid, kind = x.uid === '-' ? 'Process' : u >= 10000 ? 'App' : 'System';
+          var core = x.pct >= 95 ? 'about ' + Math.round(x.pct / 100) + (Math.round(x.pct / 100) === 1 ? ' full core' : ' full cores') : Math.round(x.pct) + '% of one core';
+          return '<div class="tdr' + (x.tot >= 10 ? ' hi' : '') + '"><div class="t1"><span>' + (i + 1) + '. ' + esc(nm[0]) + '</span><span>' + fmt(x.tot) + '</span></div>' +
+            '<div class="t2">' + (nm[1] !== nm[0] ? esc(nm[1].length > 48 ? nm[1].slice(0, 46) + '\u2026' : nm[1]) + ' &middot; ' : '') + kind + ', ' + esc(core) + ', pid ' + esc(x.pid) + '</div>' +
+            '<i style="width:' + Math.max(2, Math.round(x.tot / max * 100)) + '%"></i></div>';
+        }).join('') : '<div class="hint">Nothing else used the CPU in this time.</div>') +
+        '<div class="hint">This measurement and the root manager window are left out. Nothing is changed.</div></div>';
+      modal('CPU use now', h, [{ label: 'Close' }, { label: 'Measure again', primary: true, fn: runCpuNow }]);
+    }).catch(function (e) {
+      modal('CPU use unavailable', '<p>Couldn\'t measure the CPU use. ' + esc(e && e.message ? e.message : 'The command did not answer.') +
+        '</p><p>Check that HyperCool is installed and the KernelSU manager is working, then try again.</p>',
+        [{ label: 'Close' }, { label: 'Try again', primary: true, fn: runCpuNow }]);
+    }).then(function () {
+      $('cn-run').disabled = false;
+      $('cn-run').textContent = 'Measure';
+    });
+  }
+  $('cn-run').onclick = function () {
+    if (!HAS_KSU) return;
+    runCpuNow();
   };
 
   /* charge calibration */
