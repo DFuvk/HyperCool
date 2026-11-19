@@ -1507,7 +1507,11 @@ f_stats_reduce() {
   set_s stats_reduce global looper_stats "enabled=false"
   set_d stats_reduce interaction_jank_monitor enabled false
   set_d stats_reduce activity_manager disable_app_profiler_pss_profiling true
-  fin stats_reduce "less stats collection, jank monitor & PSS profiling off"
+  # activity / foreground-service start logs and the disk stats job
+  for _k in activity_starts_logging_enabled foreground_service_starts_logging_enabled enable_diskstats_logging; do
+    set_s stats_reduce global "$_k" 0
+  done
+  fin stats_reduce "less stats collection, jank monitor & PSS profiling off, app start and disk stats logging off"
 }
 
 f_tracking_off() {
