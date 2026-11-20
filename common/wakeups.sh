@@ -6,6 +6,10 @@
 #   wakeups.sh mark    remember the counters now (a reboot drops the mark)
 #   wakeups.sh clear   forget the mark
 #   wakeups.sh apps    which apps held Android wake locks (what "PowerManagerService.WakeLocks" is made of)
+#   wakeups.sh offmark       app wake locks now, for the screen-off keeper (own file: Mark start is not touched)
+#   wakeups.sh offtop <ms> <s>  user apps with at least <ms> of wake locks since offmark, most first (at most 3):
+#                            T|<uid>|<package or ->|<ms>|<tag that held the most>; C|charger when the charger was
+#                            in for part of the <s> seconds; nothing when the stats were reset in between
 # Reads the kernel's wakeup statistics: /sys/class/wakeup/wakeup*/{name,active_count,wakeup_count,total_time_ms,prevent_suspend_time_ms}
 # (total_time_ms is the awake time since boot; active_time_ms would only be the activation running right now)
 # Sources with the same name are added up. Nothing in the system is changed; only the mark file is written.
@@ -31,22 +35,97 @@ trap 'exit 1' INT TERM HUP PIPE
 
 [ "$1" = clear ] && { rm -f "$BASE" "$APPS"; exit 0; }
 
-# partial wake locks per app since the last full charge, from the checkin format of battery stats.
-# "-c" only prints that format; "--checkin" would be a real checkin and delete the file Google's checkin service reads.
-# Lines: P|uid|package   L|uid|tag|ms|times   BT|<ms on battery since the stats were last reset>
+# partial wake locks per app since the last full charge, from the text dump of battery stats.
+# "--charged" prints only the since-charge section, without the battery history ("-c" adds the whole
+# history, megabytes late in the day; "--checkin" would be a real checkin and delete the file Google's
+# checkin service reads). Uid sections: "  u0a123:" then "    Wake lock <tag>: 1m 2s 3ms partial (4 times) ...".
+# Lines: L|uid|tag|ms|times   BT|<ms on battery since the stats were last reset>
 TMO=""; command -v timeout >/dev/null 2>&1 && TMO="timeout 40"
+# A dump that failed or was cut by the timeout gives nothing (a part of it would be a wrong mark).
 apps_now() {
-  { $TMO dumpsys batterystats -c; } 2>/dev/null | tr -d '\r' | awk -F, '
-    $3 == "i" && $4 == "uid" { if (!($5 in P)) P[$5] = $6; next }
-    $3 == "l" && $4 == "bt" { print "BT|" $6; next }
-    $3 == "l" && $4 == "wl" {
-      ms = ""; c = 0
-      for (i = 6; i < NF; i++) if ($i == "p") { ms = $(i - 1); c = $(i + 1); break }
-      if (ms + 0 > 0) { n = $5; gsub(/\|/, "/", n); print "L|" $2 "|" n "|" ms "|" c }
-      next
+  { $TMO dumpsys batterystats --charged > "$W/bs"; } 2>/dev/null || { rm -f "$W/bs"; return 1; }
+  tr -d '\r' < "$W/bs" | awk '
+    # "1d 2h 3m 4s 5ms" -> ms
+    function tms(s,   n, i, v, u, t) {
+      t = 0; n = split(s, q, " ")
+      for (i = 1; i <= n; i++) { v = q[i] + 0; u = q[i]; sub(/^[0-9]+/, "", u)
+        if (u == "d") t += v * 86400000; else if (u == "h") t += v * 3600000; else if (u == "m") t += v * 60000
+        else if (u == "s") t += v * 1000; else if (u == "ms") t += v }
+      return t
     }
-    END { for (u in P) print "P|" u "|" P[u] }'
+    # UserHandle.formatUid: 1000, u0a123 (app), u10s1000 (system uid of user 10), u0i5 / u0ai5 (isolated)
+    function touid(x,   us, k, n) {
+      if (x ~ /^[0-9]+$/) return x
+      us = x; sub(/^u/, "", us); k = us; sub(/^[0-9]+/, "", k); us = substr(us, 1, length(us) - length(k))
+      n = k; sub(/^[a-z]+/, "", n); k = substr(k, 1, length(k) - length(n))
+      if (k == "a") return us * 100000 + 10000 + n
+      if (k == "s") return us * 100000 + n
+      if (k == "i") return us * 100000 + 99000 + n
+      if (k == "ai") return us * 100000 + 90000 + n
+      return ""
+    }
+    !bt && /^  Time on battery: / { x = $0; sub(/^  Time on battery: /, "", x); sub(/\(.*/, "", x); printf "BT|%.0f\n", tms(x); bt = 1; next }
+    /^  (u[0-9]+[a-z]+[0-9]+|[0-9]+):$/ { uid = touid(substr($0, 3, length($0) - 3)); next }
+    /^  [^ ]/ { uid = ""; next }
+    uid != "" && /^    Wake lock / {
+      x = substr($0, 15)
+      # the first time field ends the tag; "background partial" is a part of "partial", not counted twice
+      if (!match(x, /: ([0-9]+d )?([0-9]+h )?([0-9]+m )?([0-9]+s )?[0-9]+ms (full|partial|background partial|window|draw) \(/)) next
+      tag = substr(x, 1, RSTART - 1); gsub(/\|/, "/", tag)
+      if (!match(x, /(: |, )([0-9]+d )?([0-9]+h )?([0-9]+m )?([0-9]+s )?[0-9]+ms partial \([0-9]+ times\)/)) next
+      seg = substr(x, RSTART + 2, RLENGTH - 2)
+      c = seg; sub(/^.* partial \(/, "", c); sub(/ times\)$/, "", c)
+      sub(/ partial \(.*$/, "", seg)
+      ms = tms(seg)
+      if (ms > 0) printf "L|%s|%s|%.0f|%d\n", uid, tag, ms, c
+    }'
+  rm -f "$W/bs"
 }
+# package of each app id (uid % 100000), only when something has to be named: P|<app id>|<package>
+pkg_map() {
+  { $TMO cmd package list packages -U; } 2>/dev/null | tr -d '\r' |
+    sed -n 's/^package:\([^ ]*\) uid:\([0-9][0-9]*\).*/\2 \1/p' | awk '{ a = $1 % 100000; if (!(a in P)) { P[a] = $2; print "P|" a "|" $2 } }'
+}
+
+# the screen-off keeper: app wake locks over one screen-off period (needs no kernel wakeup statistics)
+OFF=$D/wk.off
+if [ "$1" = offmark ]; then
+  mkdir -p "$D" 2>/dev/null
+  # written in this run's own folder first: two runs (screen off, on, off again) never share a file
+  if apps_now > "$W/mark" 2>/dev/null && grep -q '^BT|' "$W/mark"; then mv -f "$W/mark" "$OFF"; else rm -f "$OFF"; fi
+  exit 0
+fi
+if [ "$1" = offtop ]; then
+  MIN=${2:-600000}; case "$MIN" in ''|*[!0-9]*) MIN=600000 ;; esac
+  [ -s "$OFF" ] || exit 0
+  mv -f "$OFF" "$W/off" 2>/dev/null || exit 0
+  apps_now > "$W/an" || exit 0
+  # time on battery went back: Android reset its stats (full charge) in between, nothing to compare.
+  # <s> (3rd argument, the length of the screen-off period): time on battery more than 10% short of it
+  # means the charger was in for a while, and wake locks while charging are no drain: C|charger
+  SEC=${3:-0}; case "$SEC" in ''|*[!0-9]*) SEC=0 ;; esac
+  _bv=$(awk -F'|' -v sec="$SEC" 'FILENAME == A { if ($1 == "BT" && b0 == "") b0 = $2; next } $1 == "BT" && b1 == "" { b1 = $2 }
+    END { if (b0 == "" || b1 == "" || b1 + 0 < b0 + 0) print "reset"; else if (sec > 0 && b1 - b0 < sec * 900) print "charger"; else print "ok" }' A="$W/off" "$W/off" "$W/an")
+  case "$_bv" in
+    ok) ;;
+    charger) echo "C|charger"; exit 0 ;;
+    *) exit 0 ;;
+  esac
+  # user apps only (uid 10000-19999 in any user): Android's own uids cannot be restricted
+  # a wake lock cannot have held more than the whole period (+10%): such a value is no real change
+  awk -F'|' -v MIN="$MIN" -v sec="$SEC" '
+    FILENAME == A { if ($1 == "L") o[$2 "|" $3] = $4; next }
+    $1 == "L" { u = $2; a = u % 100000; if (a < 10000 || a > 19999) next
+      d = $4 - o[u "|" $3]; if (d <= 0 || (sec > 0 && d > sec * 1100)) next
+      S[u] += d; if (d > T[u]) { T[u] = d; G[u] = $3 } }
+    END { for (u in S) if (S[u] >= MIN + 0) printf "T|%s|-|%.0f|%s\n", u, S[u], G[u] }' A="$W/off" "$W/off" "$W/an" |
+    sort -t'|' -k4,4nr | head -n 3 > "$W/top"
+  [ -s "$W/top" ] || exit 0
+  # package names only now that there is something to name
+  pkg_map > "$W/pk"
+  awk -F'|' 'FILENAME == K { P[$2] = $3; next } { a = $2 % 100000; $3 = (a in P ? P[a] : "-"); print }' OFS='|' K="$W/pk" "$W/pk" "$W/top"
+  exit 0
+fi
 
 ls -d "$WK"/wakeup[0-9]* >/dev/null 2>&1 || { echo "src=none"; exit 0; }
 
@@ -85,8 +164,7 @@ BID=$( { tr -cd '0-9a-f-' < "${HC_BOOTID:-/proc/sys/kernel/random/boot_id}"; } 2
 if [ "$1" = mark ]; then
   mkdir -p "$D" 2>/dev/null
   # app wake locks too (a second or two); a failed read only leaves the app list without a mark
-  apps_now > "$APPS.tmp" 2>/dev/null
-  if grep -q '^BT|' "$APPS.tmp" 2>/dev/null; then mv "$APPS.tmp" "$APPS"; else rm -f "$APPS.tmp" "$APPS"; fi
+  if apps_now > "$W/mark" 2>/dev/null && grep -q '^BT|' "$W/mark"; then mv -f "$W/mark" "$APPS"; else rm -f "$APPS"; fi
   { echo "#$UP${BID:+ $BID}"; [ -n "$MONO" ] && echo "#mono=$MONO"; cat "$W/cur"; } > "$BASE.tmp" 2>/dev/null && mv "$BASE.tmp" "$BASE" || { rm -f "$BASE.tmp"; exit 1; }
   exit 0
 fi
@@ -107,7 +185,8 @@ fi
 
 if [ "$1" = apps ]; then
   apps_now > "$W/an"
-  grep -q '^BT|' "$W/an" || { echo "src=none"; exit 0; }
+  grep -q '^BT|' "$W/an" 2>/dev/null || { echo "src=none"; exit 0; }
+  pkg_map >> "$W/an"
   BT1=$(sed -n 's/^BT|\([0-9][0-9]*\).*/\1/p' "$W/an" | head -n 1)
   AB=charge; RS=0
   if [ "$B" = mark ] && [ -s "$APPS" ]; then
@@ -131,8 +210,8 @@ if [ "$1" = apps ]; then
     $1 == "L" { k = $2 "|" $3; ms = $4; c = $5
       if (AB == "mark") { ms -= o[k]; c -= oc[k]; if (ms < 0) ms = 0; if (c < 0) c = 0 }
       if (ms > 0) { L[k] = ms; C[k] = c } }
-    END { for (k in L) { split(k, a, "|"); u = a[1]; t = substr(k, length(u) + 2)
-      printf "A|%s|%s|%s|%.0f|%.0f\n", u, (u in P ? P[u] : "-"), t, L[k], C[k] } }' MF="$APPS" "$( [ "$AB" = mark ] && echo "$APPS" || echo /dev/null )" "$W/an" | sort -t'|' -k5,5nr | head -n 200
+    END { for (k in L) { split(k, a, "|"); u = a[1]; t = substr(k, length(u) + 2); ap = u % 100000
+      printf "A|%s|%s|%s|%.0f|%.0f\n", u, ((ap in P) ? P[ap] : "-"), t, L[k], C[k] } }' MF="$APPS" "$( [ "$AB" = mark ] && echo "$APPS" || echo /dev/null )" "$W/an" | sort -t'|' -k5,5nr | head -n 200
   exit 0
 fi
 

@@ -7,8 +7,9 @@
 # and Location / Bluetooth off after a long screen-off (RADIO=1, RBT=1 adds Bluetooth, RMIN minutes: common/radio.sh)
 # and mobile data / NFC off after a screen-off (DATA=1, DMIN minutes, DMOB=1 mobile data, DNFC=1 NFC: common/radio.sh)
 # and automatic app optimization (DXF=1, DXM mode: dex2oat, screen off 10 min, once a week, no force recompile: common/dxauto.sh)
+# and the screen-off drain check (DRA=1: notification on high drain, the app that held wake locks the longest)
 # and F2FS garbage collection (GCF=1: screen off 10 min, once a week, battery under GCT-5 C; GCGB trigger in GB, GCTRIM=1 adds fstrim, GCT stop temperature: common/f2gc.sh)
-PCT=$1 GPU=$2 BST=$3 TCH=$4 CAP=${5:-0} PROF=${6:-1} WIFI=${7:-0} COMPACT=${8:-0} RADIO=${9:-0} RBT=${10:-0} RMIN=${11:-15} GCF=${12:-0} GCGB=${13:-4} GCTRIM=${14:-1} GCT=${15:-45} DXF=${16:-0} DXM=${17:-speed-profile} DATA=${18:-0} DMIN=${19:-10} DMOB=${20:-1} DNFC=${21:-1}
+PCT=$1 GPU=$2 BST=$3 TCH=$4 CAP=${5:-0} PROF=${6:-1} WIFI=${7:-0} COMPACT=${8:-0} RADIO=${9:-0} RBT=${10:-0} RMIN=${11:-15} GCF=${12:-0} GCGB=${13:-4} GCTRIM=${14:-1} GCT=${15:-45} DXF=${16:-0} DXM=${17:-speed-profile} DATA=${18:-0} DMIN=${19:-10} DMOB=${20:-1} DNFC=${21:-1} DRA=${22:-0}
 HC_DATA=/data/adb/hypercool
 MODDIR=/data/adb/modules/hypercool
 PIDF=$HC_DATA/soff_watch.pid
@@ -231,9 +232,12 @@ bat_chg() {
   done
   return 1
 }
-_lv0=""; _chg0=0
+_lv0=""; _chg0=0; _dok=0
 # one line for a screen-off period of 30 min or more without charging: % lost and % per hour
 drain_note() {
+  _dok=0
+  # the drain switch covers the Recent activity line too
+  [ "$DRA" = 1 ] || return 0
   _dl1=$(bat_lv); _dsec=$(( $(date +%s) - _toff ))
   [ -n "$_lv0" ] && [ -n "$_dl1" ] && [ "$_chg0" = 0 ] && [ "$_dsec" -ge "${HC_DRAIN_MIN:-1800}" ] || return 0
   bat_chg && return 0
@@ -248,11 +252,71 @@ drain_note() {
     _dr=$(awk -v s="$_dsec" 'BEGIN { printf "%.2f", 3600 / s }')
     klog drain "Screen-off drain <${_dr}%/h" "${_dh} h screen off: still ${_dl1}% (less than 1% lost)"
   fi
+  _dok=1
+}
+# drain check (DRA=1). Settings are read live: the WebUI saves them without restarting the keeper
+CONF=$HC_DATA/config.conf
+cfgv() { _cv=$(sed -n "s/^$1=//p" "$CONF" 2>/dev/null | tail -n 1 | tr -d '\r'); echo "${_cv:-$2}"; }
+WKS=$MODDIR/common/wakeups.sh
+WKOFF=$HC_DATA/wk.off
+_wj=""
+# app wake locks at screen-off (one battery stats read, in the background); not while charging
+drain_mark() {
+  rm -f "$WKOFF"
+  [ "$DRA" = 1 ] && [ "$_chg0" = 0 ] && [ -f "$WKS" ] && [ "$(cfgv drain_cause 1)" != 0 ] || return 0
+  sh "$WKS" offmark >/dev/null 2>&1 &
+  _wj=$!
+}
+# a read still running when the screen comes back is stopped (its file is dropped with it)
+wk_stop() {
+  [ -n "$_wj" ] && grep -q wakeups.sh "/proc/$_wj/cmdline" 2>/dev/null && kill "$_wj" 2>/dev/null
+  _wj=""
+}
+dnotify() {
+  _dm=$(printf '%s' "$1" | tr -d "'\"\\\\\`$")
+  su -lp 2000 -c "cmd notification post -S bigtext -t 'HyperCool' hc_drain '$_dm'" </dev/null >/dev/null 2>&1 ||
+    cmd notification post -S bigtext -t HyperCool hc_drain "$_dm" </dev/null >/dev/null 2>&1
+}
+# after a period drain_note counted: the user app that held wake locks the longest, and a notification
+# when the drain was high. Under 1%/h nothing more is done (no second battery stats read, no extra line)
+drain_check() {
+  wk_stop
+  _dtop=""; _dtp=""; _dtm=0; _dchg=0
+  if [ "$_dok" = 1 ] && [ "${_dd:-0}" -ge 1 ] && awk -v r="$_dr" 'BEGIN { exit !(r + 0 >= 1) }'; then
+    if [ -s "$WKOFF" ] && [ "$(cfgv drain_cause 1)" != 0 ]; then
+      _dcm=$(cfgv drain_cause_min 10); case "$_dcm" in ''|*[!0-9]*) _dcm=10 ;; esac
+      _dtop=$(sh "$WKS" offtop $((_dcm * 60000)) "${HC_OFFSEC:-$_dsec}" 2>/dev/null)
+      case "$_dtop" in C\|charger*) _dchg=1; _dtop="" ;; esac
+      _dtop=$(echo "$_dtop" | grep '^T|')
+      if [ -n "$_dtop" ]; then
+        _dt1=$(echo "$_dtop" | head -n 1)
+        _dtp=$(echo "$_dt1" | cut -d'|' -f3); [ "$_dtp" = - ] && _dtp="uid $(echo "$_dt1" | cut -d'|' -f2)"
+        _dtm=$(echo "$_dt1" | awk -F'|' '{ printf "%d", ($4 + 30000) / 60000 }')
+        _dto=$(echo "$_dtop" | sed -n '2,3p' | awk -F'|' '{ printf "%s%s %d min", (NR > 1 ? ", " : ""), ($3 == "-" ? "uid " $2 : $3), ($4 + 30000) / 60000 }')
+        klog drain "Kept awake by $_dtp" "$_dtm min of wake locks in ${_dh} h screen off${_dto:+; also $_dto}"
+      fi
+    fi
+  fi
+  rm -f "$WKOFF"
+  # the charger was in for part of the period: no notification
+  [ "$_dchg" = 0 ] || return 0
+  [ "$_dok" = 1 ] && [ "${_dd:-0}" -ge 2 ] && [ "$_dsec" -ge "${HC_ALERT_MIN:-3600}" ] || return 0
+  [ "$(cfgv drain_alert_notify 1)" = 0 ] && return 0
+  # the battery level is whole percent: 2% shown can be just over 1% lost, so the lower end is used
+  awk -v d="$_dd" -v s="$_dsec" -v t="$(cfgv drain_alert_rate 1.5)" 'BEGIN { exit !(t + 0 > 0 && (d - 1) * 3600 / s >= t + 0) }' || return 0
+  _dmsg="Screen-off drain was ${_dr}%/h (${_dd}% in ${_dh} h)."
+  if [ -n "$_dtp" ]; then
+    _dmsg="$_dmsg The app with the most wake lock time: $_dtp ($_dtm min)."
+  else
+    _dmsg="$_dmsg Open HyperCool, Wake sources to see what kept the phone awake."
+  fi
+  dnotify "$_dmsg"
 }
 # a job that already ended may have had its pid reused: only kill a process that is still this keeper's child
 job_kill() { [ -n "$1" ] && grep -q soff_watch "/proc/$1/cmdline" 2>/dev/null && kill "$1" 2>/dev/null; return 0; }
 jobs_stop() {
   job_kill "$_cj"; _cj=""
+  wk_stop
   # the GC job is stopped first, then gc_urgent / wake lock / fstrim are put back
   job_kill "$_gj"; _gj=""
   gcf_restore keeper-stop
@@ -320,6 +384,7 @@ while :; do
     if [ "$_on" = 1 ]; then
       _on=0; _offs=$((_offs + 1)); _toff=$(date +%s)
       _lv0=$(bat_lv); if bat_chg; then _chg0=1; else _chg0=0; fi
+      drain_mark
       [ "$PROF" = 1 ] && { apply_off; _pnext=$(( $(date +%s) + 60 )); }
       [ "$WIFI" = 1 ] && { [ "$(wifi_now)" = on ] && _want=on || _want=off; }
       [ "$COMPACT" = 1 ] && { _csince=$(date +%s); _cdone=0; }
@@ -472,6 +537,8 @@ while :; do
           klog screen-off "Screen on, values put back" "all $_kl back (off for $_km)"
         fi
       fi
+      # after the values are back: reading the battery stats takes a second or two
+      [ "$DRA" = 1 ] && drain_check
     fi
     ev_wait 60 3
   fi

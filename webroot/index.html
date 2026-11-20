@@ -155,6 +155,14 @@ main{max-width:760px;margin:0 auto;padding:6px 16px 0}
 .kp-log li.open .ka{white-space:normal}
 .kp-log .kd{display:none;margin-top:4px;font-size:13px;color:var(--on2);overflow-wrap:anywhere;padding-left:2px}
 .kp-log li.open .kd{display:block}
+.kp-log .kp-app{display:none;margin-top:8px;padding-left:2px}
+.kp-log li.open .kp-app{display:block}
+.kp-log.all .kp-app{display:block}
+.kp-log .kp-app .btn{min-height:0;padding:7px 14px;font-size:13px}
+.kp-log .kx{font-size:13px;color:var(--on2)}
+.wk-blk{margin-top:8px}
+.wk-blk .btn{min-height:0;padding:6px 12px;font-size:13px}
+.wk-blk .kx{font-size:13px;color:var(--on2)}
 .st.partial{background:rgba(var(--c-mod),var(--ta));color:var(--warn)}
 .st.failed{background:rgba(var(--c-exp),var(--ta));color:var(--bad)}
 .st.pending{background:rgba(var(--c-rom),var(--ta));color:var(--info)}
@@ -1214,6 +1222,14 @@ html[data-style="mono"],html[data-style="mono"] body{
       fields: [{ k: 'soff_data_min', label: 'Wait after the screen goes off', def: '5', min: 5, max: 120, unit: 'min' },
                { k: 'soff_data_mobile', label: 'Turn mobile data off', def: '1', bool: true },
                { k: 'soff_data_nfc', label: 'Turn NFC off', def: '1', bool: true }] },
+    { k: 'drain_alert', s: 'kdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
+      t: 'Screen-off drain check',
+      d: 'After the phone was locked for a while, shows how much battery it lost and which app kept it awake.',
+      x: 'Each time the screen was off for 30 minutes or more without the charger, the drain goes to Recent activity. You get a notification only when it was high: off for at least an hour, 2% or more lost and at or above the rate you pick. When the drain was 1%/h or more, the app that kept the phone awake is named as well. It comes from Android battery stats, read when the screen goes off and again when it comes back on, about a second each time. Only user apps are named, because Android itself cannot be restricted, and a period with the charger plugged in part of the time is left out. Tap the line in Recent activity to block that app in the background.',
+      fields: [{ k: 'drain_alert_notify', label: 'Notify me when the drain is high', def: '1', bool: true },
+               { k: 'drain_alert_rate', label: 'High drain starts at', def: '1.5', sel: [['1', '1%/h'], ['1.5', '1.5%/h'], ['2', '2%/h'], ['3', '3%/h']] },
+               { k: 'drain_cause', label: 'Name the app that kept the phone awake', def: '1', bool: true },
+               { k: 'drain_cause_min', label: 'Name it after', def: '10', sel: [['5', '5 min of wake locks'], ['10', '10 min of wake locks'], ['20', '20 min of wake locks'], ['30', '30 min of wake locks']] }] },
     { k: 'cpu_idle', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Allow deep CPU sleep',
       d: 'The lowest CPU sleep states are allowed and never switched off.', x: 'Some ROMs and tuning apps switch off the deepest idle states. With them back on, an idle CPU draws far less power, and speed is not affected.' },
@@ -1512,6 +1528,7 @@ html[data-style="mono"],html[data-style="mono"] body{
  "x_dexopt_auto": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/dxauto.sh, runs common/dexopt.sh run <mode> 1 0, mode from x_dexopt_mode: 1 speed-profile, 2 speed, 3 everything (the same script as the Optimize apps card; force recompile is never used)|start: screen off 10 min, last finished run of all apps at least 7 days ago (a run started by hand from the card counts too), at most one try per 20 h, no other optimization running, no F2FS GC running, battery temp under 40 C, and charging or at least 40% battery; battery low or too warm: looked at again every 5 min for 1 h, once per screen-off period|run: cmd package compile -m speed-profile <package> for every enabled app (system apps included), a wake lock hypercool_dexopt that also expires after 3 h; stops (the apps now compiling finish, no new ones start) when the screen turns on, at 45 C, under 15% battery (not charging) or under 1 GB free storage|x_dexopt_notify: after each run a notification (cmd notification post as the shell user, tag hc_dex) with the number of apps and the time, also when it was stopped|a run started by hand from the card is never stopped by the keeper; state of the last run in dexopt/state, last / try / runs in dexopt_auto.meta; stopped when the keeper stops and on uninstall; compiled apps stay compiled",
  "soff_radio": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/radio.sh|screen off for N min (soff_radio_min, 5-120; counted from the screen-off event, can fire late in deep sleep): Location: cmd location set-location-enabled false (fallback settings put secure location_mode 0), read back with cmd location is-location-enabled / settings get secure location_mode|Bluetooth (only with the Bluetooth option, and only when it is on): cmd bluetooth_manager disable (fallback svc bluetooth disable), skipped while dumpsys audio shows a started player, while dumpsys bluetooth_manager shows an active A2dp/Headset device, or when that dump is not in the expected format|what was switched off is written to soff_radio.save; screen on: location set-location-enabled true (fallback the old location_mode, 3 if unknown), cmd bluetooth_manager enable (fallback svc bluetooth enable, not in airplane mode); leftovers are put back at the next boot, when the keeper stops and on uninstall|a switch that is still on after the command is retried every 5 min, up to 12 times per screen-off period; nothing is polled",
  "soff_data": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/radio.sh|screen off for N min (soff_data_min, 5-120; counted from the screen-off event, can fire late in deep sleep)|mobile data (soff_data_mobile): svc data disable (fallback cmd phone data disable), read back from settings global mobile_data<default data subId> / mobile_data; not done in airplane mode, and held off while dumpsys telephony.registry shows a call (or no readable call state), while dumpsys audio shows a started player, or while tethering is on (dumpsys tethering TetheredState, or an ap/swlan/rndis/ncm/bt-pan interface up): looked at again every 5 min, at most 24 times per screen-off|NFC (soff_data_nfc): svc nfc disable (fallback cmd nfc disable-nfc), read back from dumpsys nfc mState|what was switched off is written to soff_data.save; screen on: svc data enable / svc nfc enable; leftovers are put back at the next boot, when the module is disabled, uninstalled or the keeper stops",
+ "drain_alert": "keeper common/soff_watch.sh (shared with the screen-off profile)|screen-off periods of 30 min or more that started without the charger: battery level at screen-off and screen-on, drain line in keeper.log|notification (cmd notification, tag hc_drain) when off 1 h or more, 2% or more lost and (lost - 1)% per hour is at or above drain_alert_rate (whole-percent levels: the lower end)|drain_cause: common/wakeups.sh offmark at screen-off (dumpsys batterystats --charged, text without the battery history, in the background, file wk.off) and offtop at screen-on only when the drain was 1%/h or more: partial wake lock time per user app (uid 10000-19999) in that period, the top app from drain_cause_min minutes, package from cmd package list packages -U; skipped when the stats were reset in between or the time on battery is more than 10% short of the period (charger in)|settings read live from config.conf, no restart needed",
  "ufs_pm": "*.ufshc (Qualcomm) or *.ufshci (MediaTek): clkgate_enable, clkscale_enable, hibern8_on_idle_enable = 1",
  "vm_tune": "vm.dirty_writeback_centisecs, vm.dirty_expire_centisecs|vm.dirty_background_ratio, vm.dirty_ratio|vm.stat_interval|(each 0 = untouched)",
  "io_tune": "/sys/block/{sd*,mmcblk*,dm-*}/queue/iostats = 0, add_random = 0",
@@ -1846,7 +1863,7 @@ html[data-style="mono"],html[data-style="mono"] body{
   }
   var F_ICON = {
     cpu_cap: 'cpu', prime_park: 'park', gpu_cap: 'gpu', gpu_idle: 'power', walt_tune: 'gauge', input_boost_off: 'touch',
-    bg_cpuset: 'layers', blur_off: 'blur', charge_cool: 'bolt', charge_limit: 'batt80', cpu_idle: 'moon', soff_prof: 'moon', wifi_keep: 'signal', soff_radio: 'bed', soff_data: 'dataoff', f2fs_gc: 'disk', x_dexopt_auto: 'disk', ufs_pm: 'disk',
+    bg_cpuset: 'layers', blur_off: 'blur', charge_cool: 'bolt', charge_limit: 'batt80', cpu_idle: 'moon', soff_prof: 'moon', wifi_keep: 'signal', soff_radio: 'bed', soff_data: 'dataoff', drain_alert: 'bell', f2fs_gc: 'disk', x_dexopt_auto: 'disk', ufs_pm: 'disk',
     vm_tune: 'mem', io_tune: 'pulse', debug_off: 'bug', debug_props: 'term', wakelock_block: 'lock', protect_apps: 'shield',
     app_bucket: 'apps', bg_block: 'ban', app_disable: 'warn', app_freezer: 'snow', doze_aggr: 'bed', devcfg_lock: 'sync', gms_doze: 'gms', scan_off: 'wifioff', loc_throttle: 'pulse',
     net_save: 'signal', standby: 'hour', stats_reduce: 'chart', tracking_off: 'eyeoff', debloat: 'trash', joyose_off: 'game', heat_guard: 'warn',
@@ -2547,7 +2564,7 @@ html[data-style="mono"],html[data-style="mono"] body{
   var ORDER = [
     ['Heat control (kernel)', ['cpu_cap', 'cpu_cap_lock', 'cpu_cap_little', 'cpu_cap_little_lock', 'prime_park', 'gpu_cap', 'gpu_cap_lock', 'gpu_idle', 'gpu_idle_timer', 'gpu_throttle', 'walt_tune', 'walt_hispeed_load',
       'walt_up_rate', 'walt_sched_boost_off', 'walt_task_util', 'input_boost_off', 'bg_cpuset', 'bg_uclamp', 'bg_daemons', 'blur_off', 'heat_guard', 'heat_guard_temp', 'heat_guard_cpu', 'heat_guard_rr', 'charge_cool', 'charge_cool_level', 'charge_limit']],
-    ['Battery drain (kernel)', ['soff_prof', 'soff_cpu', 'soff_gpu', 'soff_boost', 'wifi_keep', 'soff_radio', 'soff_radio_min', 'soff_radio_bt', 'soff_data', 'soff_data_min', 'soff_data_mobile', 'soff_data_nfc', 'cpu_idle', 'ufs_pm', 'vm_tune', 'vm_writeback', 'vm_stat_interval', 'vm_dirty_bg', 'vm_dirty', 'io_tune', 'debug_off',
+    ['Battery drain (kernel)', ['soff_prof', 'soff_cpu', 'soff_gpu', 'soff_boost', 'wifi_keep', 'soff_radio', 'soff_radio_min', 'soff_radio_bt', 'soff_data', 'soff_data_min', 'soff_data_mobile', 'soff_data_nfc', 'drain_alert', 'drain_alert_notify', 'drain_alert_rate', 'drain_cause', 'drain_cause_min', 'cpu_idle', 'ufs_pm', 'vm_tune', 'vm_writeback', 'vm_stat_interval', 'vm_dirty_bg', 'vm_dirty', 'io_tune', 'debug_off',
       'debug_props', 'wakelock_block', 'wl_list']],
     ['Protected apps', ['protect_apps', 'protect_pkgs', 'app_bucket', 'bg_block', 'bg_block_pkgs', 'app_disable', 'app_disable_pkgs']],
     ['Battery drain (HyperOS / ROM)', ['app_freezer', 'doze_aggr', 'doze_custom', 'devcfg_lock', 'gms_doze', 'scan_off', 'loc_throttle', 'net_save',
@@ -3220,6 +3237,11 @@ html[data-style="mono"],html[data-style="mono"] body{
   var WK_GROUPS = [
     [/^PowerManagerService\.WakeLocks$/, 'Apps and Android', 'An app or Android itself held a wake lock. Top battery use shows which app.'],
     [/^PowerManager(Service)?\.(Display|SuspendLockout)/i, 'Screen', ''],
+    // epoll sources carry the process name: "epolld16:system_server.[timerfd18:system_server]"
+    // system_server timers are AlarmManager (app and Android alarms)
+    [/^epoll\w*:system_server\b.*timerfd/i, 'Alarms and timers', 'Apps and Android wake the phone with alarms. Restrict other user apps can calm this down.'],
+    [/^epoll\w*:system_server\b/i, 'Android system', 'Android itself (system_server) woke up to handle an event. Normal in small numbers.'],
+    [/health@|hardware\.health|healthd/i, 'Battery and charging', 'Android checks the battery level now and then. Normal.'],
     [/fingerprint|goodix_fp|fpc|_fp_/i, 'Fingerprint', ''],
     [/qcom_rx_wakelock|ipa|rmnet|qmi|mhi|modem|smp2p|glink|ssr|diag|qrtr|cnss_ipa/i, 'Mobile data and modem', 'Often a weak signal or apps syncing over mobile data. Wi-Fi or a better signal helps.'],
     [/radio|^ril|_ril|telephony|^ims|_ims/i, 'Mobile network', 'The phone keeps talking to the network. A weak or changing signal (4G/5G) makes this go up.'],
@@ -3228,7 +3250,8 @@ html[data-style="mono"],html[data-style="mono"] body{
     [/bluetooth|^bt[_-]|[_-]bt([_-]|$)|^bt$|btpower|bluedroid|^hci[0-9_]|[_-]hci([0-9_-]|$)/i, 'Bluetooth', 'A connected Bluetooth device (watch, earbuds) keeps sending data.'],
     [/vib|haptic/i, 'Vibration', ''],
     [/alarm/i, 'Alarms and timers', 'Apps wake the phone on a timer. Restrict other user apps can calm this down.'],
-    [/timerfd/i, 'App timers', 'Apps wake the phone on a timer. Restrict other user apps can calm this down.'],
+    // only system and vendor services can set wake-up timers of their own (apps use Android alarms)
+    [/timerfd/i, 'Service timers', 'A system or vendor service woke the phone on its own timer. Normal in small numbers.'],
     [/batt|charg|chg|bms|fg_|_fg|fuel|power_supply|^qg|_qg|smb[0-9]/i, 'Battery and charging', 'Normal while charging or when a cable is plugged in.'],
     [/gps|gnss|location|^loc_|_loc_/i, 'Location', 'An app asks for your location. Check the location permission of your apps.'],
     [/sensor|ssc|sns|sensors/i, 'Sensors', ''],
@@ -3403,9 +3426,12 @@ html[data-style="mono"],html[data-style="mono"] body{
             return esc(wlTag(t.t)) + ' ' + fmtMs(t.ms);
           }).join(', ');
           var who = wlApp(a.uid, a.pkg), sub = (a.pkg !== '-' && who !== a.pkg ? esc(a.pkg) + ' &middot; ' : '') + a.n + (a.n === 1 ? ' time' : ' times');
+          // user apps only (uid 10000-19999 in any user): Android itself cannot be blocked
+          var ap = (+a.uid) % 100000, blk = a.pkg !== '-' && ap >= 10000 && ap <= 19999 && /^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+$/.test(a.pkg);
           return '<div class="tdr"><div class="t1"><span>' + (i + 1) + '. ' + esc(who) + '</span><span>' + fmtMs(a.ms) + '</span></div>' +
             '<div class="t2">' + sub + '</div><div class="t2">' + tags + '</div>' +
-            '<i style="width:' + Math.max(2, Math.round(a.ms / max * 100)) + '%"></i></div>';
+            '<i style="width:' + Math.max(2, Math.round(a.ms / max * 100)) + '%"></i>' +
+            (blk ? '<div class="wk-blk">' + blkHtml(a.pkg) + '</div>' : '') + '</div>';
         }).join('') : '<div class="hint">No app held a wake lock' + (kv.base === 'mark' ? ' since the mark.' : ' yet.') + '</div>') +
         '<div class="hint">Time an app kept the CPU awake with a wake lock, screen-on time included. When several apps hold one at once, Android splits the time between them.</div></div>';
       modal('Apps holding wake locks', h, [{ label: 'Back', fn: runWake }, { label: 'Close', primary: true }]);
@@ -3830,6 +3856,7 @@ html[data-style="mono"],html[data-style="mono"] body{
   function kpTone(e) {
     var a = e.a || '', r = e.r || '', m;
     if (e.k === 'idle' || e.k === 'drain') {
+      if (/^Kept awake by /.test(a)) return 'warn';
       if (/<[\d.]+%\/h/.test(a)) return '';
       m = /([\d.]+)%\/h/.exec(a);
       return !m ? '' : +m[1] > 2 ? 'bad' : +m[1] > 1 ? 'warn' : '';
@@ -3877,13 +3904,60 @@ html[data-style="mono"],html[data-style="mono"] body{
       return a.length >= 4 ? { t: a[0], k: a[1], a: a[2], r: a.slice(3).join('|') } : null;
     }).filter(Boolean);
   }
+  // "Kept awake by <package>": app name and a way to block it in the background
+  var kpLbl = {};
+  function kpLabel(pkg) {
+    if (!(pkg in kpLbl)) { try { kpLbl[pkg] = nativeLabels([pkg])[pkg] || ''; } catch (x) { kpLbl[pkg] = ''; } }
+    return kpLbl[pkg];
+  }
+  function kpList(k) { return String(cfg[k] || '').split(',').filter(Boolean); }
+  function kpApp(e) {
+    var m = e.k === 'drain' && /^Kept awake by ([A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+)$/.exec(e.a || '');
+    if (!m) return '';
+    return '<div class="kp-app">' + blkHtml(m[1]) + '</div>';
+  }
+  // Block in background button for one app (Recent activity, Apps holding wake locks)
+  function blkHtml(p) {
+    if (kpList('protect_pkgs').indexOf(p) >= 0) return '<span class="kx">In Protected apps, so it is not blocked</span>';
+    if (String(cfg.bg_block) === '1' && kpList('bg_block_pkgs').indexOf(p) >= 0) return '<span class="kx">Already blocked in the background</span>';
+    return '<button class="btn tonal kp-blk" data-pkg="' + esc(p) + '">Block in background</button>';
+  }
   function kpRows(list) {
     return list.slice().reverse().map(function (e) {
-      var tn = kpTone(e), r = e.k === 'boot' ? kpKeys(e.r) : e.r;
-      return '<li' + (tn ? ' class="' + tn + '"' : '') + '><div class="kh"><time>' + esc(e.t.slice(0, 11)) + '</time><span class="ka">' + esc(e.a) + '</span></div>' +
-        '<div class="kd">' + esc(KP_SRC[e.k] || e.k) + (r ? ': ' + esc(r) : '') + '</div></li>';
+      var tn = kpTone(e), r = e.k === 'boot' ? kpKeys(e.r) : e.r, a = e.a;
+      var am = e.k === 'drain' && /^Kept awake by (\S+)$/.exec(a || ''), al = am ? kpLabel(am[1]) : '';
+      if (al) a = 'Kept awake by ' + al;
+      return '<li' + (tn ? ' class="' + tn + '"' : '') + '><div class="kh"><time>' + esc(e.t.slice(0, 11)) + '</time><span class="ka">' + esc(a) + '</span></div>' +
+        '<div class="kd">' + esc(KP_SRC[e.k] || e.k) + (al ? ': ' + esc(am[1]) + ',' : r ? ':' : '') + (r ? ' ' + esc(r) : '') + '</div>' + kpApp(e) + '</li>';
     }).join('');
   }
+  function kpBlock(p) {
+    var l = kpLabel(p);
+    modal('Block in background?', '<p><b>' + esc(l || p) + '</b>' + (l ? ' (' + esc(p) + ')' : '') + ' is added to <b>Block background apps</b>. ' +
+      'It works normally while you have it open, but it cannot run at boot or while the phone is idle, so its notifications may not arrive.</p>' +
+      '<p>Press <b>Save</b> afterwards. You can take it off the list any time.</p>', [
+      { label: 'Cancel' },
+      { label: 'Add to the list', primary: true, fn: function () {
+        kpMaps();
+        var b = kpList('bg_block_pkgs');
+        if (b.indexOf(p) < 0) b.push(p);
+        cfg.bg_block_pkgs = b.join(',');
+        if ($('in-bg_block_pkgs')) $('in-bg_block_pkgs').value = cfg.bg_block_pkgs;
+        cfg.bg_block = '1';
+        if ($('in-bg_block')) $('in-bg_block').checked = true;
+        if (FK.bg_block) changed(FK.bg_block);
+        kpRender();
+        snack('Added to Block background apps. Press Save to apply.');
+      } }
+    ]);
+  }
+  // capture: the row underneath must not open or close on this tap
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('.kp-blk') : null;
+    if (!b) return;
+    e.stopPropagation(); e.preventDefault();
+    kpBlock(b.getAttribute('data-pkg'));
+  }, true);
   function kpBind(root) {
     root.querySelectorAll('.kp-log li:not(.kp-empty)').forEach(function (li) { li.onclick = function () { li.classList.toggle('open'); }; });
   }
@@ -3899,7 +3973,7 @@ html[data-style="mono"],html[data-style="mono"] body{
   /* keeper status: which background keepers run now (pid file + /proc), tap to open */
   var KS = [
     { p: 'soff_watch', n: 'soff_watch', st: 'soff_watch.state', k: 'screen-off', t: 'Screen-off keeper',
-      on: ['soff_prof', 'wifi_keep', 'x_compact', 'soff_radio', 'soff_data', 'f2fs_gc', 'x_dexopt_auto'] },
+      on: ['soff_prof', 'wifi_keep', 'x_compact', 'soff_radio', 'soff_data', 'drain_alert', 'f2fs_gc', 'x_dexopt_auto'] },
     { p: 'cpu_watch', n: 'cpu_watch', st: 'cpu_watch.state', k: 'cpu', t: 'CPU cap keeper', list: 1 },
     { p: 'chg_watch', n: 'chg_watch', st: 'chg_watch.state', k: 'charge', t: 'Charge limit keeper', on: ['charge_limit'], sk: 'charge_limit' },
     { p: 'rr_watch', n: 'rr_watch', st: 'rr_watch.state', k: 'refresh', t: 'Touch refresh rate keeper', on: ['rr_adapt'], sk: 'rr_adapt' },

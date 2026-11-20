@@ -239,7 +239,7 @@ fi
 
 _hgst=$(sed -n 's/^heat_guard=//p' "$HC_STATUS" 2>/dev/null | tail -n 1)
 case "$_hgst" in applied*|partial*) _hgrun=", heat guard running" ;; *) _hgrun="" ;; esac
-_desc="Heat and battery fix for Android - $(hc_soc_label) (one-shot at boot$(on charge_limit && echo ", charge-limit keeper running")${_hgrun}$({ on soff_prof || on wifi_keep || on x_compact || on soff_radio || on soff_data || on f2fs_gc || on x_dexopt_auto; } && echo ", screen-off keeper running")). Last boot: $_a applied, $_p partial, $_s unsupported, $_f failed, $_o off. Configure in WebUI. Telegram Channel: @ModuleArchives."
+_desc="Heat and battery fix for Android - $(hc_soc_label) (one-shot at boot$(on charge_limit && echo ", charge-limit keeper running")${_hgrun}$({ on soff_prof || on wifi_keep || on x_compact || on soff_radio || on soff_data || on drain_alert || on f2fs_gc || on x_dexopt_auto; } && echo ", screen-off keeper running")). Last boot: $_a applied, $_p partial, $_s unsupported, $_f failed, $_o off. Configure in WebUI. Telegram Channel: @ModuleArchives."
 sed -i "s#^description=.*#description=$_desc#" "$MODDIR/module.prop"
 
 # ---------- boot notification ----------

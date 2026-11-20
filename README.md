@@ -115,6 +115,7 @@ Everything is configured via WebUI and applied on the next boot. Only lightweigh
 - Keep Wi-Fi on while the screen is off (turns it on again when the ROM switches it off; Wi-Fi you switch off yourself stays off)
 - Location and Bluetooth off after a long screen-off (both come back when the screen turns on; off by default)
 - Mobile data and NFC off during screen-off (back on when the screen turns on; waits during calls, audio and hotspot; off by default)
+- Screen-off drain check: the drain of each screen-off period of 30 min or more in Recent activity, a notification when it is high (1 h or more, 2% or more lost, from the rate you pick), and, when the drain was 1%/h or more, the user app that held wake locks the longest, with a button to block it in the background; periods with the charger plugged in part of the time are left out (on by default)
 - Heat guard (experimental, off by default): lower refresh rate and big-core limit while the battery is hot, back after it cools down
 - Recent activity on Home: the 3 newest events, and Show all with filters (All, Keepers, Manual, Idle drain) for the last 50: boot result with the features that failed, saved setting changes, cache clean, app optimization, F2FS cleanup, heat guard, keepers that stopped and why, Revert and restore, screen-off drain per period and daily idle drain from Android's battery stats. High drain and failed work are coloured
 - Keeper status on Home: a small table (tap to open) with every background keeper, Running / Off / Not running / Skipped / Failed, its pid, state and last event
@@ -159,7 +160,7 @@ Everything is configured via WebUI and applied on the next boot. Only lightweigh
 - Search: find any feature by name and jump to it
 - Idle drain: battery drop per hour with the screen off since the last unplug (shows after a 1% drop)
 - Battery check: health, capacity, cycle count, temperature and more
-- Wake sources: which wakeup sources kept the CPU awake or cut its sleep short, in plain names (Mobile data, Wi-Fi, Apps and Android…), with how much of the time the phone was awake since "Mark start"; "Apps and Android" opens the apps that held wake locks (Android battery stats, read with `dumpsys batterystats -c`; read only)
+- Wake sources: which wakeup sources kept the CPU awake or cut its sleep short, in plain names (Mobile data, Wi-Fi, Apps and Android, Android system, Alarms and timers…), with how much of the time the phone was awake since "Mark start"; "Apps and Android" opens the apps that held wake locks (Android battery stats, read with `dumpsys batterystats --charged`, without the battery history), each with a button to block it in the background
 - CPU use now: the busiest processes over 2 seconds as a share of the whole CPU, in plain names; the measurement and the root manager are left out (read only)
 - Battery calibration: guided full cycle (5% → 100% → until charging finishes) so the battery % is accurate (optionally deletes batterystats.bin)
 

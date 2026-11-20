@@ -43,7 +43,7 @@ case "$_hp" in ''|*[!0-9]*) ;; *) grep -q heat_watch "/proc/$_hp/cmdline" 2>/dev
   _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_hp" ]; do sleep 1; _i=$((_i + 1)); done
   [ -d "/proc/$_hp" ] && grep -q heat_watch "/proc/$_hp/cmdline" 2>/dev/null && kill -9 "$_hp" 2>/dev/null ;; esac
 [ -s "$HC_DATA/heat.save" ] && [ -f "$HC_DATA/heat_watch.sh" ] && env HC_DATA="$HC_DATA" sh "$HC_DATA/heat_watch.sh" restore </dev/null >/dev/null 2>&1
-rm -f "$HC_DATA/heat_watch.pid" "$HC_DATA/heat.rr" "$HC_DATA/wk.base" "$HC_DATA/wk.apps"
+rm -f "$HC_DATA/heat_watch.pid" "$HC_DATA/heat.rr" "$HC_DATA/wk.base" "$HC_DATA/wk.apps" "$HC_DATA/wk.off"
 # stop the screen-off profile keeper (it writes the saved values back when it stops)
 _sp=$(cat "$HC_DATA/soff_watch.pid" 2>/dev/null)
 case "$_sp" in ''|*[!0-9]*) ;; *) grep -q soff_watch "/proc/$_sp/cmdline" 2>/dev/null && kill "$_sp" 2>/dev/null
