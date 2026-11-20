@@ -259,9 +259,10 @@ CONF=$HC_DATA/config.conf
 cfgv() { _cv=$(sed -n "s/^$1=//p" "$CONF" 2>/dev/null | tail -n 1 | tr -d '\r'); echo "${_cv:-$2}"; }
 WKS=$MODDIR/common/wakeups.sh
 WKOFF=$HC_DATA/wk.off
-_wj=""
+_wj=""; _dcj=""
 # app wake locks at screen-off (one battery stats read, in the background); not while charging
 drain_mark() {
+  job_kill "$_dcj"; _dcj=""
   rm -f "$WKOFF"
   [ "$DRA" = 1 ] && [ "$_chg0" = 0 ] && [ -f "$WKS" ] && [ "$(cfgv drain_cause 1)" != 0 ] || return 0
   sh "$WKS" offmark >/dev/null 2>&1 &
@@ -281,9 +282,9 @@ dnotify() {
 # when the drain was high. Under 1%/h nothing more is done (no second battery stats read, no extra line)
 drain_check() {
   wk_stop
-  _dtop=""; _dtp=""; _dtm=0; _dchg=0
+  _dtop=""; _dtp=""; _dtm=0; _dchg=${_chgm:-0}
   if [ "$_dok" = 1 ] && [ "${_dd:-0}" -ge 1 ] && awk -v r="$_dr" 'BEGIN { exit !(r + 0 >= 1) }'; then
-    if [ -s "$WKOFF" ] && [ "$(cfgv drain_cause 1)" != 0 ]; then
+    if [ "$_dchg" = 0 ] && [ -s "$WKOFF" ] && [ "$(cfgv drain_cause 1)" != 0 ]; then
       _dcm=$(cfgv drain_cause_min 10); case "$_dcm" in ''|*[!0-9]*) _dcm=10 ;; esac
       _dtop=$(sh "$WKS" offtop $((_dcm * 60000)) "${HC_OFFSEC:-$_dsec}" 2>/dev/null)
       case "$_dtop" in C\|charger*) _dchg=1; _dtop="" ;; esac
@@ -316,6 +317,7 @@ drain_check() {
 job_kill() { [ -n "$1" ] && grep -q soff_watch "/proc/$1/cmdline" 2>/dev/null && kill "$1" 2>/dev/null; return 0; }
 jobs_stop() {
   job_kill "$_cj"; _cj=""
+  job_kill "$_dcj"; _dcj=""
   wk_stop
   # the GC job is stopped first, then gc_urgent / wake lock / fstrim are put back
   job_kill "$_gj"; _gj=""
@@ -384,6 +386,7 @@ while :; do
     if [ "$_on" = 1 ]; then
       _on=0; _offs=$((_offs + 1)); _toff=$(date +%s)
       _lv0=$(bat_lv); if bat_chg; then _chg0=1; else _chg0=0; fi
+      _chgm=0
       drain_mark
       [ "$PROF" = 1 ] && { apply_off; _pnext=$(( $(date +%s) + 60 )); }
       [ "$WIFI" = 1 ] && { [ "$(wifi_now)" = on ] && _want=on || _want=off; }
@@ -396,6 +399,9 @@ while :; do
     elif [ "$WIFI" = 1 ]; then
       wifi_tick
     fi
+    # charger seen at any wake-up in this period: the drain is net loss, so no notification
+    # (also when drain_cause=0, which skips the battery stats charger check)
+    [ "$DRA" = 1 ] && [ "$_chgm" = 0 ] && bat_chg && _chgm=1
     # ROM power/perf services can raise the limits again after the screen-off transition.
     # Re-check at most once a minute; put() only writes a node that actually changed.
     if [ "$PROF" = 1 ]; then
@@ -537,8 +543,9 @@ while :; do
           klog screen-off "Screen on, values put back" "all $_kl back (off for $_km)"
         fi
       fi
-      # after the values are back: reading the battery stats takes a second or two
-      [ "$DRA" = 1 ] && drain_check
+      # after the values are back: the battery stats read takes a second or two, in the background
+      # so a slow dumpsys never holds the keeper; a still running check is stopped at the next screen-off
+      [ "$DRA" = 1 ] && { ( drain_check ) >/dev/null 2>&1 & _dcj=$!; }
     fi
     ev_wait 60 3
   fi
