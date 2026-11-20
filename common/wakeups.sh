@@ -96,6 +96,8 @@ if [ "$1" = offmark ]; then
   exit 0
 fi
 if [ "$1" = offtop ]; then
+  # HC_OFF: the keeper hands over the mark as its own file, so a new offmark never touches it
+  OFF=${HC_OFF:-$OFF}
   MIN=${2:-600000}; case "$MIN" in ''|*[!0-9]*) MIN=600000 ;; esac
   [ -s "$OFF" ] || exit 0
   mv -f "$OFF" "$W/off" 2>/dev/null || exit 0

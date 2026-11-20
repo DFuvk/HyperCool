@@ -52,7 +52,10 @@ ev_stop() {
   EV_PID=""; EV=0; EV_VAL=""
   [ -n "$EV_FIFO" ] && rm -f "$EV_FIFO" "$EV_FIFO.pid"
 }
-# ev_start <fifo>: logcat feed of screen_toggled into a fifo on fd 3 (EV=1 when it runs)
+# ev_start <fifo>: logcat feed of screen_toggled into a fifo on fd 3 (EV=1 when it runs).
+# The feed also carries battery_status (written by Android when the charger is plugged or pulled):
+# EV_PLUGGED=1 once a line says a charger is in; the keeper sets it back to 0 itself.
+EV_PLUGGED=0
 ev_start() {
   EV_FIFO=$1
   # a feed left by a keeper that was killed hard
@@ -64,7 +67,7 @@ ev_start() {
   mkfifo "$EV_FIFO" 2>/dev/null || return 1
   ( exec 3<>"$EV_FIFO" ) 2>/dev/null || { rm -f "$EV_FIFO"; return 1; }
   exec 3<>"$EV_FIFO"
-  logcat -b events -T 1 -s screen_toggled >&3 2>/dev/null &
+  logcat -b events -T 1 -s screen_toggled battery_status >&3 2>/dev/null &
   EV_PID=$!
   echo "$EV_PID" > "$EV_FIFO.pid"
   EV=1
@@ -79,7 +82,16 @@ ev_start() {
 }
 # ev_line <line>: keep the value of a screen_toggled line (anything but 0 = on)
 ev_line() {
-  case "$1" in *screen_toggled*) ;; *) return 1 ;; esac
+  case "$1" in
+    *battery_status*)
+      # [status,health,present,plugged,technology]: plugged 0 = on battery
+      _x=${1##*[}; _x=${_x%%]*}
+      _o=$IFS; IFS=,; set -- $_x; IFS=$_o
+      case "${4:-0}" in ''|0|*[!0-9]*) ;; *) EV_PLUGGED=1 ;; esac
+      return 1 ;;
+    *screen_toggled*) ;;
+    *) return 1 ;;
+  esac
   _x=${1##*:}
   case "$_x" in *[!0\ ]*) EV_VAL=1 ;; *) EV_VAL=0 ;; esac
 }
