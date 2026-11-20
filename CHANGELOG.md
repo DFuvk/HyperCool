@@ -1,6 +1,19 @@
 # Changelog
 
-> Current build: **v2.3.6 (236)**.
+> Current build: **v2.3.7 (237)**.
+
+## v2.3.7 (237)
+
+- New: Wake sources report: kernel wakeup statistics in plain names (Mobile data, Wi-Fi, Apps and Android, Android system, Alarms and timers, Battery and charging, …), with how much of the time the phone was awake since "Mark start", sorting by awake time or wake-ups, and "Apps and Android" opening the apps that held wake locks. Read only.
+- New: CPU use now: the busiest processes over 2 seconds as a share of the whole CPU, in plain names; the measurement itself and the root manager are left out, and reading `/proc` uses shell builtins only.
+- New: Screen-off drain check (off by default): each screen-off period of 30 min or more without the charger is logged in Recent activity, with a notification when the drain is high (1 h or more, 2% or more lost, at the rate you pick) and the user app that held the most wake locks when the drain was 1%/h or more.
+- New: `drain_alert`, `drain_alert_rate`, `drain_alert_notify`, `drain_cause` and `drain_cause_min` in the WebUI, read live by the keeper. App wake-lock rows and drain lines also get a "Block in background" button.
+- Changed: `stats_reduce` now also turns off activity and foreground-service start logs and the disk stats logging job.
+- Changed: the app wake-lock list reads `dumpsys batterystats --charged` (text, without the battery history), counts only per-uid partial wake locks, and gets package names from `cmd package list packages -U`.
+- Changed: the screen-off drain check is off by default for new installs.
+- Fixed: a charger plugged in during a screen-off period is detected from Android's `battery_status` events (with wake-up checks as a fallback), so those periods are left out even when `drain_cause` is off.
+- Fixed: the drain check reads battery stats in the background with its own per-period mark (`wk.chk.<n>`), so a slow `dumpsys` never holds the keeper and a quick screen-off cannot clear its mark.
+- Fixed: the module description reports "screen-off keeper running" when `drain_alert` is the only active keeper feature, and no drain line is logged when the drain check is off.
 
 ## v2.3.6 (236)
 
