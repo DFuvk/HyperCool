@@ -1222,7 +1222,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       fields: [{ k: 'soff_data_min', label: 'Wait after the screen goes off', def: '5', min: 5, max: 120, unit: 'min' },
                { k: 'soff_data_mobile', label: 'Turn mobile data off', def: '1', bool: true },
                { k: 'soff_data_nfc', label: 'Turn NFC off', def: '1', bool: true }] },
-    { k: 'drain_alert', s: 'kdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
+    { k: 'drain_alert', s: 'kdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '0',
       t: 'Screen-off drain check',
       d: 'After the phone was locked for a while, shows how much battery it lost and which app kept it awake.',
       x: 'Each time the screen was off for 30 minutes or more without the charger, the drain goes to Recent activity. You get a notification only when it was high: off for at least an hour, 2% or more lost and at or above the rate you pick. When the drain was 1%/h or more, the app that kept the phone awake is named as well. It comes from Android battery stats, read when the screen goes off and again when it comes back on, about a second each time. Only user apps are named, because Android itself cannot be restricted, and a period with the charger plugged in part of the time is left out. Tap the line in Recent activity to block that app in the background.',
