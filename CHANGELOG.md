@@ -1,6 +1,19 @@
 # Changelog
 
-> Current build: **v2.3.7 (237)**.
+> Current build: **v2.3.8 (238)**.
+
+## v2.3.8 (238)
+
+- New: Background app hibernation (off by default). User apps and preinstalled apps with launcher icons can be stopped a few minutes after the screen turns off, or closed manually from Home. Stop mode keeps apps asleep until opened; Close background processes only is the gentler option. Charging, protected, in-use, alarm-clock, default, and system-critical apps are skipped.
+- New: `hibernate`, `hibernate_min`, and `hibernate_mode` settings in the WebUI, with hibernation results and skipped-app counts in Recent activity.
+- New: System-background CPU tuning through `bg_sys_uclamp` and `bg_sys_latency`, reducing unnecessary scheduling work while allowing Android background tasks to share awake cores.
+- New: TCP tuning through `x_net_tcp`, selecting the best available congestion control and configuring SACK, ECN, low latency, and timestamps. This option is now part of Faster network connections.
+- Changed: HyperCool (Glacier) is available again as the original accent preset.
+- Changed: Recent activity displays package labels and hibernation keeper status.
+- Changed: The Home screen shows the last measured screen-off drain alongside the current estimate.
+- Changed: The WebUI includes a What's New dialog for the current build.
+- Changed: Routine screen-on keeper entries are no longer written to Recent activity.
+- Fixed: Camera resolver packages such as `com.android.camera2` are excluded from hibernation to avoid stopping the camera on ROMs where the camera uses a resolver package.
 
 ## v2.3.7 (237)
 

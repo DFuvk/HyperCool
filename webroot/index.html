@@ -3590,12 +3590,16 @@ html[data-style="mono"],html[data-style="mono"] body{
   /* what's new: once after each module update (remembered in this browser only) */
   var NEWS = {
     '2.3.7': [
-      ['Hibernate background apps', 'Off by default. A few minutes after the screen goes off, apps left running in the background are put to sleep. Protected apps are never touched. Hibernate apps now on Home does it at any time and shows the list first.'],
-      ['Screen-off drain check', 'Off by default. After a long screen-off it tells you how much battery went and which app kept the phone awake, with a button to block that app.'],
-      ['HyperCool (Glacier) colour', 'The original HyperCool accent is back in Settings, Colors.'],
+      ['Background app hibernation', 'User apps and preinstalled apps with launcher icons can now be stopped a few minutes after the screen turns off. Charging, protected, in-use, alarm-clock, and system-critical apps are skipped.'],
       ['Android background work', 'Background apps on little cores now also limits Android\'s own background work (sync, backup, media scan).'],
-      ['Faster network connections', 'The new name of Network stack tuning. The TCP part of Common kernel tuning moved here. It is made for speed, not battery.'],
-      ['Recent activity and Idle drain', 'Routine screen-on lines are gone and apps show by name. The Idle drain card shows the last measured value until a new one is ready.']
+      ['Faster network connections', 'The new name of Network stack tuning. The TCP part of Common kernel tuning moved here. It is made for speed, not battery.']
+    ],
+    '2.3.8': [
+      ['Hibernate background apps', 'Off by default. After a few minutes with the screen off, background apps, including eligible preinstalled apps, can be stopped. Charging, protected, in-use, alarm-clock, and system-critical apps are skipped.'],
+      ['Hibernate apps now', 'Run hibernation manually from Home. Choose Stop the app or Close background processes only, and review the apps and skipped counts before continuing.'],
+      ['Background and network tuning', 'Android background work now has its own CPU scheduling limits, while Faster network connections includes the TCP tuning from Common kernel tuning.'],
+      ['HyperCool (Glacier) colour', 'The original HyperCool accent is back in Settings, Colors.'],
+      ['Clearer recent activity', 'Apps show by name, hibernation status is included, and the last measured screen-off drain stays visible until a new value is ready.']
     ]
   };
   function whatsNew(ver) {
