@@ -9,7 +9,8 @@
 #   kill   am kill: only its background processes are closed, pushes still arrive
 # Prints R|<stopped>|<protected>|<in use>|<alarm clock>|<state unknown>|<failed>|<stopped packages, comma list>
 # or R|busy (another run is going) or R|noalarm (alarm list not readable: nothing is stopped).
-# User apps (pm list packages -3, user 0) with a running process are stopped, except:
+# Apps of user 0 with a running process are stopped: user apps, and preinstalled apps that have a
+# launcher icon (Chrome, YouTube, Gallery...; Android's own uids under 10000 never), except:
 #   Protected apps, default dialer / SMS / keyboard / launcher, accessibility, notification listeners,
 #   always-on VPN, live wallpaper, device admins, core apps (HC_BGB_NEVER), apps with an alarm clock set,
 #   and apps Android still counts as in use (top, top while asleep = the last app, foreground service,
@@ -66,10 +67,22 @@ alarm_apps() {
     END { if (bad) printf "!," }'
 }
 
-# ---------------------------------------------------------------- running user apps
-# package and uid of each user app: "<pkg> <uid>"
+# ---------------------------------------------------------------- running apps
+# preinstalled apps that are never stopped: store, camera, clock, calendar, contacts, SIM toolkit,
+# assistant, themes, find device (on top of NEVER and the default / bound apps)
+SYSNEVER="com.android.vending,com.android.camera,com.android.camera2,com.android.deskclock,com.google.android.deskclock,com.android.calendar,com.google.android.calendar,com.android.contacts,com.google.android.contacts,com.android.mms,com.android.stk,com.google.android.googlequicksearchbox,com.miui.voiceassist,com.android.thememanager,com.xiaomi.finddevice,com.miui.cloudservice,com.xiaomi.account"
+# package and uid: "<pkg> <uid>". User apps, then preinstalled apps with a launcher icon (uid 10000+)
 pm list packages -3 -U </dev/null 2>/dev/null | tr -d '\r' |
   sed -n 's/^package:\([^ ]*\) uid:\([0-9][0-9]*\).*/\1 \2/p' > "$PK" 2>/dev/null
+_lch=" $(cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER </dev/null 2>/dev/null |
+  tr -d '\r' | sed -n 's#^ *\([A-Za-z0-9._]*\)/.*#\1#p' | sort -u | tr '\n' ' ')"
+pm list packages -s -U </dev/null 2>/dev/null | tr -d '\r' |
+  sed -n 's/^package:\([^ ]*\) uid:\([0-9][0-9]*\).*/\1 \2/p' | while read -r _p _u; do
+    [ "$_u" -ge 10000 ] 2>/dev/null || continue
+    case "$_lch" in *" $_p "*) ;; *) continue ;; esac
+    case ",$SYSNEVER," in *",$_p,"*) continue ;; esac
+    echo "$_p $_u"
+  done >> "$PK" 2>/dev/null
 [ -s "$PK" ] || { echo "time=$(date '+%H:%M:%S') stopped=0 error=no-packages" > "$STATE"; echo "R|0|0|0|0|0|0|"; exit 0; }
 # process names (first argument of the command line, builtins only): "com.app" or "com.app:service"
 _run=" "

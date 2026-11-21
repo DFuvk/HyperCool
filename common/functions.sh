@@ -811,7 +811,7 @@ f_soff_prof() {
     [ "$_dxf" = 1 ] && st x_dexopt_auto applied "apps optimized (dex2oat $_dxm, 1 at a time, no force recompile) when the screen was off 10 min, once a week; battery under 40 C to start, stops at 45 C, under 15% battery or when the screen turns on; charger not needed, but without one the battery must be at least 40% (keeper pid $_sp, shared with the screen-off profile)"
     if [ "$_hib" = 1 ]; then
       _hbm=stopped; [ "$(cfg hibernate_mode stop)" = kill ] && _hbm="background processes closed"
-      st hibernate applied "user apps running in the background $_hbm $(cfg hibernate_min 5) min after the screen goes off, once per screen-off, not while charging; Protected apps, default and bound apps, alarm clocks and apps still in use are skipped (keeper pid $_sp, shared with the screen-off profile)"
+      st hibernate applied "apps running in the background (user apps and preinstalled apps with a launcher icon) $_hbm $(cfg hibernate_min 5) min after the screen goes off, once per screen-off, not while charging; Protected apps, default and bound apps, alarm clocks and apps still in use are skipped (keeper pid $_sp, shared with the screen-off profile)"
     fi
     if [ "$_dra" = 1 ]; then
       _drw="drain of each screen-off period of 30 min or more (not charging) in Recent activity"
