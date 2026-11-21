@@ -505,6 +505,17 @@ f_bg_cpuset() {
     done
   fi
   if [ "$_uc" -gt 0 ] && [ "$_uc" -lt 100 ]; then _ud="uclamp.max ${_uc}%"; else _ud="uclamp stock"; fi
+  # system-background (sync, backup, media scan, updates of Android itself): its own uclamp.max (0 = stock),
+  # and latency_sensitive off so the scheduler can pack that work on cores already awake
+  _su=$(rng bg_sys_uclamp 50 10 100)
+  _sg=/dev/cpuctl/system-background
+  if [ "$_su" -gt 0 ] && [ "$_su" -lt 100 ] && [ -f "$_sg/cpu.uclamp.max" ]; then
+    wn "$_sg/cpu.uclamp.max" "$_su" && _ud="$_ud, system background ${_su}%"
+  fi
+  if [ "$(cfg bg_sys_latency 1)" = 1 ] && [ -f "$_sg/cpu.uclamp.latency_sensitive" ]; then
+    [ "$(rd "$_sg/cpu.uclamp.latency_sensitive")" = 0 ] || wn "$_sg/cpu.uclamp.latency_sensitive" 0
+    [ "$(rd "$_sg/cpu.uclamp.latency_sensitive")" = 0 ] && _ud="$_ud, system background latency_sensitive 0"
+  fi
   # always-running logging / diagnostic daemons and light HALs into the background groups
   # (never vibrator or lights: haptics and brightness need fast, on-time CPU)
   _dm=0
@@ -677,6 +688,7 @@ f_soff_prof() {
   _gcf=0; on f2fs_gc && _gcf=1
   _dxf=0; on x_dexopt_auto && _dxf=1
   _dra=0; on drain_alert && _dra=1
+  _hib=0; on hibernate && _hib=1
   _dxm=speed-profile
   case "$(cfg x_dexopt_mode 1)" in 2) _dxm=speed ;; 3) _dxm=everything ;; esac
   # Doze whitelist entries added by older builds (Deep Doze option)
@@ -692,7 +704,8 @@ f_soff_prof() {
   [ "$_gcf" = 0 ] && st f2fs_gc off
   [ "$_dxf" = 0 ] && st x_dexopt_auto off
   [ "$_dra" = 0 ] && st drain_alert off
-  [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_dat" = 0 ] && return
+  [ "$_hib" = 0 ] && st hibernate off
+  [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_hib" = 0 ] && [ "$_dat" = 0 ] && return
   _sc=30; _sg=1; _sb=1; _st=0; _cc=0
   if [ "$_prof" = 1 ]; then
     _sc=$(rng soff_cpu 30 30 90); [ "$_sc" = 0 ] && _sc=30
@@ -707,14 +720,14 @@ f_soff_prof() {
     if ! ls -d /sys/devices/system/cpu/cpufreq/policy* >/dev/null 2>&1; then
       st soff_prof skipped "no cpufreq policies"
       _prof=0
-      [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_dat" = 0 ] && return
+      [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_hib" = 0 ] && [ "$_dat" = 0 ] && return
     fi
   fi
   if [ "$_wfk" = 1 ]; then
     command -v svc >/dev/null 2>&1 && command -v cmd >/dev/null 2>&1 || {
       st wifi_keep skipped "no svc/cmd command on this Android"
       _wfk=0
-      [ "$_prof" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_dat" = 0 ] && return
+      [ "$_prof" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_hib" = 0 ] && [ "$_dat" = 0 ] && return
     }
   fi
   if [ "$_cmp" = 1 ]; then
@@ -722,7 +735,7 @@ f_soff_prof() {
     case "$_co" in ''|*"Unknown command"*|*"unknown command"*)
       st x_compact skipped "this ROM has no 'cmd activity compact'"
       _cmp=0
-      [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_dat" = 0 ] && return ;;
+      [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_hib" = 0 ] && [ "$_dat" = 0 ] && return ;;
     esac
   fi
   _rbt=0; _rmin=5
@@ -732,7 +745,7 @@ f_soff_prof() {
     command -v settings >/dev/null 2>&1 && command -v cmd >/dev/null 2>&1 || {
       st soff_radio skipped "no settings/cmd command on this Android"
       _rad=0
-      [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_dat" = 0 ] && return
+      [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_hib" = 0 ] && [ "$_dat" = 0 ] && return
     }
   fi
   _dmin=5; _dmob=1; _dnfc=1
@@ -747,7 +760,7 @@ f_soff_prof() {
       st soff_data skipped "no settings/svc command on this Android"
       _dat=0
     fi
-    [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_dat" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && return
+    [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_dat" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_hib" = 0 ] && return
   fi
   _gcb=4; _gct=1; _gcm=45
   if [ "$_gcf" = 1 ]; then
@@ -759,7 +772,7 @@ f_soff_prof() {
     elif ! _gcd=$(gcf_dev); then
       st f2fs_gc skipped "/data is not F2FS or this kernel has no gc_urgent / unusable nodes"; _gcf=0
     fi
-    [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_dat" = 0 ] && return
+    [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_hib" = 0 ] && [ "$_dat" = 0 ] && return
   fi
   if [ "$_dxf" = 1 ]; then
     if [ ! -f "$MODDIR/common/dxauto.sh" ] || [ ! -f "$MODDIR/common/dexopt.sh" ]; then
@@ -767,16 +780,16 @@ f_soff_prof() {
     elif ! command -v cmd >/dev/null 2>&1 || ! cmd package </dev/null 2>&1 | grep -q compile; then
       st x_dexopt_auto skipped "this ROM has no 'cmd package compile'"; _dxf=0
     fi
-    [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_dat" = 0 ] && return
+    [ "$_prof" = 0 ] && [ "$_wfk" = 0 ] && [ "$_cmp" = 0 ] && [ "$_rad" = 0 ] && [ "$_gcf" = 0 ] && [ "$_dxf" = 0 ] && [ "$_dra" = 0 ] && [ "$_hib" = 0 ] && [ "$_dat" = 0 ] && return
   fi
   _bl=""
   for _b in /sys/class/backlight/*/brightness /sys/class/leds/lcd-backlight/brightness; do
     [ -f "$_b" ] && { _bl=${_b#/sys/class/}; break; }
   done
   if command -v nice >/dev/null 2>&1; then
-    nohup nice -n 19 sh "$MODDIR/common/soff_watch.sh" "$_sc" "$_sg" "$_sb" "$_st" "$_cc" "$_prof" "$_wfk" "$_cmp" "$_rad" "$_rbt" "$_rmin" "$_gcf" "$_gcb" "$_gct" "$_gcm" "$_dxf" "$_dxm" "$_dat" "$_dmin" "$_dmob" "$_dnfc" "$_dra" >/dev/null 2>&1 &
+    nohup nice -n 19 sh "$MODDIR/common/soff_watch.sh" "$_sc" "$_sg" "$_sb" "$_st" "$_cc" "$_prof" "$_wfk" "$_cmp" "$_rad" "$_rbt" "$_rmin" "$_gcf" "$_gcb" "$_gct" "$_gcm" "$_dxf" "$_dxm" "$_dat" "$_dmin" "$_dmob" "$_dnfc" "$_dra" "$_hib" >/dev/null 2>&1 &
   else
-    nohup sh "$MODDIR/common/soff_watch.sh" "$_sc" "$_sg" "$_sb" "$_st" "$_cc" "$_prof" "$_wfk" "$_cmp" "$_rad" "$_rbt" "$_rmin" "$_gcf" "$_gcb" "$_gct" "$_gcm" "$_dxf" "$_dxm" "$_dat" "$_dmin" "$_dmob" "$_dnfc" "$_dra" >/dev/null 2>&1 &
+    nohup sh "$MODDIR/common/soff_watch.sh" "$_sc" "$_sg" "$_sb" "$_st" "$_cc" "$_prof" "$_wfk" "$_cmp" "$_rad" "$_rbt" "$_rmin" "$_gcf" "$_gcb" "$_gct" "$_gcm" "$_dxf" "$_dxm" "$_dat" "$_dmin" "$_dmob" "$_dnfc" "$_dra" "$_hib" >/dev/null 2>&1 &
   fi
   _i=0
   while [ "$_i" -lt 5 ] && ! hc_soff_pid >/dev/null; do sleep 1; _i=$((_i + 1)); done
@@ -796,6 +809,10 @@ f_soff_prof() {
       st f2fs_gc applied "$_gw$([ "$_gct" = 1 ] && echo ", fstrim at most weekly") (keeper pid $_sp, shared with the screen-off profile)"
     fi
     [ "$_dxf" = 1 ] && st x_dexopt_auto applied "apps optimized (dex2oat $_dxm, 1 at a time, no force recompile) when the screen was off 10 min, once a week; battery under 40 C to start, stops at 45 C, under 15% battery or when the screen turns on; charger not needed, but without one the battery must be at least 40% (keeper pid $_sp, shared with the screen-off profile)"
+    if [ "$_hib" = 1 ]; then
+      _hbm=stopped; [ "$(cfg hibernate_mode stop)" = kill ] && _hbm="background processes closed"
+      st hibernate applied "user apps running in the background $_hbm $(cfg hibernate_min 5) min after the screen goes off, once per screen-off, not while charging; Protected apps, default and bound apps, alarm clocks and apps still in use are skipped (keeper pid $_sp, shared with the screen-off profile)"
+    fi
     if [ "$_dra" = 1 ]; then
       _drw="drain of each screen-off period of 30 min or more (not charging) in Recent activity"
       [ "$(cfg drain_alert_notify 1)" = 0 ] || _drw="$_drw, notification at $(cfg drain_alert_rate 1.5)%/h or more (1 h or more, 2% or more lost)"
@@ -812,6 +829,7 @@ f_soff_prof() {
     [ "$_dxf" = 1 ] && st x_dexopt_auto failed "keeper did not start"
     [ "$_cmp" = 1 ] && st x_compact failed "keeper did not start"
     [ "$_dra" = 1 ] && st drain_alert failed "keeper did not start"
+    [ "$_hib" = 1 ] && st hibernate failed "keeper did not start"
   fi
 }
 

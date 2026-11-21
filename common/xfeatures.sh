@@ -80,12 +80,27 @@ f_x_kquiet() {
   fin x_kquiet "EDAC/BPF/ramdump/crash dumper output off"
 }
 
-# x_net - network stack tuning
+# x_net - faster network connections (TCP), not a battery feature
 f_x_net() {
   on x_net || { st x_net off; return; }
   cnt_reset
   apply_list "$HC_XLISTS/x_net_list.txt"
-  fin x_net "TCP slow-start/metrics/FastOpen and inotify limits tuned"
+  # sub-option (was part of Common kernel tuning): best available congestion control, SACK,
+  # ECN only when the server asks (2), low latency, no timestamps; FastOpen comes from the list above
+  _cc=""
+  if [ "$(cfg x_net_tcp 1)" = 1 ]; then
+    _n=/proc/sys/net/ipv4
+    if [ -f "$_n/tcp_available_congestion_control" ]; then
+      for _a in bbr3 bbr2 bbrplus bbr westwood cubic; do
+        grep -qw "$_a" "$_n/tcp_available_congestion_control" && { wn "$_n/tcp_congestion_control" "$_a"; break; }
+      done
+    fi
+    for _kv in tcp_low_latency:1 tcp_ecn:2 tcp_sack:1 tcp_timestamps:0; do
+      [ -f "$_n/${_kv%%:*}" ] && wn "$_n/${_kv%%:*}" "${_kv#*:}"
+    done
+    _cc=$(cat "$_n/tcp_congestion_control" 2>/dev/null)
+  fi
+  fin x_net "TCP slow-start/metrics/FastOpen and inotify limits tuned${_cc:+, TCP $_cc, SACK, ECN on request}"
 }
 
 # x_io - extra block queue tuning
@@ -822,7 +837,7 @@ f_x_balanced() {
   fin x_balanced "balanced scheduler, storage queue and bus/DRAM defaults; protections on" "no matching nodes on this kernel"
 }
 
-# x_kcommon - common kernel and network tuning
+# x_kcommon - common kernel tuning (less scheduler, memory and I/O bookkeeping); the TCP part is in x_net
 f_x_kcommon() {
   on x_kcommon || { st x_kcommon off; return; }
   cnt_reset
@@ -842,20 +857,9 @@ f_x_kcommon() {
     [ -f "$_q/add_random" ] && wn "$_q/add_random" 0
   done
   [ -f /sys/module/mmc_core/parameters/use_spi_crc ] && wn /sys/module/mmc_core/parameters/use_spi_crc 0
-  # network: best available congestion control, SACK / fast open, ECN only when the server asks (2)
-  _n=/proc/sys/net/ipv4
-  if [ -f "$_n/tcp_available_congestion_control" ]; then
-    for _a in bbr3 bbr2 bbrplus bbr westwood cubic; do
-      grep -qw "$_a" "$_n/tcp_available_congestion_control" && { wn "$_n/tcp_congestion_control" "$_a"; break; }
-    done
-  fi
-  for _kv in tcp_low_latency:1 tcp_ecn:2 tcp_fastopen:3 tcp_sack:1 tcp_timestamps:0; do
-    [ -f "$_n/${_kv%%:*}" ] && wn "$_n/${_kv%%:*}" "${_kv#*:}"
-  done
   # OnePlus / Oppo / Realme scheduler helpers
   [ -f /sys/module/opchain/parameters/chain_on ] && wn /sys/module/opchain/parameters/chain_on 0
   [ -f /proc/task_info/task_sched_info/task_sched_info_enable ] && wn /proc/task_info/task_sched_info/task_sched_info_enable 0
   [ -f /proc/oplus_scheduler/sched_assist/sched_assist_enabled ] && wn /proc/oplus_scheduler/sched_assist/sched_assist_enabled 0
-  _cc=$(cat "$_n/tcp_congestion_control" 2>/dev/null)
-  fin x_kcommon "scheduler, memory, storage and network tuned${_cc:+ (TCP $_cc)}"
+  fin x_kcommon "scheduler, memory and storage bookkeeping reduced"
 }

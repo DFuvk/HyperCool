@@ -7,9 +7,10 @@
 # and Location / Bluetooth off after a long screen-off (RADIO=1, RBT=1 adds Bluetooth, RMIN minutes: common/radio.sh)
 # and mobile data / NFC off after a screen-off (DATA=1, DMIN minutes, DMOB=1 mobile data, DNFC=1 NFC: common/radio.sh)
 # and automatic app optimization (DXF=1, DXM mode: dex2oat, screen off 10 min, once a week, no force recompile: common/dxauto.sh)
+# and hibernation of background apps (HIB=1: common/hibernate.sh, settings read live)
 # and the screen-off drain check (DRA=1: notification on high drain, the app that held wake locks the longest)
 # and F2FS garbage collection (GCF=1: screen off 10 min, once a week, battery under GCT-5 C; GCGB trigger in GB, GCTRIM=1 adds fstrim, GCT stop temperature: common/f2gc.sh)
-PCT=$1 GPU=$2 BST=$3 TCH=$4 CAP=${5:-0} PROF=${6:-1} WIFI=${7:-0} COMPACT=${8:-0} RADIO=${9:-0} RBT=${10:-0} RMIN=${11:-15} GCF=${12:-0} GCGB=${13:-4} GCTRIM=${14:-1} GCT=${15:-45} DXF=${16:-0} DXM=${17:-speed-profile} DATA=${18:-0} DMIN=${19:-10} DMOB=${20:-1} DNFC=${21:-1} DRA=${22:-0}
+PCT=$1 GPU=$2 BST=$3 TCH=$4 CAP=${5:-0} PROF=${6:-1} WIFI=${7:-0} COMPACT=${8:-0} RADIO=${9:-0} RBT=${10:-0} RMIN=${11:-15} GCF=${12:-0} GCGB=${13:-4} GCTRIM=${14:-1} GCT=${15:-45} DXF=${16:-0} DXM=${17:-speed-profile} DATA=${18:-0} DMIN=${19:-10} DMOB=${20:-1} DNFC=${21:-1} DRA=${22:-0} HIB=${23:-0}
 HC_DATA=/data/adb/hypercool
 MODDIR=/data/adb/modules/hypercool
 PIDF=$HC_DATA/soff_watch.pid
@@ -259,7 +260,8 @@ CONF=$HC_DATA/config.conf
 cfgv() { _cv=$(sed -n "s/^$1=//p" "$CONF" 2>/dev/null | tail -n 1 | tr -d '\r'); echo "${_cv:-$2}"; }
 WKS=$MODDIR/common/wakeups.sh
 WKOFF=$HC_DATA/wk.off
-_wj=""; _dcj=""
+_bok=0; _blast=""
+_wj=""; _dcj=""; _hj=""; _hdone=1; _hnext=0; _hcnt=0; _hlast=""
 # marks of checks a keeper killed hard left behind
 rm -f "$HC_DATA"/wk.chk.* 2>/dev/null
 # app wake locks at screen-off (one battery stats read, in the background); not while charging
@@ -268,6 +270,17 @@ drain_mark() {
   [ "$DRA" = 1 ] && [ "$_chg0" = 0 ] && [ -f "$WKS" ] && [ "$(cfgv drain_cause 1)" != 0 ] || return 0
   sh "$WKS" offmark >/dev/null 2>&1 &
   _wj=$!
+}
+# hibernation still running when the screen comes back: the rest of the apps are left alone
+hib_stop() {
+  [ -n "$_hj" ] && grep -q hibernate.sh "/proc/$_hj/cmdline" 2>/dev/null && kill "$_hj" 2>/dev/null
+  _hj=""
+}
+# minutes to wait after the screen goes off (2-60, default 5)
+hib_min() {
+  _hm=$(cfgv hibernate_min 5); case "$_hm" in ''|*[!0-9]*) _hm=5 ;; esac
+  [ "$_hm" -lt 2 ] && _hm=2; [ "$_hm" -gt 60 ] && _hm=60
+  echo "$_hm"
 }
 # a read still running when the screen comes back is stopped (its file is dropped with it)
 wk_stop() {
@@ -321,6 +334,7 @@ job_kill() { [ -n "$1" ] && grep -q soff_watch "/proc/$1/cmdline" 2>/dev/null &&
 jobs_stop() {
   job_kill "$_cj"; _cj=""
   job_kill "$_dcj"; _dcj=""
+  hib_stop
   wk_stop
   rm -f "$HC_DATA"/wk.chk.* 2>/dev/null
   # the GC job is stopped first, then gc_urgent / wake lock / fstrim are put back
@@ -379,7 +393,7 @@ feed_now() {
 note() {
   [ -n "$1" ] && { _scr=$1; _since=$(date '+%H:%M:%S'); }
   feed_now; _fd=$_fn
-  echo "screen=$_scr since=$_since changed=$(grep -c . "$SAVE") offs=$_offs feed=$_fd$([ "$SCR_BLBAD" = 1 ] && echo " backlight=ignored")${_al:+ last_off_caps=$_al}$([ "$WIFI" = 1 ] && echo " wifi_on=$_wcnt${_wlast:+ wifi_last=$_wlast}${_wpause:+ wifi_pauses=$_wpause}")$([ "$RADIO" = 1 ] && echo " radio_off=$_rcnt${_rlast:+ radio_last=$_rlast}")$([ "$DATA" = 1 ] && echo " data_off=$_dcnt${_dlast:+ data_last=$_dlast}")$([ "$GCF" = 1 ] && echo " gc_runs=$_gcnt${_glast:+ gc_last=$_glast}")$([ "$DXF" = 1 ] && echo " dex_runs=$_xcnt${_xlast:+ dex_last=$_xlast}")" > "$STATE"
+  echo "screen=$_scr since=$_since changed=$(grep -c . "$SAVE") offs=$_offs feed=$_fd$([ "$SCR_BLBAD" = 1 ] && echo " backlight=ignored")${_al:+ last_off_caps=$_al}$([ "$WIFI" = 1 ] && echo " wifi_on=$_wcnt${_wlast:+ wifi_last=$_wlast}${_wpause:+ wifi_pauses=$_wpause}")$([ "$RADIO" = 1 ] && echo " radio_off=$_rcnt${_rlast:+ radio_last=$_rlast}")$([ "$DATA" = 1 ] && echo " data_off=$_dcnt${_dlast:+ data_last=$_dlast}")$([ "$GCF" = 1 ] && echo " gc_runs=$_gcnt${_glast:+ gc_last=$_glast}")$([ "$DXF" = 1 ] && echo " dex_runs=$_xcnt${_xlast:+ dex_last=$_xlast}")$([ "$HIB" = 1 ] && echo " hib_runs=$_hcnt${_hlast:+ hib_last=$_hlast}") put_back=$_bok${_blast:+ put_back_last=$_blast}" > "$STATE"
 }
 note on
 while :; do
@@ -399,6 +413,7 @@ while :; do
       [ "$DATA" = 1 ] && { _dnext=$(( $(date +%s) + DDELAY )); _ddone=0; _dtries=0; _dseen=0; }
       [ "$GCF" = 1 ] && { _gnext=$(( $(date +%s) + GCDELAY )); _gdone=0; _gtries=0; }
       [ "$DXF" = 1 ] && { _xnext=$(( $(date +%s) + DXDELAY )); _xdone=0; _xtries=0; }
+      [ "$HIB" = 1 ] && { _hmin=$(hib_min); _hnext=$(( $(date +%s) + ${HC_HDELAY:-$((_hmin * 60))} )); _hdone=0; }
       note off
     elif [ "$WIFI" = 1 ]; then
       wifi_tick
@@ -428,6 +443,21 @@ while :; do
         fi
       else
         _ew=$((CDELAY - _cel))
+      fi
+    fi
+    if [ "$HIB" = 1 ] && [ "$_hdone" = 0 ]; then
+      _hkn=$(date +%s)
+      if [ "$_hkn" -ge "$_hnext" ]; then
+        # once per screen-off period; never while charging
+        _hdone=1
+        if ! bat_chg && [ -f "$MODDIR/common/hibernate.sh" ]; then
+          sh "$MODDIR/common/hibernate.sh" "$(cfgv hibernate_mode stop)" "$_hmin" >/dev/null 2>&1 &
+          _hj=$!; _hcnt=$((_hcnt + 1)); _hlast=$(date '+%H:%M:%S')
+          note ""
+        fi
+      else
+        _hkw=$((_hnext - _hkn)); [ "$_hkw" -lt 1 ] && _hkw=1
+        [ "$_hkw" -lt "$_ew" ] && _ew=$_hkw
       fi
     fi
     if [ "$RADIO" = 1 ] && [ "$_rdone" = 0 ]; then
@@ -529,6 +559,7 @@ while :; do
       # a compaction still running stops with the screen-off period
       job_kill "$_cj"; _cj=""
       job_kill "$_gj"; _gj=""
+      hib_stop
       gcf_restore screen-on
       dxa_stop screen
       _rb=$(lines "$SAVE"); _rrb=$(lines "$RSAVE"); _drb=$(lines "$DSAVE")
@@ -541,10 +572,12 @@ while :; do
       if [ "$_kl" -gt 0 ]; then
         _kleft=$(( $(lines "$SAVE") + $(lines "$RSAVE") + $(lines "$DSAVE") ))
         _km=$(( $(date +%s) - _toff )); if [ "$_km" -lt 90 ]; then _km="$_km s"; else _km="$(( (_km + 30) / 60 )) min"; fi
+        # Recent activity only gets a line when something did not go back: the routine case is
+        # counted in the keeper state (Keeper status), so it does not push real events out of the log
         if [ "$_kleft" -gt 0 ]; then
-          klog screen-off "Screen on, values put back" "$_kleft of $_kl not accepted yet, tried again at the next screen-on (off for $_km)"
+          klog screen-off "Screen on: values not all put back" "$_kleft of $_kl not accepted yet, tried again at the next screen-on (off for $_km)"
         else
-          klog screen-off "Screen on, values put back" "all $_kl back (off for $_km)"
+          _bok=$((_bok + 1)); _blast=$(date '+%H:%M:%S'); note ""
         fi
       fi
       # after the values are back: the battery stats read takes a second or two, in the background

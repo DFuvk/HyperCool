@@ -1,4 +1,4 @@
-# HyperCool - network stack tuning (path|value).
+# HyperCool - faster network connections (path|value).
 # tcp_syncookies stays enabled (security).
 /proc/sys/net/ipv4/tcp_slow_start_after_idle|0
 /proc/sys/net/ipv4/tcp_no_metrics_save|1

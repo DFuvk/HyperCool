@@ -603,6 +603,9 @@ html[data-style="mono"],html[data-style="mono"] body{
   // accent palettes (Material 3 roles, dark and light):
   // primary, on primary, primary container, on primary container, secondary container, on secondary container
   var PRESETS = [
+    // HyperCool's own colour: Glacier, the accent of the original HyperCool look
+    { id: 'glacier', n: 'HyperCool (Glacier)', sub: 'The original HyperCool colour', sw: 'linear-gradient(135deg,#64d9f1,#09505c)',
+      d: ['#64d9f1', '#023740', '#09505c', '#b0effd', '#2c4d54', '#c5eaf3'], l: ['#096a7a', '#ffffff', '#b0effd', '#002027', '#c5eaf3', '#002027'] },
     { id: 'blue', n: 'Blue', d: ['#b2c5ff', '#182e60', '#304578', '#dae2ff', '#404659', '#dce2f9'], l: ['#495d92', '#ffffff', '#dae2ff', '#304578', '#dce2f9', '#404659'] },
     { id: 'cyan', n: 'Cyan', d: ['#85d1e8', '#003641', '#004e5d', '#afecff', '#344a51', '#cee7ef'], l: ['#00687b', '#ffffff', '#afecff', '#004e5d', '#cee7ef', '#344a51'] },
     { id: 'green', n: 'Green', d: ['#98d4a3', '#003919', '#17512c', '#b4f1be', '#394b3b', '#d3e8d3'], l: ['#316a41', '#ffffff', '#b4f1be', '#17512c', '#d3e8d3', '#394b3b'] },
@@ -725,10 +728,12 @@ html[data-style="mono"],html[data-style="mono"] body{
   // a nearly grey wallpaper falls back to Blue
   function okHue(h) { var o = toOk(hex2rgb(h)); return { h: (Math.atan2(o[2], o[1]) * 180 / Math.PI + 360) % 360, c: Math.sqrt(o[1] * o[1] + o[2] * o[2]) }; }
   function nearestPreset(seed) {
-    var s = okHue(seed), best = PRESETS[0], bd = 1e9;
-    if (s.c < 0.03) return PRESETS[0];
+    // Glacier is HyperCool's own colour, not a wallpaper match: the wallpaper picks among the plain colours
+    var blue = PRESETS.filter(function (p) { return p.id === 'blue'; })[0];
+    var s = okHue(seed), best = blue, bd = 1e9;
+    if (s.c < 0.03) return blue;
     for (var i = 0; i < PRESETS.length; i++) {
-      if (PRESETS[i].id === 'grey') continue;
+      if (PRESETS[i].id === 'grey' || PRESETS[i].id === 'glacier') continue;
       var d = Math.abs(okHue(PRESETS[i].l[0]).h - s.h); d = Math.min(d, 360 - d);
       if (d < bd) { bd = d; best = PRESETS[i]; }
     }
@@ -914,6 +919,10 @@ html[data-style="mono"],html[data-style="mono"] body{
       <div class="item"><div class="row">
         <div class="txt"><div class="ttl">CPU use now</div><div class="desc">Which processes use the CPU over the next 2 seconds</div></div>
         <button class="btn tonal" id="cn-run">Measure</button>
+      </div></div>
+      <div class="item"><div class="row">
+        <div class="txt"><div class="ttl">Hibernate apps now</div><div class="desc">Stop user apps running in the background, except protected and in-use apps</div></div>
+        <button class="btn tonal" id="hb-run">Hibernate</button>
       </div></div>
     </div>
 
@@ -1172,9 +1181,11 @@ html[data-style="mono"],html[data-style="mono"] body{
     { k: 'bg_cpuset', s: 'heat', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Background apps on little cores',
       d: 'Background apps run only on little cores, never on big cores.',
-      x: 'Log daemons and light HALs can move to little cores. Sensors, vibration, Wi-Fi, GPS, Bluetooth and screen are never moved.',
+      x: 'Log daemons and light HALs can move to little cores. Sensors, vibration, Wi-Fi, GPS, Bluetooth and screen are never moved. Android\'s own background work (sync, backup, media scan, updates) gets its own CPU limit, and the scheduler may put it on cores that are already awake instead of waking idle ones. That work takes a little longer, at lower clocks.',
       fields: [{ k: 'bg_uclamp', label: 'Background CPU limit (uclamp.max)', def: '25', min: 10, max: 99, unit: '%', zero: true },
-               { k: 'bg_daemons', label: 'Also move logging / diagnostic daemons and light HALs to the background group', def: '1', bool: true }] },
+               { k: 'bg_daemons', label: 'Also move logging / diagnostic daemons and light HALs to the background group', def: '1', bool: true },
+               { k: 'bg_sys_uclamp', label: 'System background CPU limit (uclamp.max)', def: '50', min: 10, max: 99, unit: '%', zero: true },
+               { k: 'bg_sys_latency', label: 'Let system background work share cores that are already awake (latency_sensitive off)', def: '1', bool: true }] },
     { k: 'blur_off', s: 'heat', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Disable UI blur',
       d: 'Blur is off in the UI, Xiaomi Control Center, recents and folders.',
@@ -1277,6 +1288,12 @@ html[data-style="mono"],html[data-style="mono"] body{
       d: 'Chosen apps cannot run at boot or while idle.',
       x: 'Blocked apps work normally while open, but their notifications may not arrive. Core apps are always skipped.',
       text: { k: 'bg_block_pkgs', label: 'Blocked packages (comma separated)', filter: /[^A-Za-z0-9._,]/g, apps: true, sys: true } },
+    { k: 'hibernate', s: 'protect', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
+      t: 'Hibernate background apps',
+      d: 'A few minutes after the screen goes off, user apps still running in the background are put to sleep until you open them.',
+      x: 'Stopped apps stay asleep until you open them again: no notifications, reminders or background syncs from them until then. Put chat and other apps you need to hear from in Protected apps, they are never stopped. Also left alone: your launcher, keyboard, phone and SMS apps, accessibility and notification access apps, VPN, live wallpaper, apps with an alarm set, the app you had open, and anything playing music, video or navigation. Nothing happens while charging. Close background processes only is gentler: notifications still arrive, but it saves much less.',
+      fields: [{ k: 'hibernate_min', label: 'Wait after the screen goes off', def: '5', min: 2, max: 60, unit: 'min' },
+               { k: 'hibernate_mode', label: 'How', def: 'stop', sel: [['stop', 'Stop the app'], ['kill', 'Close background processes only']] }] },
     { k: 'app_disable', s: 'protect', src: 'rom', risk: 'exp', type: 'toggle', def: '0',
       t: 'Disable apps',
       d: 'Chosen apps are disabled, including system apps, until you turn this off.',
@@ -1394,8 +1411,10 @@ html[data-style="mono"],html[data-style="mono"] body{
       d: 'Extra kernel messages such as EDAC, BPF, OOM and F2FS are quieted.',
       x: 'This turns off more kernel logs than Turn off kernel debug covers: EDAC, BPF printk, ramdumps, OOM dumps and F2FS iostat.' },
     { k: 'x_net', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
-      t: 'Network stack tuning',
-      d: 'TCP Fast Open stays on, and slow start after idle and metric saving are skipped.', x: 'Connections go back to full speed right after a pause and repeat visits to a server skip one round trip, so transfers end sooner and the radio can sleep earlier. The higher file-watch limits only keep apps from running out of them.' },
+      t: 'Faster network connections',
+      d: 'Connections get back to full speed after a pause and reach known servers sooner, so transfers end earlier.',
+      x: 'This is tuned for speed, not battery. It saves no battery, and it can use more: data goes out at full speed right away instead of easing in, so the Wi-Fi or mobile radio works harder for a moment, most of all on a weak mobile signal. Turn it off if battery matters more to you than speed. The Faster TCP option picks the best congestion control the kernel has (BBR when present). Also raises the file-watch limits apps can use, so they do not run out of them.',
+      fields: [{ k: 'x_net_tcp', label: 'Faster TCP: BBR when present, SACK, ECN on request, low latency', def: '1', bool: true }] },
     { k: 'x_io', s: 'xk', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Extra block I/O tuning',
       d: 'Disk requests are merged and finished on the same CPU group.',
@@ -1410,9 +1429,9 @@ html[data-style="mono"],html[data-style="mono"] body{
       x: 'Balanced mode keeps top-app boost off, uses a normal storage queue, leaves bus and DRAM at normal levels, keeps MediaTek power limits on and turns GPU and touch boosts off. CPU and GPU limits stay with the caps.',
       fields: [{ k: 'x_bal_bus', label: 'Qualcomm: also unlock other bus voters (cpu-lat, cpu-bw, llccbw, cpubw), mostly older Snapdragon', def: '0', bool: true }] },
     { k: 'x_kcommon', s: 'xk', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
-      t: 'Common kernel and network tuning',
-      d: 'Small scheduling, memory and TCP changes are added, including BBR when present.',
-      x: 'This uses less scheduler and I/O accounting, skips swap read-ahead, runs vmstat every 15 s and picks the best TCP congestion control (BBR if available).' },
+      t: 'Common kernel tuning',
+      d: 'The kernel keeps fewer statistics and does less memory housekeeping in the background.',
+      x: 'Scheduler and I/O accounting is turned off, swap is read without read-ahead, memory is no longer compacted ahead of time and vmstat runs every 15 s instead of every second. Each saves only a little CPU time. The TCP tuning that used to be here is now an option of Faster network connections.' },
 
     // more: RAM management
     { k: 'x_ram_opt', s: 'xram', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
@@ -1518,7 +1537,7 @@ html[data-style="mono"],html[data-style="mono"] body{
  "gpu_idle": "Qualcomm: kgsl-3d0/force_clk_on, force_bus_on, force_rail_on, force_no_nap = 0|kgsl-3d0/bus_split = 1|kgsl-3d0/throttling = 1 (On) or 0 (Off), from the sub-option|kgsl-3d0/idle_timer = value (0 = untouched)|MediaTek / Mali: power_policy = coarse_demand",
  "walt_tune": "policy*/walt or schedutil: pl = 0, rtg_boost_freq = 0|policy*/walt or schedutil: hispeed_load, up_rate_limit_us (0 = untouched)|/proc/sys/walt/sched_boost = 0, sched_conservative_pl = 1 (only if the sub-option is on)|sub-option (Qualcomm): /proc/sys/walt (or kernel) sched_min_task_util_for_boost = 80, sched_min_task_util_for_colocation = 65, only when lower",
  "input_boost_off": "/proc/sys/walt/input_boost/input_boost_ms = 0, input_boost_freq = 0, sched_boost_on_input = 0|cpu_boost module input_boost_ms / powerkey_input_boost_ms = 0|MediaTek: /proc/perfmgr/tchbst/user/usrtch = enable 0",
- "bg_cpuset": "/dev/cpuset/background, system-background, restricted: cpus = little cluster|/dev/cpuctl/background, restricted: cpu.uclamp.max = value (0 = untouched)|sub-option: threads of logd, statsd, traced, tombstoned, diag-router, diag_mdlog, ipacm-diag, subsystem_ramdump, mobile_log_d, emdlogger*, connsyslogger, mdlogger, *hardware.atrace / health / memtrack / usb (never vibrator or lights), f2fs_gc, kgsl_low_prio -> /dev/cpuset/background/tasks and /dev/cpuctl/background/tasks (a restarted daemon goes back to its own group until the next boot)",
+ "bg_cpuset": "/dev/cpuset/background, system-background, restricted: cpus = little cluster|/dev/cpuctl/background, restricted: cpu.uclamp.max = value (0 = untouched)|/dev/cpuctl/system-background: cpu.uclamp.max = bg_sys_uclamp (0 = untouched), cpu.uclamp.latency_sensitive = 0 (bg_sys_latency)|sub-option: threads of logd, statsd, traced, tombstoned, diag-router, diag_mdlog, ipacm-diag, subsystem_ramdump, mobile_log_d, emdlogger*, connsyslogger, mdlogger, *hardware.atrace / health / memtrack / usb (never vibrator or lights), f2fs_gc, kgsl_low_prio -> /dev/cpuset/background/tasks and /dev/cpuctl/background/tasks (a restarted daemon goes back to its own group until the next boot)",
  "blur_off": "settings global disable_window_blurs = 1 (restored when off)|cmd window disable-blur 1|runtime props (Xiaomi ROMs): ro.miui.has_real_blur, ro.miui.has_blur, ro.miui.backdrop_sampling_enabled, persist.sys.background_blur_supported, persist.sysui.miui_blur_enabled, ro.surface_flinger.supports_background_blur, ro.sf.blurs_are_expensive, disableBlurs, enable_blurs_on_windows",
  "charge_cool": "power_supply/battery/charge_control_limit = charger thermal level|level = the one you pick in 'Charger level', else from the mA value using your Calibrate table, else a device-tree table, else an estimate|value read back after 2 s|Calibrate (manual, ~5 min while charging) steps every level, measures current_now and restores the original level",
  "charge_limit": "qcom-battery/night_charging = 1 (or power_supply/battery/night_charging)|keeper common/chg_watch.sh: every 15 s, if a charger is online and the flag is 0, writes 1 again|keeper stops when the switch is off (next boot), the module is disabled or removed|uninstall: keeper stopped, flag set back to 0",
@@ -1529,6 +1548,7 @@ html[data-style="mono"],html[data-style="mono"] body{
  "soff_radio": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/radio.sh|screen off for N min (soff_radio_min, 5-120; counted from the screen-off event, can fire late in deep sleep): Location: cmd location set-location-enabled false (fallback settings put secure location_mode 0), read back with cmd location is-location-enabled / settings get secure location_mode|Bluetooth (only with the Bluetooth option, and only when it is on): cmd bluetooth_manager disable (fallback svc bluetooth disable), skipped while dumpsys audio shows a started player, while dumpsys bluetooth_manager shows an active A2dp/Headset device, or when that dump is not in the expected format|what was switched off is written to soff_radio.save; screen on: location set-location-enabled true (fallback the old location_mode, 3 if unknown), cmd bluetooth_manager enable (fallback svc bluetooth enable, not in airplane mode); leftovers are put back at the next boot, when the keeper stops and on uninstall|a switch that is still on after the command is retried every 5 min, up to 12 times per screen-off period; nothing is polled",
  "soff_data": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/radio.sh|screen off for N min (soff_data_min, 5-120; counted from the screen-off event, can fire late in deep sleep)|mobile data (soff_data_mobile): svc data disable (fallback cmd phone data disable), read back from settings global mobile_data<default data subId> / mobile_data; not done in airplane mode, and held off while dumpsys telephony.registry shows a call (or no readable call state), while dumpsys audio shows a started player, or while tethering is on (dumpsys tethering TetheredState, or an ap/swlan/rndis/ncm/bt-pan interface up): looked at again every 5 min, at most 24 times per screen-off|NFC (soff_data_nfc): svc nfc disable (fallback cmd nfc disable-nfc), read back from dumpsys nfc mState|what was switched off is written to soff_data.save; screen on: svc data enable / svc nfc enable; leftovers are put back at the next boot, when the module is disabled, uninstalled or the keeper stops",
  "drain_alert": "keeper common/soff_watch.sh (shared with the screen-off profile)|screen-off periods of 30 min or more that started without the charger: battery level at screen-off and screen-on, drain line in keeper.log|notification (cmd notification, tag hc_drain) when off 1 h or more, 2% or more lost and (lost - 1)% per hour is at or above drain_alert_rate (whole-percent levels: the lower end)|drain_cause: common/wakeups.sh offmark at screen-off (dumpsys batterystats --charged, text without the battery history, in the background, file wk.off) and offtop at screen-on only when the drain was 1%/h or more: partial wake lock time per user app (uid 10000-19999) in that period, the top app from drain_cause_min minutes, package from cmd package list packages -U; skipped when the stats were reset in between or the time on battery is more than 10% short of the period (charger in)|charger in at some point of the period (logcat battery_status event with plugged > 0, or charging seen at a keeper wake-up): no notification and no app line, also with drain_cause off|the check runs in the background with its own copy of the mark (wk.chk.N), so a quick screen-off right after neither stops nor clears it|settings read live from config.conf, no restart needed",
+ "hibernate": "keeper common/soff_watch.sh (shared with the screen-off profile) runs common/hibernate.sh once per screen-off period, hibernate_min minutes after the screen goes off, not while charging|user apps (pm list packages -3) with a process in /proc are stopped: am force-stop --user 0 (Stop the app) or am kill --user 0 (background processes only); dual apps and work profile copies are left alone|skipped: protect_pkgs (also while Keep important apps alive is off), default dialer, SMS, keyboard and launcher, accessibility services, notification listeners, always-on VPN, live wallpaper, device admins, core apps, apps with an alarm clock (dumpsys alarm), and apps whose cmd activity get-uid-state is TOP, TOP_SLEEPING, a foreground service, IMPORTANT_BACKGROUND, HOME, PERSISTENT, HEAVY_WEIGHT or BACKUP; NONEXISTENT (only a dual app or work profile copy runs) is left alone|turning the screen on stops a run that is still going|one line in Recent activity when apps were stopped, counts in hibernate.state; settings read live, no restart needed",
  "ufs_pm": "*.ufshc (Qualcomm) or *.ufshci (MediaTek): clkgate_enable, clkscale_enable, hibern8_on_idle_enable = 1",
  "vm_tune": "vm.dirty_writeback_centisecs, vm.dirty_expire_centisecs|vm.dirty_background_ratio, vm.dirty_ratio|vm.stat_interval|(each 0 = untouched)",
  "io_tune": "/sys/block/{sd*,mmcblk*,dm-*}/queue/iostats = 0, add_random = 0",
@@ -1563,7 +1583,7 @@ html[data-style="mono"],html[data-style="mono"] body{
  "apply_delay": "nothing - only controls when the one-shot apply starts",
  "x_sched": "kernel: sched_migration_cost_ns 5 ms, sched_nr_migrate 32 (CFS debug kernels only), sched_util_clamp_min_rt_default 0 (RT tasks not forced to the top frequency)|schedutil: up_rate_limit_us 5000, hispeed_load 99 (only where present; skipped while Less aggressive CPU governor is on, it owns these two values)|interactive: go_hispeed_load 99|/dev/stune/top-app: schedtune.prefer_idle = 0, schedtune.boost = 0 (old kernels)",
  "x_kquiet": "edac/qcom-llcc log_ce, log_ue = 0|bpf_trace_printk enable = 0|printk_ratelimit = 5|vm.block_dump = 0, kernel.random wakeup thresholds 256/320|ftrace_dump_on_oops = 0, qcom_ramdump enable_dump_collection = 0|msm_show_resume_irq debug_mask = 0, vm.oom_dump_tasks = 0|f2fs iostat_enable = 0, platform snapshot_crashdumper = 0, qdf_log_dump_at_kernel_enable = N|soft_watchdog = 0, hung_task_timeout_secs = 0 (debug detectors only, the hardware watchdog stays on), printk console_suspend = Y",
- "x_net": "net.ipv4: tcp_slow_start_after_idle = 0|tcp_no_metrics_save = 1, tcp_fastopen = 3|fs.inotify max_user_watches = 262144, max_user_instances = 512|tcp_syncookies untouched (stays on)",
+ "x_net": "net.ipv4: tcp_slow_start_after_idle = 0|tcp_no_metrics_save = 1, tcp_fastopen = 3|fs.inotify max_user_watches = 262144, max_user_instances = 512|sub-option x_net_tcp: tcp_congestion_control = bbr3 / bbr2 / bbrplus / bbr / westwood / cubic (first available), tcp_low_latency 1, tcp_ecn 2 (only when the server asks), tcp_sack 1, tcp_timestamps 0|tcp_syncookies untouched (stays on)",
  "x_io": "/sys/block/sd*, mmcblk*, nvme*: nomerges = 0, rq_affinity = 1",
  "x_xiaomi_fw": "migt: enable_pkg_monitor = 0, glk_freq_limit_walt = 0, boost_policy = 0, glk_disable = 1, force_stask_to_big = 0|metis: suspend_vip_enable = 0, mi_link_enable = 0, mi_switch_enable = 0",
  "x_ram_opt": "vm: vfs_cache_pressure 80, overcommit 1/75, watermark_boost_factor 0, compaction_proactiveness 0, page-cluster 0|device_config: usap_pool_enabled = false, use_compaction = true (restored when off)|classic LMK minfree, or lmkd ro.lmk.* props by level (runtime only, lmkd.reinit; the old values are put back when the switch goes off)|vendor reclaim off: process_reclaim, mi_reclaim, memplus, opchain",
@@ -1575,7 +1595,7 @@ html[data-style="mono"],html[data-style="mono"] body{
  "x_diag": "ctl.stop charge_logger, misight, vendor.mi_misight (when running)|cmd looper_stats disable|settings system: anr_debugging_mechanism = 0, send_security_reports = 0 (restored when off)|runtime props where the ROM exposes them: nativehangII, turbosched, wifisalog, offlinelog.bootlog, camera mawlog|msm_vidc_debug = 0, qcom,mmrm debug = 0",
  "x_kpower": "/sys/module/workqueue/parameters/power_efficient = Y (state reported when read-only)|/sys/module/battery_saver/parameters/enabled = Y or 1 (custom kernels only)|stock values return after a reboot when off",
  "x_balanced": "/dev/stune/top-app schedtune.boost = 0, prefer_idle = 0|kernel.split_lock_mitigate = 1, sched_features NEXT_BUDDY + TTWU_QUEUE (when present)|vm.vfs_cache_pressure = 120 (not when RAM management is on)|mmcblk / sd queues: read_ahead_kb = 128, nr_requests = 64|/proc/touchpanel game_switch_enable 0, *_tp_limit_enable 1, *_tp_direction 0|Qualcomm: devfreq *memlat* / *latfloor* / *ddr-lat* min = lowest, max = highest; bus_dcvs DDR / LLCC / L3 hw_min = lowest, hw_max = highest|Qualcomm (sub-option): devfreq *cpu*-lat / *cpu*-bw / *llccbw* / *bus_llcc* / *bus_ddr* / *cpubw* / *kgsl-ddr-qos* full range|Qualcomm: kgsl devfreq/adrenoboost = 0, msm_perfmon touch_boost_enable / touch_boost_freq = 0, msm_performance touchboost = 0, pnpmgr touch_boost = 0|MediaTek: PPM PWR_THRO / THERMAL policies on, fpsgo force_onoff = 2, cpufreq_power_mode / cci_mode = 0, dramboost 0, EAS 2, GED KPI 1, GED gx_boost_on / gx_game_mode / ged_smart_boost / enable_gpu_boost / ged_boost_enable / gx_frc_mode / cpu_boost_policy / boost_extra = 0, gpu_boost_level = -1, pnpmgr mwn / boost_enable / boost_mode = 0, gpufreq not fixed, GED boost floor = lowest OPP, gpufreq_power_limited ignore_* = 0, battery_oc_protect_stop = stop 0, eara_thermal 1, DVFSRC ddr opp / vcore = -1, mtk-dvfsrc-devfreq full range|stock values return after a reboot when off",
- "x_kcommon": "kernel.sched_child_runs_first = 1, sched_autogroup_enabled = 0, sched_nr_migrate = 32, sched_schedstats = 0, task_cpustats_enable = 0|perf_cpu_time_max_percent = 3 (not when Debug off is on)|vm.page-cluster = 0, compaction_proactiveness = 0, stat_interval = 15 (not when VM tuning is on)|all block queues: iostats = 0, add_random = 0; mmc_core use_spi_crc = 0|tcp_congestion_control = bbr3 / bbr2 / bbrplus / bbr / westwood / cubic (first available), tcp_low_latency 1, tcp_ecn 2 (only when the server asks), tcp_fastopen 3, tcp_sack 1, tcp_timestamps 0|opchain chain_on 0, task_sched_info 0, oplus sched_assist 0|stock values return after a reboot when off",
+ "x_kcommon": "kernel.sched_child_runs_first = 1, sched_autogroup_enabled = 0, sched_nr_migrate = 32, sched_schedstats = 0, task_cpustats_enable = 0|perf_cpu_time_max_percent = 3 (not when Debug off is on)|vm.page-cluster = 0, compaction_proactiveness = 0, stat_interval = 15 (not when VM tuning is on)|all block queues: iostats = 0, add_random = 0; mmc_core use_spi_crc = 0|opchain chain_on 0, task_sched_info 0, oplus sched_assist 0|stock values return after a reboot when off",
  "x_job_limit": "device_config jobscheduler: min_ready_cpu_only_jobs_count, min_ready_non_active_jobs_count, max_cpu_only_job_batch_delay_ms, max_non_active_job_batch_delay_ms, conn_max_connectivity_job_batch_delay_ms (Balanced 5/8/1 h, Strong 8/12/2 h; only the ones dumpsys jobscheduler lists)|read back from dumpsys jobscheduler for up to 6 s: what took effect stays (Partial), the other keys keep their old value; nothing taken = put back and Unsupported|original values come back when off",
  "x_compact": "runs in the screen-off keeper common/soff_watch.sh (started when screen-off profile, Keep Wi-Fi on or this is on), library common/compact.sh|after 90 s off and free RAM below 30%: cmd activity compact some <process> <uid> for up to 40 user-app processes (not protected apps, launcher, keyboard, dialer, media, system), then waits 20 min|runs in a background job that stops when the screen turns on|state in compact.state (apps, free RAM before and after)",
  "x_eas": "/proc/sys/kernel/sched_energy_aware = 1 (only written when it is 0)|stock value returns after a reboot when off",
@@ -1863,7 +1883,7 @@ html[data-style="mono"],html[data-style="mono"] body{
   }
   var F_ICON = {
     cpu_cap: 'cpu', prime_park: 'park', gpu_cap: 'gpu', gpu_idle: 'power', walt_tune: 'gauge', input_boost_off: 'touch',
-    bg_cpuset: 'layers', blur_off: 'blur', charge_cool: 'bolt', charge_limit: 'batt80', cpu_idle: 'moon', soff_prof: 'moon', wifi_keep: 'signal', soff_radio: 'bed', soff_data: 'dataoff', drain_alert: 'bell', f2fs_gc: 'disk', x_dexopt_auto: 'disk', ufs_pm: 'disk',
+    bg_cpuset: 'layers', blur_off: 'blur', charge_cool: 'bolt', charge_limit: 'batt80', cpu_idle: 'moon', soff_prof: 'moon', wifi_keep: 'signal', soff_radio: 'bed', soff_data: 'dataoff', drain_alert: 'bell', hibernate: 'moon', f2fs_gc: 'disk', x_dexopt_auto: 'disk', ufs_pm: 'disk',
     vm_tune: 'mem', io_tune: 'pulse', debug_off: 'bug', debug_props: 'term', wakelock_block: 'lock', protect_apps: 'shield',
     app_bucket: 'apps', bg_block: 'ban', app_disable: 'warn', app_freezer: 'snow', doze_aggr: 'bed', devcfg_lock: 'sync', gms_doze: 'gms', scan_off: 'wifioff', loc_throttle: 'pulse',
     net_save: 'signal', standby: 'hour', stats_reduce: 'chart', tracking_off: 'eyeoff', debloat: 'trash', joyose_off: 'game', heat_guard: 'warn',
@@ -2563,15 +2583,15 @@ html[data-style="mono"],html[data-style="mono"] body{
   /* io */
   var ORDER = [
     ['Heat control (kernel)', ['cpu_cap', 'cpu_cap_lock', 'cpu_cap_little', 'cpu_cap_little_lock', 'prime_park', 'gpu_cap', 'gpu_cap_lock', 'gpu_idle', 'gpu_idle_timer', 'gpu_throttle', 'walt_tune', 'walt_hispeed_load',
-      'walt_up_rate', 'walt_sched_boost_off', 'walt_task_util', 'input_boost_off', 'bg_cpuset', 'bg_uclamp', 'bg_daemons', 'blur_off', 'heat_guard', 'heat_guard_temp', 'heat_guard_cpu', 'heat_guard_rr', 'charge_cool', 'charge_cool_level', 'charge_limit']],
+      'walt_up_rate', 'walt_sched_boost_off', 'walt_task_util', 'input_boost_off', 'bg_cpuset', 'bg_uclamp', 'bg_daemons', 'bg_sys_uclamp', 'bg_sys_latency', 'blur_off', 'heat_guard', 'heat_guard_temp', 'heat_guard_cpu', 'heat_guard_rr', 'charge_cool', 'charge_cool_level', 'charge_limit']],
     ['Battery drain (kernel)', ['soff_prof', 'soff_cpu', 'soff_gpu', 'soff_boost', 'wifi_keep', 'soff_radio', 'soff_radio_min', 'soff_radio_bt', 'soff_data', 'soff_data_min', 'soff_data_mobile', 'soff_data_nfc', 'drain_alert', 'drain_alert_notify', 'drain_alert_rate', 'drain_cause', 'drain_cause_min', 'cpu_idle', 'ufs_pm', 'vm_tune', 'vm_writeback', 'vm_stat_interval', 'vm_dirty_bg', 'vm_dirty', 'io_tune', 'debug_off',
       'debug_props', 'wakelock_block', 'wl_list']],
-    ['Protected apps', ['protect_apps', 'protect_pkgs', 'app_bucket', 'bg_block', 'bg_block_pkgs', 'app_disable', 'app_disable_pkgs']],
+    ['Protected apps', ['protect_apps', 'protect_pkgs', 'app_bucket', 'bg_block', 'bg_block_pkgs', 'hibernate', 'hibernate_min', 'hibernate_mode', 'app_disable', 'app_disable_pkgs']],
     ['Battery drain (HyperOS / ROM)', ['app_freezer', 'doze_aggr', 'doze_custom', 'devcfg_lock', 'gms_doze', 'scan_off', 'loc_throttle', 'net_save',
       'standby', 'stats_reduce', 'tracking_off', 'debloat', 'joyose_off', 'log_reduce']],
     ['Long battery / saver', ['saver_policy', 'saver_vib', 'saver_constants', 'saver_trigger', 'saver_dim', 'smart_px', 'refresh_rate', 'rr_adapt', 'rr_active', 'rr_idle', 'rr_hold', 'anim_scale']],
     ['Advanced', ['apply_delay', 'boot_notify']],
-    ['More: extra kernel', ['x_sched', 'x_kquiet', 'x_net', 'x_io', 'x_xiaomi_fw', 'x_balanced', 'x_bal_bus', 'x_kcommon']],
+    ['More: extra kernel', ['x_sched', 'x_kquiet', 'x_net', 'x_net_tcp', 'x_io', 'x_xiaomi_fw', 'x_balanced', 'x_bal_bus', 'x_kcommon']],
     ['More: RAM', ['x_ram_opt', 'x_ram_level', 'x_multitask', 'x_compact', 'x_zram', 'x_zram_size', 'x_zram_custom', 'x_zram_alg']],
     ['More: Google services', ['x_gms_freeze', 'x_track']],
     ['More: logging', ['x_log_nuke', 'x_diag', 'x_props']],
@@ -2767,6 +2787,7 @@ html[data-style="mono"],html[data-style="mono"] body{
         ].filter(Boolean).join(', ');
         if (info.ver) document.querySelectorAll('[data-ver]').forEach(function (v) { v.textContent = info.ver; });
         if (info.ver) document.querySelectorAll('[data-verlong]').forEach(function (v) { v.textContent = 'v' + info.ver.replace(/^v/i, '') + ' by Yudharn'; });
+        if (info.ver) whatsNew(info.ver);
       } else {
         $('dev').textContent = 'Not connected';
         $('devsub').textContent = '';
@@ -2909,7 +2930,34 @@ html[data-style="mono"],html[data-style="mono"] body{
     o.pct = null;
     return o;
   }
+  // the newest drain measured in the last 2 days (Recent activity): a screen-off period counted by the
+  // keeper or a day of Android's daily stats, shown while the count since unplugging has no result yet
+  function lastDrain() {
+    var now = Date.now(), all = kpAll || [];
+    for (var i = all.length - 1; i >= 0; i--) {
+      var e = all[i];
+      if (e.k !== 'drain' && e.k !== 'idle') continue;
+      var m = /^(?:Screen-off drain|Idle drain) (<?)([\d.]+)%\/h/.exec(e.a || '');
+      if (!m) continue;
+      var at = Date.parse(kpKey(e.t, e.y).replace(/^(\d{4})-(\d\d-\d\d) /, '$1-$2T'));
+      if (!(at > 0) || now - at > 2 * 86400000) return null;
+      var len = e.k === 'drain' ? String(e.r || '').split(':')[0] : 'Android daily stats';
+      return { lt: m[1], v: +m[2], when: e.t.slice(0, 11), what: len };
+    }
+    return null;
+  }
+  var drainArgs = null;
+  function drainLast(intro, rest) {
+    var lb = lastDrain();
+    if (!lb) return false;
+    $('idrain').innerHTML = (lb.lt ? '&lt;' : '') + lb.v.toFixed(2) + '<small>\u2009%/h</small>';
+    $('idrain').style.color = lb.lt ? '' : (lb.v > 2 ? 'var(--bad)' : (lb.v > 1 ? 'var(--warn)' : ''));
+    $('idle').innerHTML = intro + 'Last measured: <b>' + (lb.lt ? 'under ' : '') + lb.v.toFixed(2) + '% per hour</b> (' + esc(lb.when) +
+      (lb.what ? ', ' + esc(lb.what) : '') + '). ' + rest;
+    return true;
+  }
   function showDrain(o, err) {
+    drainArgs = [o, err];
     var el = $('idle');
     if (!HAS_KSU) {
       $('idrain').textContent = '\u2013';
@@ -2933,18 +2981,21 @@ html[data-style="mono"],html[data-style="mono"] body{
       return;
     }
     if (o && o.charging) {
+      if (drainLast(intro, 'Charging now: a new count starts when you unplug.')) return;
       $('idrain').textContent = '\u2013';
       $('idrain').style.color = '';
       el.innerHTML = intro + 'Charging now: the count starts again when you unplug.';
       return;
     }
     if (o && o.stepsSeen && o.pct === null) {
+      if (drainLast(intro, 'The count since you unplugged shows after the battery drops 1% with the screen off.')) return;
       $('idrain').textContent = '\u2013';
       $('idrain').style.color = '';
       el.innerHTML = intro + 'Counting since you unplugged: shows after the battery drops 1% with the screen off.';
       return;
     }
     if (!o || o.pct === null || (o.pct < 1 && o.hours < 1)) {
+      if (o && drainLast(intro, 'The count since the last full charge shows after the battery drops 1% with the screen off.')) return;
       $('idrain').textContent = '\u2013';
       el.innerHTML = intro + 'Shows after the battery drops 1% with the screen off' +
         (o && o.hours > 0 ? ' (' + Math.round(o.hours * 60) + ' min screen off so far).' : '.');
@@ -3536,6 +3587,107 @@ html[data-style="mono"],html[data-style="mono"] body{
     runCpuNow();
   };
 
+  /* what's new: once after each module update (remembered in this browser only) */
+  var NEWS = {
+    '2.3.7': [
+      ['Hibernate background apps', 'Off by default. A few minutes after the screen goes off, apps left running in the background are put to sleep. Protected apps are never touched. Hibernate apps now on Home does it at any time and shows the list first.'],
+      ['Screen-off drain check', 'Off by default. After a long screen-off it tells you how much battery went and which app kept the phone awake, with a button to block that app.'],
+      ['HyperCool (Glacier) colour', 'The original HyperCool accent is back in Settings, Colors.'],
+      ['Android background work', 'Background apps on little cores now also limits Android\'s own background work (sync, backup, media scan).'],
+      ['Faster network connections', 'The new name of Network stack tuning. The TCP part of Common kernel tuning moved here. It is made for speed, not battery.'],
+      ['Recent activity and Idle drain', 'Routine screen-on lines are gone and apps show by name. The Idle drain card shows the last measured value until a new one is ready.']
+    ]
+  };
+  function whatsNew(ver) {
+    var v = String(ver).replace(/^v/i, '').trim(), seen = null;
+    try { seen = localStorage.getItem('hc_seen_ver'); } catch (e) { seen = null; }
+    if (seen === v || !NEWS[v]) return;
+    var tries = 0;
+    (function show() {
+      // another dialog is open: look again a little later (at most a minute)
+      if ($('modal').classList.contains('show')) { if (++tries < 20) setTimeout(show, 3000); return; }
+      try { localStorage.setItem('hc_seen_ver', v); } catch (e) { /* no storage: it may show again next time */ }
+      modal('What\'s new in v' + v, NEWS[v].map(function (x) { return '<p><b>' + esc(x[0]) + '</b><br>' + esc(x[1]) + '</p>'; }).join(''),
+        [{ label: 'Got it', primary: true }]);
+    })();
+  }
+
+
+  /* hibernate apps now: the same rules as the screen-off hibernation */
+  function hbMode() { return String(cfg.hibernate_mode || 'stop') === 'kill' ? 'kill' : 'stop'; }
+  function runHibernate() {
+    var btn = $('hb-run'), kill = hbMode() === 'kill';
+    btn.disabled = true; btn.textContent = 'Working…';
+    exec('sh /data/adb/modules/' + MODID + '/common/hibernate.sh ' + hbMode() + ' now').then(function (r) {
+      var line = String(r.stdout || '').split('\n').filter(function (l) { return /^R\|/.test(l); }).pop() || '';
+      var f = line.split('|');
+      if (f[1] === 'busy') { snack('Hibernation is already running'); return; }
+      if (f[1] === 'noalarm') {
+        modal('Nothing was stopped', '<p>The alarm list of this ROM could not be read, so HyperCool cannot tell which app has an alarm set. ' +
+          'No app was stopped, so no alarm gets lost.</p>', [{ label: 'Close' }]);
+        return;
+      }
+      if (f.length < 8) throw new Error('No answer from hibernate.sh.');
+      var pk = f[7] ? f[7].split(',').filter(Boolean) : [], lb = {};
+      try { lb = pk.length ? nativeLabels(pk) : {}; } catch (x) { lb = {}; }
+      var sk = [];
+      if (+f[2]) sk.push(f[2] + ' protected or default');
+      if (+f[3]) sk.push(f[3] + ' in use');
+      if (+f[4]) sk.push(f[4] + ' with an alarm');
+      if (+f[5]) sk.push(f[5] + ' with an unknown state');
+      var h = '<p><b>' + pk.length + '</b> ' + (pk.length === 1 ? 'app' : 'apps') + (kill ? ' closed in the background.' : ' stopped until you open them.') + '</p>' +
+        (pk.length ? '<p>' + pk.map(function (p) { return esc(lb[p] || p); }).join(', ') + '</p>' : '<p>Nothing else was running in the background.</p>') +
+        (sk.length ? '<p class="wk-n">Left alone: ' + esc(sk.join(', ')) + '.</p>' : '') +
+        (+f[6] ? '<p class="wk-n">' + esc(f[6]) + ' could not be stopped.</p>' : '');
+      modal('Hibernate apps now', h, [{ label: 'Close' }]);
+      try { loadKeepers(true); } catch (x) { }
+    }).catch(function (e) {
+      modal('Hibernation unavailable', '<p>' + esc(e && e.message ? e.message : 'The command did not answer.') +
+        '</p><p>Check that HyperCool is installed and the KernelSU manager is working, then try again.</p>', [{ label: 'Close' }]);
+    }).then(function () {
+      btn.disabled = false; btn.textContent = 'Hibernate';
+    });
+  }
+  $('hb-run').onclick = function () {
+    if (!HAS_KSU) return;
+    var kill = hbMode() === 'kill', btn = $('hb-run');
+    btn.disabled = true; btn.textContent = 'Checking…';
+    // preview: the same checks as a real run, nothing is stopped
+    exec('sh /data/adb/modules/' + MODID + '/common/hibernate.sh ' + hbMode() + ' preview').then(function (r) {
+      var line = String(r.stdout || '').split('\n').filter(function (l) { return /^R\|/.test(l); }).pop() || '';
+      var f = line.split('|');
+      if (f[1] === 'busy') { snack('Hibernation is already running'); return; }
+      if (f[1] === 'noalarm') {
+        modal('Nothing can be stopped', '<p>The alarm list of this ROM could not be read, so HyperCool cannot tell which app has an alarm set. ' +
+          'No app is stopped, so no alarm gets lost.</p>', [{ label: 'Close' }]);
+        return;
+      }
+      if (f.length < 8) throw new Error('No answer from hibernate.sh.');
+      var pk = f[7] ? f[7].split(',').filter(Boolean) : [], lb = {};
+      try { lb = pk.length ? nativeLabels(pk) : {}; } catch (x) { lb = {}; }
+      var sk = [];
+      if (+f[2]) sk.push(f[2] + ' protected or default');
+      if (+f[3]) sk.push(f[3] + ' in use');
+      if (+f[4]) sk.push(f[4] + ' with an alarm');
+      var left = (sk.length ? '<p class="wk-n">Left alone: ' + esc(sk.join(', ')) + '.</p>' : '');
+      if (!pk.length) {
+        modal('Nothing to hibernate', '<p>No user app is running in the background right now, apart from the ones that are always left alone.</p>' + left, [{ label: 'Close' }]);
+        return;
+      }
+      modal('Hibernate ' + pk.length + (pk.length === 1 ? ' app?' : ' apps?'),
+        '<p>' + pk.map(function (p) { return '<b>' + esc(lb[p] || p) + '</b>'; }).join(', ') + '</p>' +
+        '<p>' + (kill ? 'Their background processes are closed. Their notifications still arrive.' :
+          'They stay asleep until you open them: no notifications, reminders or syncs from them until then.') + '</p>' + left +
+        '<p class="wk-n">Put an app in Protected apps to keep it out of this list. The list is checked again when you press Hibernate.</p>',
+        [{ label: 'Cancel' }, { label: 'Hibernate', primary: true, fn: runHibernate }]);
+    }).catch(function (e) {
+      modal('Hibernation unavailable', '<p>' + esc(e && e.message ? e.message : 'The command did not answer.') +
+        '</p><p>Check that HyperCool is installed and the KernelSU manager is working, then try again.</p>', [{ label: 'Close' }]);
+    }).then(function () {
+      btn.disabled = false; btn.textContent = 'Hibernate';
+    });
+  };
+
   /* charge calibration */
   var calTable = {};
   function fillLevels(cur) {
@@ -3654,6 +3806,8 @@ html[data-style="mono"],html[data-style="mono"] body{
       ' echo "== cpu keeper"; cat $D/cpu_watch.state 2>/dev/null; cat $D/cpu_keep.list 2>/dev/null;' +
       ' echo "== core_ctl (prime cluster)"; P=; M=0; for x in /sys/devices/system/cpu/cpufreq/policy*; do m=$(cat $x/cpuinfo_max_freq 2>/dev/null); [ -n "$m" ] && [ "$m" -gt "$M" ] && { M=$m; P=$x; }; done; set -- $(cat $P/related_cpus 2>/dev/null); c=/sys/devices/system/cpu/cpu$1/core_ctl; echo "cpu=$1"; for n in enable min_cpus max_cpus; do echo "$n=$(cat $c/$n 2>/dev/null) mode=$(stat -c %a $c/$n 2>/dev/null)"; done; echo "isolated=[$(cat /sys/devices/system/cpu/isolated 2>/dev/null)] online=$(cat /sys/devices/system/cpu/cpu$1/online 2>/dev/null)"; grep -A12 "^CPU$1" $c/global_state 2>/dev/null;' +
       ' echo "== dexopt"; [ -f $D/dexopt/state ] && { cat $D/dexopt/state; tail -n 20 $D/dexopt/fail.log 2>/dev/null; };' +
+      ' echo "== activity log (last 50)"; tail -n 50 $D/keeper.log 2>/dev/null;' +
+      ' echo "== hibernate"; cat $D/hibernate.state 2>/dev/null;' +
       ' echo "== boot log"; cat $D/boot.log 2>/dev/null || echo "(no boot log yet)";' +
       ' } > "$f" 2>&1 || { echo "write failed" >&2; exit 4; }; echo "OK|$f"').then(function (r) {
       var m = /OK\|(.+)/.exec(r.stdout || '');
@@ -3902,7 +4056,10 @@ html[data-style="mono"],html[data-style="mono"] body{
     return (txt || '').split('\n').map(function (l) {
       var a = l.split('|');
       return a.length >= 4 ? { t: a[0], k: a[1], a: a[2], r: a.slice(3).join('|') } : null;
-    }).filter(Boolean);
+    }).filter(function (e) {
+      // older builds logged every plain screen-on with all values back: routine, not shown any more
+      return e && !(e.k === 'screen-off' && e.a === 'Screen on, values put back' && /^all \d+ back/.test(e.r));
+    });
   }
   // "Kept awake by <package>": app name and a way to block it in the background
   var kpLbl = {};
@@ -3911,6 +4068,27 @@ html[data-style="mono"],html[data-style="mono"] body{
     return kpLbl[pkg];
   }
   function kpList(k) { return String(cfg[k] || '').split(',').filter(Boolean); }
+  // package names inside a line (hibernation, "also" apps of a drain line) shown as app names;
+  // the labels of all lines are looked up in one call and kept
+  var PKG_RE = /\b[a-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+){1,}\b/g;
+  function kpPkgLine(e) {
+    return (e.k === 'screen-off' || e.k === 'tools') && /^(Apps hibernated|Background apps closed)/.test(e.a || '') ||
+      e.k === 'drain' && /^Kept awake by /.test(e.a || '');
+  }
+  function kpLabelAll(list) {
+    var need = [];
+    list.forEach(function (e) {
+      if (!kpPkgLine(e)) return;
+      (String(e.r || '').match(PKG_RE) || []).concat(String(e.a || '').match(PKG_RE) || []).forEach(function (p) {
+        if (!(p in kpLbl) && need.indexOf(p) < 0) need.push(p);
+      });
+    });
+    if (!need.length) return;
+    var m = {};
+    try { m = nativeLabels(need); } catch (x) { m = {}; }
+    need.forEach(function (p) { kpLbl[p] = m[p] || ''; });
+  }
+  function kpNames(txt) { return String(txt).replace(PKG_RE, function (p) { return kpLbl[p] || p; }); }
   function kpApp(e) {
     var m = e.k === 'drain' && /^Kept awake by ([A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+)$/.exec(e.a || '');
     if (!m) return '';
@@ -3923,8 +4101,9 @@ html[data-style="mono"],html[data-style="mono"] body{
     return '<button class="btn tonal kp-blk" data-pkg="' + esc(p) + '">Block in background</button>';
   }
   function kpRows(list) {
+    kpLabelAll(list);
     return list.slice().reverse().map(function (e) {
-      var tn = kpTone(e), r = e.k === 'boot' ? kpKeys(e.r) : e.r, a = e.a;
+      var tn = kpTone(e), r = e.k === 'boot' ? kpKeys(e.r) : (kpPkgLine(e) ? kpNames(e.r) : e.r), a = e.a;
       var am = e.k === 'drain' && /^Kept awake by (\S+)$/.exec(a || ''), al = am ? kpLabel(am[1]) : '';
       if (al) a = 'Kept awake by ' + al;
       return '<li' + (tn ? ' class="' + tn + '"' : '') + '><div class="kh"><time>' + esc(e.t.slice(0, 11)) + '</time><span class="ka">' + esc(a) + '</span></div>' +
@@ -3969,11 +4148,13 @@ html[data-style="mono"],html[data-style="mono"] body{
       : '<li class="kp-empty">No activity yet. Cache cleans, app optimization, F2FS cleanup, heat events, manual actions and the daily idle drain show up here.</li>';
     $('kp-log').disabled = !kpAll.length;
     kpBind($('kp-list').parentNode);
+    // the Idle drain card may have been drawn before the log arrived: draw it again with the log
+    if (drainArgs) showDrain(drainArgs[0], drainArgs[1]);
   }
   /* keeper status: which background keepers run now (pid file + /proc), tap to open */
   var KS = [
     { p: 'soff_watch', n: 'soff_watch', st: 'soff_watch.state', k: 'screen-off', t: 'Screen-off keeper',
-      on: ['soff_prof', 'wifi_keep', 'x_compact', 'soff_radio', 'soff_data', 'drain_alert', 'f2fs_gc', 'x_dexopt_auto'] },
+      on: ['soff_prof', 'wifi_keep', 'x_compact', 'soff_radio', 'soff_data', 'drain_alert', 'hibernate', 'f2fs_gc', 'x_dexopt_auto'] },
     { p: 'cpu_watch', n: 'cpu_watch', st: 'cpu_watch.state', k: 'cpu', t: 'CPU cap keeper', list: 1 },
     { p: 'chg_watch', n: 'chg_watch', st: 'chg_watch.state', k: 'charge', t: 'Charge limit keeper', on: ['charge_limit'], sk: 'charge_limit' },
     { p: 'rr_watch', n: 'rr_watch', st: 'rr_watch.state', k: 'refresh', t: 'Touch refresh rate keeper', on: ['rr_adapt'], sk: 'rr_adapt' },
@@ -4620,7 +4801,7 @@ html[data-style="mono"],html[data-style="mono"] body{
     else if (s.c === 'mono') sw.style.background = MONO_SW;
     else {
       var p = T.presets.filter(function (x) { return x.id === s.c; })[0];
-      sw.style.background = p ? p.h : '';
+      sw.style.background = p ? (p.sw || p.h) : '';
     }
   }
   function apDarkDlg() {
@@ -4673,7 +4854,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       h += row('mono', 'Mono', 'Black and white, the default', MONO_SW);
       h += row('dynamic', 'System (Dynamic)', dsub, 'linear-gradient(135deg,#1a73e8 0 34%,#d93025 34% 67%,#f9ab00 67%)');
       h += '<div class="apsep"></div>';
-      T.presets.forEach(function (p) { h += row(p.id, p.n, '', p.h); });
+      T.presets.forEach(function (p) { h += row(p.id, p.n, p.sub || '', p.sw || p.h); });
       return h;
     }
     function wire() {
