@@ -4,8 +4,8 @@
 # HyperCool - battery calibration keeper (only runs during a calibration started from the WebUI)
 # One full cycle lets the fuel gauge learn the real capacity: use the phone down to 5%, charge to
 # 100% without unplugging, keep it plugged in until charging really ends (status Full + 5 min,
-# at most 1 h after 100%). Checks once a minute, no wakelock; the charge
-# limit keeper pauses itself while a calibration is running. State: phase=discharge|charge|hold|done
+# at most 1 h after 100%). Checks once a minute, no wakelock; Pause / bypass
+# charging pauses itself while a calibration is running. State: phase=discharge|charge|hold|done
 export PATH=/system/bin:/system/xbin:/vendor/bin:/data/adb/ksu/bin:/data/adb/ap/bin:/data/adb/magisk:"$PATH"
 HC_DATA=/data/adb/hypercool
 MODDIR=/data/adb/modules/hypercool

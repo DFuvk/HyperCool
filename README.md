@@ -93,12 +93,14 @@ Everything is configured via WebUI and applied on the next boot. Only lightweigh
 `Every feature has its own switch in the WebUI. Changes apply at boot; turning a feature off (or uninstalling) restores the original values. Unsupported features are skipped.`
 
 **Heat control**
-- Big / little core and GPU frequency caps (with lock), GPU power collapse
+- Big / little core, GPU and memory bus frequency caps (with lock), GPU power collapse
 - Calmer CPU governor (WALT / schedutil), kernel touch boost off
 - Background apps on little cores, prime core parking (Qualcomm)
 - CPU keeper: puts the caps back when the ROM undoes them
-- UI blur off, cooler charging and ~80% charge limit (Xiaomi)
+- UI blur off and cooler charging
 - Heat guard (experimental): lower refresh rate and big-core limit while the battery is hot
+- Pause / bypass charging when hot, at a level or while gaming (charging switch, 0 mA current limit or charger input off; Qualcomm and MediaTek), battery temperature warning
+- Game battery mode: Android Game Mode with a 60 FPS cap and lower render resolution for games
 
 **Battery drain (kernel)**
 - Adaptive screen-off power profile, deep CPU sleep, UFS power saving
@@ -107,6 +109,7 @@ Everything is configured via WebUI and applied on the next boot. Only lightweigh
 - Hibernate background apps a few minutes after the screen goes off (Protected, default and in-use apps are skipped), plus Hibernate apps now on Home
 - Screen-off drain check: drain per screen-off, alert when high, and the app that kept the phone awake
 - F2FS cleanup and app optimization (dex2oat) once a week with the screen off
+- Battery history: 48 h chart of level, temperature and screen-on / screen-off drain
 
 **Apps**
 - Keep important apps alive, restrict other user apps
@@ -119,20 +122,20 @@ Everything is configured via WebUI and applied on the next boot. Only lightweigh
 
 **Long battery**
 - Stronger Battery Saver with auto level, screen dimming, Smart Pixels
-- Refresh rate cap, adaptive refresh rate, animation scale
+- Refresh rate cap, adaptive refresh rate, animation scale, lower screen resolution
 
 **Extras**
 - Scheduler, I/O and common kernel tuning, balanced system defaults, MiGT / Metis off
 - Faster network connections (TCP / BBR; for speed, not battery)
 - RAM optimizer, multitasking profile, ZRAM size and compression
 - GMS ads / analytics freeze, log cleanup, vendor diagnostics off
-- Kernel power saving, Energy Aware Scheduler, idle USB / I2C / SPI power saving
+- Kernel power saving, Energy Aware Scheduler (C-state aware), idle USB / I2C / SPI power saving
 - Fewer background jobs, compact background apps when RAM is low
-- Auto app cache clean, on-demand app optimization, boot notification
+- Auto app cache clean, on-demand app optimization, leftover app folder cleanup, boot notification
 
 **Home**
 - Search, Recent activity and Keeper status
-- Idle drain, battery check and battery calibration
+- Idle drain, battery check, battery history and battery calibration
 - Top battery use, Wake sources (with the apps holding wake locks), CPU use now
 
 ## Requirements

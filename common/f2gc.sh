@@ -86,7 +86,7 @@ gcf_unusable() {
   case "$_gv" in ''|*[!0-9]*) return 1 ;; esac
   echo "$_gv"
 }
-# charging, or plugged in while the charge limit / night charging holds the battery ("Not charging")
+# charging, or plugged in while a charging pause holds the battery ("Not charging")
 gcf_chg() {
   case "$(cat "$HC_PS/battery/status" 2>/dev/null)" in Charging|Full) return 0 ;; esac
   for _go in usb ac wireless dc; do

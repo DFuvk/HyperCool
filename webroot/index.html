@@ -396,6 +396,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .ccard{background:var(--surf);border-radius:var(--r-card);padding:18px 18px 14px}
 .ccard .cbig{font-size:15.5px;font-weight:600;line-height:1.3;color:var(--on)}
 .ccard .clbl{font-size:13px;color:var(--on2);margin-top:2px}
+.bh-svg{width:100%;height:auto;display:block;margin:6px 0 2px}
+.bh-svg text{font-size:9px;fill:var(--on2)}
+.bh-leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--on2);margin:2px 0 6px}
+.bh-leg i{display:inline-block;width:12px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.lo-list{margin:6px 0 10px;padding:0;list-style:none;max-height:42vh;overflow:auto}
+.lo-list li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:13px;word-break:break-all}
+.lo-list li span{color:var(--on2);white-space:nowrap}
 .ccard table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
 .ccard td{padding:7px 0;border-top:1px solid var(--line);color:var(--on2)}
 .ccard td+td{text-align:right;color:var(--on);font-weight:500}
@@ -909,6 +916,10 @@ html[data-style="mono"],html[data-style="mono"] body{
         <button class="btn tonal" id="bc-run">Check battery</button>
       </div></div>
       <div class="item"><div class="row">
+        <div class="txt"><div class="ttl">Battery history</div><div class="desc">Level, temperature and drain with the screen on and off, last 48 h</div></div>
+        <button class="btn tonal" id="bh-run">Show history</button>
+      </div></div>
+      <div class="item"><div class="row">
         <div class="txt"><div class="ttl">Top battery use</div><div class="desc">Apps, system apps and hardware since the last charge</div></div>
         <button class="btn tonal" id="td-run">Show usage</button>
       </div></div>
@@ -991,6 +1002,7 @@ html[data-style="mono"],html[data-style="mono"] body{
         <div class="txt"><div class="xhead"><div class="ttl">Clean RAM now</div><button type="button" class="xtoggle" aria-expanded="false" aria-controls="rc-x" aria-label="Show details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg></button></div><div class="desc">Stops background apps when the phone feels slow.</div><div class="xpanel" id="rc-x" hidden>It doesn't save battery, apps that restart later use more. Safe: cached apps only. Aggressive: other user apps too. Extreme: everything except core system and push.</div><div class="xactions"><div class="pill"><select id="rc-mode" aria-label="RAM clean mode"><option value="safe">Safe</option><option value="aggressive">Aggressive</option><option value="extreme">Extreme</option></select></div><button class="btn fill" id="rc-run">Clean</button></div></div>
       </div></div>
       <div class="item press" id="t-junk"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5h17M9 6.5V4h6v2.5M6 6.5l1 14h10l1-14M10 10.5v6M14 10.5v6"/></svg></div><div class="txt"><div class="ttl">Clean junk files now</div><div class="desc">Deletes crash dumps, ANR traces, old logs and thumbnails, then runs fstrim</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
+      <div class="item press" id="t-left"><div class="row"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2.5h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M9.5 12.5l5 5M14.5 12.5l-5 5"/></svg></div><div class="txt"><div class="ttl">Leftover app folders</div><div class="desc">Finds Android/data and Android/obb folders of apps that are no longer installed, shows them first, then deletes them</div></div><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span></div></div>
     </div>
   </section>
 
@@ -1160,6 +1172,12 @@ html[data-style="mono"],html[data-style="mono"] body{
       x: 'The frequency options come from your own GPU table, so the UI stays smooth. GPU thermal throttling is set in GPU power collapse.',
       o: [['0', 'Off'], ['1', 'One step below max'], ['2', 'Two steps below max'], ['3', 'Three steps below max']],
       fields: [{ k: 'gpu_cap_lock', label: 'Lock the cap so the ROM cannot raise it', def: '1', bool: true, inline: true }] },
+    { k: 'bus_cap', s: 'heat', src: 'kernel', risk: 'moderate', type: 'level', def: '0', only: 'QUALCOMM',
+      t: 'Memory bus frequency cap',
+      d: 'The memory bus (RAM and system cache) cannot run at its highest speed, so the chip makes less heat under heavy load.',
+      x: 'The bus between the CPU, the system cache (LLCC) and RAM (DDR) speeds up with load, and at the top it adds heat too. This holds its highest step lower, from your own frequency table. At idle nothing changes, because the bus is low then anyway. Heavy games can lose a few FPS or stutter a little; normal use does not feel it. GPU, L3 cache and storage are not touched. Some kernels refuse that; then only the requests from the CPUs are capped, so the effect is smaller. Set once at boot; turning it off brings the stock range back after a reboot. Turn on Lock so the ROM cannot raise it again.',
+      o: [['0', 'Off'], ['90', 'Light 90%'], ['75', 'Balanced 75%'], ['60', 'Strong 60%']],
+      fields: [{ k: 'bus_cap_lock', label: 'Lock the cap so the ROM cannot raise it', def: '1', bool: true, inline: true }] },
     { k: 'gpu_idle', s: 'heat', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'GPU power collapse',
       d: 'The GPU sleeps between frames with lower clocks and a shorter timer.',
@@ -1197,16 +1215,33 @@ html[data-style="mono"],html[data-style="mono"] body{
       fields: [{ k: 'heat_guard_temp', label: 'Battery temperature limit', def: '42', min: 38, max: 50, unit: '°C' },
                { k: 'heat_guard_cpu', label: 'Big-core limit while hot', def: '70', min: 40, max: 95, unit: '%' },
                { k: 'heat_guard_rr', label: 'Refresh rate while hot', def: '60', sel: [['0', 'Don’t change'], ['60', '60 Hz'], ['90', '90 Hz']] }] },
+    { k: 'temp_warn', s: 'heat', src: 'kernel', risk: 'safe', type: 'toggle', def: '0',
+      t: 'Battery temperature warning',
+      d: 'A notification tells you when the battery gets too hot, so you can stop gaming or charging for a while.',
+      x: 'The battery temperature is read every minute while the phone is awake (every 20 s on the charger). You get one notification when it reaches the limit, and the next one only after it was 3 °C cooler. It only warns, nothing is slowed down; Heat guard does that. Uses the battery keeper.',
+      fields: [{ k: 'temp_warn_temp', label: 'Warn at', def: '45', min: 40, max: 52, unit: '°C' }] },
+    { k: 'game_mode', s: 'heat', src: 'rom', risk: 'safe', type: 'toggle', def: '0',
+      t: 'Game battery mode',
+      d: 'Games run at a lower FPS and render resolution, so they heat up less and use less battery.',
+      x: 'This uses Android\'s own Game Mode (Android 13 or newer): the games get battery mode with an FPS cap and a lower render resolution. Only the picture inside the game is rendered smaller, the screen resolution stays the same. From Android 14, leave the list empty to use every installed app that Android counts as a game, or choose the games yourself. Android 13 cannot tell which apps are games, so choose them there (also for bypass while gaming); it only takes 30, 45, 60, 90 or 120 FPS. Android keeps the mode after a reboot, so turning this off puts the old mode back at the next boot. Some games ignore it, and the game booster of your ROM can set its own FPS.',
+      fields: [{ k: 'game_mode_fps', label: 'FPS cap', def: '60', sel: [['30', '30 FPS'], ['45', '45 FPS'], ['60', '60 FPS (default)'], ['90', '90 FPS'], ['120', '120 FPS'], ['0', 'Don’t change']] },
+               { k: 'game_mode_scale', label: 'Render resolution', def: '80', sel: [['100', 'Full (100%)'], ['90', '90%'], ['80', '80%'], ['70', '70%'], ['60', '60%'], ['50', '50%']] }],
+      text: { k: 'game_mode_pkgs', label: 'Games (comma separated, empty = every installed game)', filter: /[^A-Za-z0-9._,]/g, apps: true } },
     { k: 'charge_cool', s: 'heat', src: 'kernel', risk: 'exp', type: 'value', def: '0', unit: 'mA', min: 500, max: 12000,
       t: 'Cooler charging (current limit)',
       d: 'Charging current is limited by charger temperature or a chosen mA value.',
       x: 'Pick a level or type a mA value. Run Calibrate once, because every phone is different.',
       fields: [{ k: 'charge_cool_level', label: 'Charger level (overrides the mA value)', def: '0', levelsel: true }],
       o: [['0', 'Off'], ['5000', '5000 mA'], ['3000', '3000 mA'], ['2000', '2000 mA'], ['1500', '1500 mA']] },
-    { k: 'charge_limit', s: 'heat', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0', only: 'XIAOMI',
-      t: 'Charge limit ~80% (night charging)',
-      d: 'Charging stops near 80% on Xiaomi kernels and is checked again after replug.',
-      x: 'Xiaomi night_charging holds the charge at 80%. A small keeper sets it again after every replug (every 15 s, no wakelock). Xiaomi kernels only.' },
+    { k: 'chg_pause', s: 'heat', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
+      t: 'Pause charging / bypass charging',
+      d: 'Charging pauses while the battery is hot, at the level you pick or while you play, and the charger powers the phone instead.',
+      x: 'Works on Qualcomm and MediaTek kernels. Bypass: a charging switch of the kernel is turned off, or the charge current is held at 0 on kernels without one, so the charger keeps powering the phone and the battery is left alone. That keeps it cooler while gaming on the charger. Cut: the charger input is switched off, so the battery is used for a while even though the cable is in (never used while gaming). Auto tries the switch first, then the current limit, then cut. The one that works is found the first time charging is paused and remembered. Bypass while gaming uses the games of Game battery mode (its list, or every installed game when the list is empty). Charging comes back 3 °C cooler (at least 2 minutes later), 3% lower or when the game is closed, and always when you unplug, under 15%, during battery calibration or the charger calibration of Cooler charging, and when this is turned off. Uses the battery keeper: every 20 s on the charger (5 s while a current limit holds the bypass, the ROM may raise it again), every minute otherwise, never waking the phone.',
+      fields: [{ k: 'chg_pause_temp', label: 'Pause at battery temperature', def: '40', min: 36, max: 48, unit: '°C', zero: true },
+               { k: 'chg_pause_level', label: 'Hold the battery at', def: '0', min: 50, max: 95, unit: '%', zero: true },
+               { k: 'chg_pause_game', label: 'Bypass while a game is open', def: '0', bool: true },
+               { k: 'chg_pause_game_screen', label: 'Only while the screen is on', def: '1', bool: true },
+               { k: 'chg_pause_how', label: 'How', def: 'auto', sel: [['auto', 'Auto (bypass first)'], ['bypass', 'Bypass only (switch or current limit)'], ['cut', 'Cut the charger input']] }] },
 
     // kernel drain
     { k: 'soff_prof', s: 'kdrain', src: 'kernel', risk: 'moderate', type: 'toggle', def: '0',
@@ -1241,6 +1276,10 @@ html[data-style="mono"],html[data-style="mono"] body{
                { k: 'drain_alert_rate', label: 'High drain starts at', def: '1.5', sel: [['1', '1%/h'], ['1.5', '1.5%/h'], ['2', '2%/h'], ['3', '3%/h']] },
                { k: 'drain_cause', label: 'Name the app that kept the phone awake', def: '1', bool: true },
                { k: 'drain_cause_min', label: 'Name it after', def: '10', sel: [['5', '5 min of wake locks'], ['10', '10 min of wake locks'], ['20', '20 min of wake locks'], ['30', '30 min of wake locks']] }] },
+    { k: 'bat_hist', s: 'kdrain', src: 'rom', risk: 'safe', type: 'toggle', def: '0',
+      t: 'Battery history',
+      d: 'Battery level, temperature and screen state are saved for 48 hours, for the chart on Home.',
+      x: 'Every 5 minutes while the phone is awake, and whenever the charger is plugged in or out, one short line is saved: level, temperature, charger and screen. Home > Battery history draws it and works out the drain with the screen on and off. Nothing is sent anywhere; Export copies it to Download. Uses the battery keeper.' },
     { k: 'cpu_idle', s: 'kdrain', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Allow deep CPU sleep',
       d: 'The lowest CPU sleep states are allowed and never switched off.', x: 'Some ROMs and tuning apps switch off the deepest idle states. With them back on, an idle CPU draws far less power, and speed is not affected.' },
@@ -1392,6 +1431,11 @@ html[data-style="mono"],html[data-style="mono"] body{
       o: [['0', 'Don’t change'], ['75', '0.75×'], ['50', '0.5×']] },
 
     // advanced
+    { k: 'screen_res', s: 'saver', src: 'rom', risk: 'moderate', type: 'level', def: '0',
+      t: 'Lower screen resolution',
+      d: 'The whole screen is drawn with fewer pixels, so the GPU works less. Everything keeps its size.',
+      x: 'Sets a lower resolution and density for the whole system (wm size and wm density), so icons and text stay the same size. Scrolling, video and games cost a little less GPU power. Text looks a little less sharp, screenshots get the lower resolution, and a few apps or launchers can place things a little differently. If your ROM has its own resolution setting, use only one of them. Game battery mode only lowers the picture inside games; this lowers everything, so with both on a game is rendered smaller twice (90% here and 80% there is about 72%). The resolution and density you had come back when you turn this off, on Revert and on uninstall.',
+      o: [['0', 'Off'], ['90', '90%'], ['80', '80%'], ['75', '75%']] },
     { k: 'apply_delay', s: 'adv', src: 'kernel', risk: 'safe', type: 'value', def: '30', unit: 's', min: 10, max: 120, noOff: true,
       t: 'Apply delay after boot',
       d: 'Startup waits this long so the ROM can finish its own tuning first.', x: 'Changes made too early can be overwritten by the ROM\'s own boot tuning. A longer wait is safer; a shorter one applies the module sooner.',
@@ -1470,11 +1514,11 @@ html[data-style="mono"],html[data-style="mono"] body{
     { k: 'x_log_nuke', s: 'xlog', src: 'rom', risk: 'moderate', type: 'toggle', def: '0',
       t: 'Log cleanup at boot',
       d: 'Leftover message daemons are killed and log buffers are shrunk at startup.',
-      x: 'This clears and shrinks the log buffers and turns off framework tracing. Keep it off while collecting bug reports.' },
+      x: 'This clears and shrinks the log buffers and turns off framework tracing, including the accessibility trace and the trace buffer of Xiaomi migard. Keep it off while collecting bug reports.' },
     { k: 'x_diag', s: 'xlog', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Turn off vendor diagnostics',
       d: 'Manufacturer loggers are quieted and ANR and looper reports are turned off.',
-      x: 'This stops charge_logger and misight, and turns off looper stats, ANR debugging and vendor diagnostic logs.' },
+      x: 'This stops charge_logger, misight and the Wi-Fi driver logger (wlan_logging), and turns off looper stats, ANR debugging and vendor diagnostic logs.' },
     { k: 'x_props', s: 'xlog', src: 'rom', risk: 'safe', type: 'toggle', def: '1',
       t: 'Extra logging props off',
       d: 'More SurfaceFlinger, codec and OEM logging switches are cleared.',
@@ -1518,7 +1562,8 @@ html[data-style="mono"],html[data-style="mono"] body{
     { k: 'x_eas', s: 'xpower', src: 'kernel', risk: 'safe', type: 'toggle', def: '1',
       t: 'Keep Energy Aware Scheduler on',
       d: 'EAS stays on so light tasks remain on little cores.',
-      x: 'Some ROMs turn EAS off; this turns it back on so light tasks stay on little cores.' },
+      x: 'Some ROMs turn EAS off; this turns it back on so light tasks stay on little cores. C-state aware: a light task goes to a core that is already awake or only lightly asleep, so cores in deep sleep are woken less often. Only on kernels that have the switch.',
+      fields: [{ k: 'x_eas_cstate', label: 'Prefer cores that are awake or sleep lightly (C-state aware)', def: '1', bool: true }] },
     { k: 'x_job_limit', s: 'xpower', src: 'rom', risk: 'safe', type: 'level', def: '0',
       t: 'Fewer background jobs',
       d: 'Sync and updates are batched so they wake the phone less often.',
@@ -1540,7 +1585,12 @@ html[data-style="mono"],html[data-style="mono"] body{
  "bg_cpuset": "/dev/cpuset/background, system-background, restricted: cpus = little cluster|/dev/cpuctl/background, restricted: cpu.uclamp.max = value (0 = untouched)|/dev/cpuctl/system-background: cpu.uclamp.max = bg_sys_uclamp (0 = untouched), cpu.uclamp.latency_sensitive = 0 (bg_sys_latency)|sub-option: threads of logd, statsd, traced, tombstoned, diag-router, diag_mdlog, ipacm-diag, subsystem_ramdump, mobile_log_d, emdlogger*, connsyslogger, mdlogger, *hardware.atrace / health / memtrack / usb (never vibrator or lights), f2fs_gc, kgsl_low_prio -> /dev/cpuset/background/tasks and /dev/cpuctl/background/tasks (a restarted daemon goes back to its own group until the next boot)",
  "blur_off": "settings global disable_window_blurs = 1 (restored when off)|cmd window disable-blur 1|runtime props (Xiaomi ROMs): ro.miui.has_real_blur, ro.miui.has_blur, ro.miui.backdrop_sampling_enabled, persist.sys.background_blur_supported, persist.sysui.miui_blur_enabled, ro.surface_flinger.supports_background_blur, ro.sf.blurs_are_expensive, disableBlurs, enable_blurs_on_windows",
  "charge_cool": "power_supply/battery/charge_control_limit = charger thermal level|level = the one you pick in 'Charger level', else from the mA value using your Calibrate table, else a device-tree table, else an estimate|value read back after 2 s|Calibrate (manual, ~5 min while charging) steps every level, measures current_now and restores the original level",
- "charge_limit": "qcom-battery/night_charging = 1 (or power_supply/battery/night_charging)|keeper common/chg_watch.sh: every 15 s, if a charger is online and the flag is 0, writes 1 again|keeper stops when the switch is off (next boot), the module is disabled or removed|uninstall: keeper stopped, flag set back to 0",
+ "chg_pause": "keeper common/bat_watch.sh (shared with Battery history and the temperature warning): every 20 s with a charger, 60 s without, not in deep sleep|at chg_pause_temp C (36-48) or chg_pause_level % (50-95) while the battery status is Charging: one charging switch is turned off, then within ~12 s the battery status must leave Charging or the battery current drop to 150 mA or less, else it is put back and the next one is tried|bypass (charger powers the phone): power_supply/battery/charging_enabled or battery_charging_enabled = 0, qcom-battery/battery_charging_enabled = 0, MediaTek charger/bypass_charger = 1, /proc/mtk_battery_cmd/current_cmd = 0 1, qcom-battery/charging_enabled = 0, qcom-battery/night_charging = 1 (Xiaomi), power_supply/battery/charge_enabled = 0, charge_disable = 1, mmi_charging_enable = 0, op_disable_charge = 1, power_supply/battery_ext/smart_charging_interruption = 1, MediaTek mt-battery/disable_charger = 1, and the switches other phones use (Samsung batt_slate_mode, Huawei / OPPO / Google / LG / Nubia / Transsion / ASUS charger nodes, ac / dc charging_enabled, stop_charge and others; only the nodes this kernel has are tried)|a switch that leaves the battery Discharging counts as cut (not used while gaming)|current limit (charger powers the phone, for kernels without a switch): power_supply/battery/constant_charge_current, fast_charge_current or thermal_input_current = 0, or charge_control_limit = its last level; the value before comes back; rewritten every 5 s while it holds|cut (charger input off, not while gaming): power_supply/battery/input_suspend = 1, qcom-battery/input_suspend = 1, /proc/mtk_battery_cmd/en_power_path = 0, power_supply/battery/battery_input_suspend = 1, the pmic_glink battery_charger/force_charger_suspend = 1, asuslib/charging_suspend_en = 1, debugfs google_charger/input_suspend = 1|bypass while gaming (chg_pause_game): a game of batp.games (game_mode_pkgs or the installed games) is in the foreground (pidof, oom_score_adj 100 or lower), with the screen on (chg_pause_game_screen); back when it is closed or the screen goes off|the switch that worked is kept in batp.node and tried first next time|back to the normal value 3 C cooler (2 min at least) or 3% lower, when unplugged, at 15% or less, during battery calibration, when the keeper stops, the module is disabled or removed (batp.save)",
+ "temp_warn": "keeper common/bat_watch.sh reads power_supply/battery/temp|at temp_warn_temp C (40-52): cmd notification post as the shell user (tag hc_temp) and one line in Recent activity|again only after it was 3 C below the limit|nothing else changes",
+ "game_mode": "cmd game (Android 13+ Game Mode), user 0, at boot|games: game_mode_pkgs, or empty = user apps whose game mode is not unsupported (cmd game list-modes, Android 14+; Android 13 has no list-modes, so only the chosen games)|cmd game reset --mode 3, then cmd game set --mode 3 --downscale (game_mode_scale / 100, left out at 100%) --fps game_mode_fps (left out at 0; never above the fastest panel mode; Android 13 retried with the nearest of 30/45/60/90/120)|cmd game mode battery, checked with cmd game list-modes (Android 13: by the answer of cmd game mode)|game.save keeps the mode each game had before (Android 13: standard); off, a game removed from the list, Revert and uninstall: cmd game reset and that mode again",
+ "bat_hist": "keeper common/bat_watch.sh: every 5 min while awake and when the charger is plugged in or out, one line in /data/adb/hypercool/bat_hist.csv: time, level, battery temp, charger, screen (dumpsys power wakefulness), charging paused|the last 48 h are kept (cut back past 1300 lines)|read only, nothing on the system changes",
+ "bus_cap": "Qualcomm, once at boot, after Balanced system defaults|GKI: /sys/devices/system/cpu/bus_dcvs/DDR and LLCC: hw_max_freq = the available step nearest bus_cap % of the top one (never the lowest; tables with fewer than 3 steps are skipped)|older kernels: max_freq of the devfreq CPU-DDR / LLCC bandwidth and latency voters (cpubw, llccbw, bus_ddr, bus_llcc, memlat, bw_hwmon); kgsl / GPU, L3, UFS, video, camera and NPU nodes are skipped|a voter whose min_freq is above the new ceiling is left alone|a kernel that refuses every write to hw_max_freq (checked first with the value already set): max_freq of the soc:qcom,memlat:<DDR|LLCC>:* and bwmon voters of that block is lowered to the same step instead; nothing lowerable shows Skipped, not Failed|Lock: chmod 0444 on the written nodes|stock values come back with the next reboot when off",
+ "screen_res": "wm size = physical (or your own) size x screen_res % (even numbers), wm density = density x screen_res %|the size and density before (none = no override) are kept in the backup and set again when off, on Revert and on uninstall (wm size / density reset)|a size or density changed in Settings after that becomes the new base|checked with wm size / wm density after the write; not kept -> put back, failed",
  "soff_prof": "keeper common/soff_watch.sh: screen state from Android's screen_toggled events (logcat events buffer; off = not interactive, AOD counts as off), sleeps until the next event (wakes at most once a minute while the CPU is awake); without events it polls /sys/class/backlight/*/brightness (or leds/lcd-backlight) every 2-3 s, or dumpsys power every 10 s when there is no backlight node|screen off: policy*/scaling_max_freq of every non-little cluster = the % above (never raised), kgsl max_pwrlevel = min_pwrlevel or Mali devfreq max_freq = lowest|boosts: /proc/sys/walt/sched_boost = 0, policy*/walt/pl = 0, MediaTek fpsgo force_onoff = 0, touch boost 0 (when Disable kernel touch boost is off)|screen on: every saved value written back (locks kept)|keeper stops (and restores) when the switch is off, the module is disabled or removed",
  "wifi_keep": "keeper common/soff_watch.sh (shared with the screen-off profile, started when either is on): the Wi-Fi state is read once when the screen turns off (cmd wifi status) and is what you want|ip monitor link (a small child of the keeper, no CPU while idle) wakes the keeper when wlan changes; plus the 60 s timer (does not run in suspend)|while the screen is off, on every such wake-up (at most one check per 2 s; per 60 s without screen events): if you wanted it on, it is off now and still off 2 s later and airplane mode is off: svc wifi enable|3 re-enables within 10 min = the ROM keeps switching it off: pause 5 min|screen on: nothing is touched|no setting is changed, nothing to restore", "cpu_idle": "qcom_lpm sleep_disabled = N, lpm_levels sleep_disabled = 0|cpu*/cpuidle/state*/disable = 0 (only states that were disabled)",
  "f2fs_gc": "keeper common/soff_watch.sh (shared with the screen-off profile) + library common/f2gc.sh|device: /sys/fs/f2fs/<dev> of the F2FS mounted on /data (dev.mnt.blk.data, /proc/mounts), needs gc_urgent and unusable|start: screen off 10 min, last run at least 7 days ago, not paused, gc_urgent is 0, unusable (4 KB blocks) >= f2fs_gc_gb GB, battery temp under f2fs_gc_temp minus 5 C (35-45 C, default 40 C), and charging or at least 30% battery; battery low or too warm: looked at again every 5 min for 1 h, once per screen-off period|run: echo 1 > gc_urgent (default pace), a wake lock hypercool_gc that also expires by itself, checked every 10 s; stops when unusable is at or under min(1 GB, trigger/4), after 420 s, under 20% battery (not charging), at f2fs_gc_temp C (41-50, default 45), or when the screen turns on; then echo 0 > gc_urgent|fstrim /data after a finished run when f2fs_gc_trim is on, at most every 7 days|f2fs_gc_notify: after each run a notification (cmd notification post as the shell user, tag hc_f2gc) with the reclaimable space before and after and the time; also when the run was stopped|two finished runs in a row that cut unusable by less than 1% pause it for 7 days; state in f2fs_gc.state and f2fs_gc.meta; leftovers (gc_urgent, wake lock) are put back at boot, when the keeper stops and on uninstall",
@@ -1591,14 +1641,14 @@ html[data-style="mono"],html[data-style="mono"] body{
  "x_multitask": "device_config activity_manager max_cached_processes = stock x 125/100/75% (min 8, restored when off)|no memory-factor override (any override is cleared)",
  "x_gms_freeze": "pm disable --user 0 for the components in common/x_gms_safe.txt|components removed from the list are enabled again|every component re-enabled (pm enable) when the switch goes off, on Revert, or on uninstall",
  "x_track": "settings global = 0: play_store_panel_logging_enabled, clearcut_events, clearcut_gcm, bugreport_in_power_menu|gms_checkin_timeout_min = 120|all restored when switched off",
- "x_log_nuke": "stopped once at boot (init stop): logcatd, tcpdump, cnss_diag, traced_perf, idd-*, aplogd, vendor log daemons; leftover logcat processes|logcat -c, dmesg -c, logcat -G 64k|cmd logging off: activity, autofill, display (ab/dmd/dwb), window, statusbar, input_method, voiceinteraction, wifi verbose|settings global: dropbox:<tag> = disabled; netstats_* values set by older builds are restored for the module's tag list (restored when off)",
- "x_diag": "ctl.stop charge_logger, misight, vendor.mi_misight (when running)|cmd looper_stats disable|settings system: anr_debugging_mechanism = 0, send_security_reports = 0 (restored when off)|runtime props where the ROM exposes them: nativehangII, turbosched, wifisalog, offlinelog.bootlog, camera mawlog|msm_vidc_debug = 0, qcom,mmrm debug = 0",
+ "x_log_nuke": "stopped once at boot (init stop): logcatd, tcpdump, cnss_diag, traced_perf, idd-*, aplogd, vendor log daemons; leftover logcat processes|logcat -c, dmesg -c, logcat -G 64k|cmd logging off: activity, autofill, display (ab/dmd/dwb), window, statusbar, input_method, accessibility trace, voiceinteraction, wifi verbose; Xiaomi migard trace off (stop-trace, buffer 0)|settings global: dropbox:<tag> = disabled; netstats_* values set by older builds are restored for the module's tag list (restored when off)",
+ "x_diag": "ctl.stop charge_logger, misight, vendor.mi_misight, wlan_logging (when running)|cmd looper_stats disable|settings system: anr_debugging_mechanism = 0, send_security_reports = 0 (restored when off)|runtime props where the ROM exposes them: nativehangII, turbosched, wifisalog, offlinelog.bootlog, camera mawlog|msm_vidc_debug = 0, qcom,mmrm debug = 0",
  "x_kpower": "/sys/module/workqueue/parameters/power_efficient = Y (state reported when read-only)|/sys/module/battery_saver/parameters/enabled = Y or 1 (custom kernels only)|stock values return after a reboot when off",
  "x_balanced": "/dev/stune/top-app schedtune.boost = 0, prefer_idle = 0|kernel.split_lock_mitigate = 1, sched_features NEXT_BUDDY + TTWU_QUEUE (when present)|vm.vfs_cache_pressure = 120 (not when RAM management is on)|mmcblk / sd queues: read_ahead_kb = 128, nr_requests = 64|/proc/touchpanel game_switch_enable 0, *_tp_limit_enable 1, *_tp_direction 0|Qualcomm: devfreq *memlat* / *latfloor* / *ddr-lat* min = lowest, max = highest; bus_dcvs DDR / LLCC / L3 hw_min = lowest, hw_max = highest|Qualcomm (sub-option): devfreq *cpu*-lat / *cpu*-bw / *llccbw* / *bus_llcc* / *bus_ddr* / *cpubw* / *kgsl-ddr-qos* full range|Qualcomm: kgsl devfreq/adrenoboost = 0, msm_perfmon touch_boost_enable / touch_boost_freq = 0, msm_performance touchboost = 0, pnpmgr touch_boost = 0|MediaTek: PPM PWR_THRO / THERMAL policies on, fpsgo force_onoff = 2, cpufreq_power_mode / cci_mode = 0, dramboost 0, EAS 2, GED KPI 1, GED gx_boost_on / gx_game_mode / ged_smart_boost / enable_gpu_boost / ged_boost_enable / gx_frc_mode / cpu_boost_policy / boost_extra = 0, gpu_boost_level = -1, pnpmgr mwn / boost_enable / boost_mode = 0, gpufreq not fixed, GED boost floor = lowest OPP, gpufreq_power_limited ignore_* = 0, battery_oc_protect_stop = stop 0, eara_thermal 1, DVFSRC ddr opp / vcore = -1, mtk-dvfsrc-devfreq full range|stock values return after a reboot when off",
  "x_kcommon": "kernel.sched_child_runs_first = 1, sched_autogroup_enabled = 0, sched_nr_migrate = 32, sched_schedstats = 0, task_cpustats_enable = 0|perf_cpu_time_max_percent = 3 (not when Debug off is on)|vm.page-cluster = 0, compaction_proactiveness = 0, stat_interval = 15 (not when VM tuning is on)|all block queues: iostats = 0, add_random = 0; mmc_core use_spi_crc = 0|opchain chain_on 0, task_sched_info 0, oplus sched_assist 0|stock values return after a reboot when off",
  "x_job_limit": "device_config jobscheduler: min_ready_cpu_only_jobs_count, min_ready_non_active_jobs_count, max_cpu_only_job_batch_delay_ms, max_non_active_job_batch_delay_ms, conn_max_connectivity_job_batch_delay_ms (Balanced 5/8/1 h, Strong 8/12/2 h; only the ones dumpsys jobscheduler lists)|read back from dumpsys jobscheduler for up to 6 s: what took effect stays (Partial), the other keys keep their old value; nothing taken = put back and Unsupported|original values come back when off",
  "x_compact": "runs in the screen-off keeper common/soff_watch.sh (started when screen-off profile, Keep Wi-Fi on or this is on), library common/compact.sh|after 90 s off and free RAM below 30%: cmd activity compact some <process> <uid> for up to 40 user-app processes (not protected apps, launcher, keyboard, dialer, media, system), then waits 20 min|runs in a background job that stops when the screen turns on|state in compact.state (apps, free RAM before and after)",
- "x_eas": "/proc/sys/kernel/sched_energy_aware = 1 (only written when it is 0)|stock value returns after a reboot when off",
+ "x_eas": "kernel.sched_cstate_aware = 1 when the kernel has it (x_eas_cstate)|/proc/sys/kernel/sched_energy_aware = 1 (only written when it is 0)|stock value returns after a reboot when off",
  "cpu_cap_little": "policy*/scaling_max_freq of the little (smallest max clock) cluster only, nearest available frequency|MediaTek: PPM user limit for that cluster|Lock: chmod 0444 on that scaling_max_freq so non-root ROM services cannot raise it (thermal limits still apply; reset at reboot)",
  "x_cache_keep": "pm trim-caches finds an app cache by its group id and cannot skip an app, so when the list is not empty the clean empties the cache folders itself: /data/user/*/<pkg>/cache, /data/user_de/*/<pkg>/cache and /data/media/*/Android/data/<pkg>/cache of every app that is not listed (listed apps are not touched)|code_cache is left alone|what happened is written to /data/adb/hypercool/cache_keep.log|with an empty list or the switch off the clean uses pm trim-caches as before",
  "x_cache_notify": "after each app cache clean (daily keeper and Clean now): cmd notification post as the shell user, tag hc_cache, text = MB freed and apps cleaned|nothing else changes",
@@ -1615,6 +1665,7 @@ html[data-style="mono"],html[data-style="mono"] body{
     bg_block_pkgs: '',
     app_disable_pkgs: '',
     x_cache_keep_pkgs: '',
+    game_mode_pkgs: '',
     doze_custom: DOZE_AGGRESSIVE,
     saver_constants: SAVER_DEFAULT
   };
@@ -1628,14 +1679,16 @@ html[data-style="mono"],html[data-style="mono"] body{
         log_reduce: '1', saver_policy: '2', saver_trigger: '20', saver_dim: '2', smart_px: '1', refresh_rate: '60', anim_scale: '50',
         x_kquiet: '1', x_net: '1', x_io: '1', x_xiaomi_fw: '1', x_sched: '1', x_ram_opt: '1', x_ram_level: '1', x_gms_freeze: '1', x_track: '1',
         x_log_nuke: '1', x_diag: '1', x_props: '1', x_cache_auto: '1', x_cache_min: '0', x_kpower: '1', x_vm_lite: '1', x_eas: '1', soff_prof: '1', x_balanced: '1', x_kcommon: '1',
-        soff_radio: '1', x_job_limit: '1', f2fs_gc: '1', x_dexopt_auto: '1', x_rpm: '1' }, soft: true },
+        soff_radio: '1', x_job_limit: '1', f2fs_gc: '1', x_dexopt_auto: '1', x_rpm: '1',
+        bus_cap: '75', screen_res: '90', game_mode: '1', game_mode_fps: '60', game_mode_scale: '80', temp_warn: '1', x_eas_cstate: '1' }, soft: true },
     { n: 'Cool gaming', v: { cpu_cap: '95', gpu_cap: '0', gpu_idle: '1', gpu_throttle: '0', walt_tune: '0', bg_cpuset: '1',
         cpu_idle: '1', ufs_pm: '1', vm_tune: '1', io_tune: '1', debug_off: '1', debug_props: '1', protect_apps: '1',
         bg_block: '1', app_freezer: '1', doze_aggr: '2', scan_off: '1', net_save: '1', standby: '1', stats_reduce: '1',
         tracking_off: '1', debloat: '1', log_reduce: '1', saver_policy: '1',
         x_kquiet: '1', x_net: '1', x_io: '1', x_ram_opt: '1', x_ram_level: '1', x_multitask: '2', x_gms_freeze: '1', x_track: '1',
         x_log_nuke: '1', x_diag: '1', x_props: '1', x_cache_auto: '1', x_cache_min: '0', x_vm_lite: '1', x_eas: '1', x_balanced: '1', x_kcommon: '1',
-        f2fs_gc: '1', x_dexopt_auto: '1', x_rpm: '1' }, soft: true },
+        f2fs_gc: '1', x_dexopt_auto: '1', x_rpm: '1',
+        bus_cap: '90', game_mode: '1', game_mode_fps: '60', game_mode_scale: '90', chg_pause: '1', chg_pause_temp: '40', chg_pause_game: '1', temp_warn: '1', x_eas_cstate: '1' }, soft: true },
     { n: 'Custom', v: 'custom' },
     { n: 'Kernel only', v: 'kernel' },
     { n: 'All off', v: 'off' }
@@ -1833,7 +1886,6 @@ html[data-style="mono"],html[data-style="mono"] body{
     layers: '<path d="M12 3l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16.5l9 4.5 9-4.5"/>',
     blur: '<circle cx="12" cy="12" r="8.5"/><path d="M4 4l16 16"/>',
     bolt: '<path d="M13 2.5L4.5 13.5H11l-1 8 8.5-11H12z"/>',
-    batt80: '<rect x="2.5" y="7" width="16.5" height="10" rx="2"/><path d="M21.5 10.5v3"/><path d="M6 10v4M9 10v4M12 10v4"/>',
     moon: '<path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"/>',
     disk: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M7.5 8.5h9M7.5 12h9M7.5 15.5h5"/>',
     mem: '<rect x="3" y="7" width="18" height="10" rx="1.5"/><path d="M7 10.5v3M11 10.5v3M15 10.5v3M7 7V4.5M12 7V4.5M17 7V4.5M7 17v2.5M17 17v2.5"/>',
@@ -1883,7 +1935,7 @@ html[data-style="mono"],html[data-style="mono"] body{
   }
   var F_ICON = {
     cpu_cap: 'cpu', prime_park: 'park', gpu_cap: 'gpu', gpu_idle: 'power', walt_tune: 'gauge', input_boost_off: 'touch',
-    bg_cpuset: 'layers', blur_off: 'blur', charge_cool: 'bolt', charge_limit: 'batt80', cpu_idle: 'moon', soff_prof: 'moon', wifi_keep: 'signal', soff_radio: 'bed', soff_data: 'dataoff', drain_alert: 'bell', hibernate: 'moon', f2fs_gc: 'disk', x_dexopt_auto: 'disk', ufs_pm: 'disk',
+    bg_cpuset: 'layers', blur_off: 'blur', charge_cool: 'bolt', cpu_idle: 'moon', soff_prof: 'moon', wifi_keep: 'signal', soff_radio: 'bed', soff_data: 'dataoff', drain_alert: 'bell', hibernate: 'moon', bat_hist: 'chart', temp_warn: 'bell', game_mode: 'game', chg_pause: 'power', bus_cap: 'mem', screen_res: 'monitor', f2fs_gc: 'disk', x_dexopt_auto: 'disk', ufs_pm: 'disk',
     vm_tune: 'mem', io_tune: 'pulse', debug_off: 'bug', debug_props: 'term', wakelock_block: 'lock', protect_apps: 'shield',
     app_bucket: 'apps', bg_block: 'ban', app_disable: 'warn', app_freezer: 'snow', doze_aggr: 'bed', devcfg_lock: 'sync', gms_doze: 'gms', scan_off: 'wifioff', loc_throttle: 'pulse',
     net_save: 'signal', standby: 'hour', stats_reduce: 'chart', tracking_off: 'eyeoff', debloat: 'trash', joyose_off: 'game', heat_guard: 'warn',
@@ -2180,6 +2232,23 @@ html[data-style="mono"],html[data-style="mono"] body{
         }
       });
     }
+    // Game battery mode: 30 / 45 / 60 FPS and the rates of this panel, up to its fastest one
+    var fg = F.filter(function (x) { return x.k === 'game_mode'; })[0];
+    if (fg) {
+      var mx = m[m.length - 1], gc = [30, 45, 60].concat(m.filter(function (h) { return h >= 30; }))
+        .filter(function (h, i, a) { return h <= mx && a.indexOf(h) === i; }).sort(function (a, b) { return a - b; });
+      if (!gc.length) gc = [mx];
+      var gx = fg.fields.filter(function (y) { return y.k === 'game_mode_fps'; })[0], gs = $('in-game_mode_fps');
+      gx.def = gc.indexOf(60) >= 0 ? '60' : String(gc[gc.length - 1]);
+      gx.sel = gc.map(function (h) { return [String(h), h + ' FPS' + (String(h) === gx.def ? ' (default)' : '')]; }).concat([['0', 'Don\u2019t change']]);
+      [saved, cfg].forEach(function (o) {
+        if (o.game_mode_fps !== undefined && String(o.game_mode_fps) !== '0' && gc.indexOf(+o.game_mode_fps) < 0) o.game_mode_fps = gx.def;
+      });
+      if (gs) {
+        gs.innerHTML = gx.sel.map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join('');
+        gs.value = cfg.game_mode_fps != null ? String(cfg.game_mode_fps) : gx.def;
+      }
+    }
     if (fc) {
       fc.o = [['0', 'Don\u2019t change']].concat(m.slice().reverse().map(function (h) { return [String(h), h + ' Hz']; }));
       var cs = $('in-refresh_rate');
@@ -2348,8 +2417,8 @@ html[data-style="mono"],html[data-style="mono"] body{
 
   var PRESET_INFO = [
     { i: 'star', d: 'Cooler cores, deeper sleep and safe defaults for most phones', x: 'Cooler big cores, a less aggressive governor, deeper sleep, messengers protected, safe Extras options and auto cache clean on' },
-    { i: 'leaf', d: 'Strongest savings: 88% big-core and 80% little-core caps, strict Doze, little background work', x: '88% big-core cap, 80% little-core cap, GPU one step below max, screen-off power profile, Maximum Doze, kernel wakelock blocker, restricted background apps, Joyose off, 60 Hz, Extreme Battery Saver at 20%, blur off, fewer background jobs, Location off during long screen-off, auto F2FS GC and dex2oat, power saving for idle devices, all Extras options except Multitasking and ZRAM. Charging, Keep Wi-Fi on, Adaptive refresh rate, ZRAM, Multitasking and Compact background apps stay as you set them' },
-    { i: 'game', d: 'Keeps performance high and cuts heat: 95% CPU cap, background work limited', x: '95% CPU cap, GPU power collapse with throttling off, background apps on little cores, governor, refresh rate, Joyose and Game Turbo left stock, Performance multitasking, no app restriction, plus auto F2FS GC and dex2oat and power saving for idle devices. Charging, Keep Wi-Fi on, Adaptive refresh rate, ZRAM and Compact background apps stay as you set them' },
+    { i: 'leaf', d: 'Strongest savings: 88% big-core and 80% little-core caps, strict Doze, little background work', x: '88% big-core cap, 80% little-core cap, GPU one step below max, screen-off power profile, Maximum Doze, kernel wakelock blocker, restricted background apps, Joyose off, 60 Hz, Extreme Battery Saver at 20%, blur off, fewer background jobs, Location off during long screen-off, auto F2FS GC and dex2oat, power saving for idle devices, all Extras options except Multitasking and ZRAM, memory bus cap 75%, screen resolution 90%, Game battery mode (60 FPS, 80%), battery temperature warning and C-state aware scheduling. Pause / bypass charging, Battery history, Keep Wi-Fi on, Adaptive refresh rate, ZRAM, Multitasking and Compact background apps stay as you set them' },
+    { i: 'game', d: 'Keeps performance high and cuts heat: 95% CPU cap, background work limited', x: '95% CPU cap, GPU power collapse with throttling off, background apps on little cores, governor, refresh rate, Joyose and Game Turbo left stock, Performance multitasking, no app restriction, plus auto F2FS GC and dex2oat, power saving for idle devices, memory bus cap 90%, Game battery mode (60 FPS, 90%), bypass charging while gaming or at 40 °C, battery temperature warning and C-state aware scheduling. Battery history, Keep Wi-Fi on, Adaptive refresh rate, ZRAM and Compact background apps stay as you set them' },
     { i: 'sliders', d: '' },
     { i: 'cpu', d: 'Kernel tweaks only; every system option is switched off', x: 'Only kernel tweaks (including the Extras kernel options); every system option is switched off' },
     { i: 'power', d: 'Every feature off: the module changes nothing at the next boot' }
@@ -2357,7 +2426,7 @@ html[data-style="mono"],html[data-style="mono"] body{
   // values a preset would load (lists and custom strings are not part of a preset)
   // personal settings, not tuning: no preset changes them
   // Max battery and Cool gaming list what they switch on; these are left as the user has them when a preset does not mention them
-  var PRESET_SOFT = { wifi_keep: 1, charge_limit: 1, rr_adapt: 1, x_zram: 1, x_multitask: 1, x_compact: 1 };
+  var PRESET_SOFT = { wifi_keep: 1, rr_adapt: 1, x_zram: 1, x_multitask: 1, x_compact: 1, chg_pause: 1, bat_hist: 1 };
   function softKept(pr, f) { return !!(pr.soft && PRESET_SOFT[f.k] && pr.v[f.k] === undefined); }
   var PRESET_KEEP = { apply_delay: 1, boot_notify: 1, x_cache_notify: 1, x_cache_keep: 1, x_cache_keep_pkgs: 1, x_cache_days: 1 };
   function presetTarget(pr) {
@@ -2582,20 +2651,20 @@ html[data-style="mono"],html[data-style="mono"] body{
 
   /* io */
   var ORDER = [
-    ['Heat control (kernel)', ['cpu_cap', 'cpu_cap_lock', 'cpu_cap_little', 'cpu_cap_little_lock', 'prime_park', 'gpu_cap', 'gpu_cap_lock', 'gpu_idle', 'gpu_idle_timer', 'gpu_throttle', 'walt_tune', 'walt_hispeed_load',
-      'walt_up_rate', 'walt_sched_boost_off', 'walt_task_util', 'input_boost_off', 'bg_cpuset', 'bg_uclamp', 'bg_daemons', 'bg_sys_uclamp', 'bg_sys_latency', 'blur_off', 'heat_guard', 'heat_guard_temp', 'heat_guard_cpu', 'heat_guard_rr', 'charge_cool', 'charge_cool_level', 'charge_limit']],
-    ['Battery drain (kernel)', ['soff_prof', 'soff_cpu', 'soff_gpu', 'soff_boost', 'wifi_keep', 'soff_radio', 'soff_radio_min', 'soff_radio_bt', 'soff_data', 'soff_data_min', 'soff_data_mobile', 'soff_data_nfc', 'drain_alert', 'drain_alert_notify', 'drain_alert_rate', 'drain_cause', 'drain_cause_min', 'cpu_idle', 'ufs_pm', 'vm_tune', 'vm_writeback', 'vm_stat_interval', 'vm_dirty_bg', 'vm_dirty', 'io_tune', 'debug_off',
+    ['Heat control (kernel)', ['cpu_cap', 'cpu_cap_lock', 'cpu_cap_little', 'cpu_cap_little_lock', 'prime_park', 'gpu_cap', 'gpu_cap_lock', 'bus_cap', 'bus_cap_lock', 'gpu_idle', 'gpu_idle_timer', 'gpu_throttle', 'walt_tune', 'walt_hispeed_load',
+      'walt_up_rate', 'walt_sched_boost_off', 'walt_task_util', 'input_boost_off', 'bg_cpuset', 'bg_uclamp', 'bg_daemons', 'bg_sys_uclamp', 'bg_sys_latency', 'blur_off', 'heat_guard', 'heat_guard_temp', 'heat_guard_cpu', 'heat_guard_rr', 'temp_warn', 'temp_warn_temp', 'game_mode', 'game_mode_fps', 'game_mode_scale', 'game_mode_pkgs', 'charge_cool', 'charge_cool_level', 'chg_pause', 'chg_pause_temp', 'chg_pause_level', 'chg_pause_game', 'chg_pause_game_screen', 'chg_pause_how']],
+    ['Battery drain (kernel)', ['soff_prof', 'soff_cpu', 'soff_gpu', 'soff_boost', 'wifi_keep', 'soff_radio', 'soff_radio_min', 'soff_radio_bt', 'soff_data', 'soff_data_min', 'soff_data_mobile', 'soff_data_nfc', 'drain_alert', 'drain_alert_notify', 'drain_alert_rate', 'drain_cause', 'drain_cause_min', 'bat_hist', 'cpu_idle', 'ufs_pm', 'vm_tune', 'vm_writeback', 'vm_stat_interval', 'vm_dirty_bg', 'vm_dirty', 'io_tune', 'debug_off',
       'debug_props', 'wakelock_block', 'wl_list']],
     ['Protected apps', ['protect_apps', 'protect_pkgs', 'app_bucket', 'bg_block', 'bg_block_pkgs', 'hibernate', 'hibernate_min', 'hibernate_mode', 'app_disable', 'app_disable_pkgs']],
     ['Battery drain (HyperOS / ROM)', ['app_freezer', 'doze_aggr', 'doze_custom', 'devcfg_lock', 'gms_doze', 'scan_off', 'loc_throttle', 'net_save',
       'standby', 'stats_reduce', 'tracking_off', 'debloat', 'joyose_off', 'log_reduce']],
-    ['Long battery / saver', ['saver_policy', 'saver_vib', 'saver_constants', 'saver_trigger', 'saver_dim', 'smart_px', 'refresh_rate', 'rr_adapt', 'rr_active', 'rr_idle', 'rr_hold', 'anim_scale']],
+    ['Long battery / saver', ['saver_policy', 'saver_vib', 'saver_constants', 'saver_trigger', 'saver_dim', 'smart_px', 'refresh_rate', 'rr_adapt', 'rr_active', 'rr_idle', 'rr_hold', 'anim_scale', 'screen_res']],
     ['Advanced', ['apply_delay', 'boot_notify']],
     ['More: extra kernel', ['x_sched', 'x_kquiet', 'x_net', 'x_net_tcp', 'x_io', 'x_xiaomi_fw', 'x_balanced', 'x_bal_bus', 'x_kcommon']],
     ['More: RAM', ['x_ram_opt', 'x_ram_level', 'x_multitask', 'x_compact', 'x_zram', 'x_zram_size', 'x_zram_custom', 'x_zram_alg']],
     ['More: Google services', ['x_gms_freeze', 'x_track']],
     ['More: logging', ['x_log_nuke', 'x_diag', 'x_props']],
-    ['More: extra power saving', ['x_kpower', 'x_vm_lite', 'x_eas', 'x_job_limit', 'x_rpm']],
+    ['More: extra power saving', ['x_kpower', 'x_vm_lite', 'x_eas', 'x_eas_cstate', 'x_job_limit', 'x_rpm']],
     ['More: storage', ['x_cache_auto', 'x_cache_days', 'x_cache_min', 'x_cache_keep', 'x_cache_keep_pkgs', 'x_cache_notify', 'f2fs_gc', 'f2fs_gc_gb', 'f2fs_gc_trim', 'f2fs_gc_temp', 'f2fs_gc_notify', 'x_dexopt_auto', 'x_dexopt_mode', 'x_dexopt_notify']]
   ];
 
@@ -3111,7 +3180,7 @@ html[data-style="mono"],html[data-style="mono"] body{
   $('bcal-btn').onclick = function () {
     if (!HAS_KSU) return;
     if ($('bcal-btn').dataset.act) {
-      modal('Cancel battery calibration?', '<p>Charge limit works again right away. You can start a new calibration any time.</p>',
+      modal('Cancel battery calibration?', '<p>Pause / bypass charging works again right away. You can start a new calibration any time.</p>',
         [{ label: 'Keep going' }, { label: 'Cancel calibration', primary: true, fn: bcalCancel }]);
       return;
     }
@@ -3119,7 +3188,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       '<p>1. Use the phone normally until the battery is at <b>5%</b> (not 0%).</p>' +
       '<p>2. Charge to <b>100% without unplugging</b>.</p>' +
       '<p>3. Keep it plugged in <b>until charging finishes</b> (usually 20&ndash;40 min, at most 1 h).</p>' +
-      '<p>HyperCool sends a notification at each step. Android battery stats are reset now, and Charge limit pauses until the calibration ends. ' +
+      '<p>HyperCool sends a notification at each step. Android battery stats are reset now, and Pause / bypass charging waits until the calibration ends. ' +
       'If your phone has Optimized / Smart charging, turn it off until it is done.</p>',
       [{ label: 'Not now' }, { label: 'Start', primary: true, fn: bcalStart }]);
   };
@@ -3594,23 +3663,34 @@ html[data-style="mono"],html[data-style="mono"] body{
       ['Android background work', 'Background apps on little cores now also limits Android\'s own background work (sync, backup, media scan).'],
       ['Faster network connections', 'The new name of Network stack tuning. The TCP part of Common kernel tuning moved here. It is made for speed, not battery.']
     ],
-    '2.3.8': [
+    '2.4.0': [
       ['Hibernate background apps', 'Off by default. After a few minutes with the screen off, background apps, including eligible preinstalled apps, can be stopped. Charging, protected, in-use, alarm-clock, and system-critical apps are skipped.'],
       ['Hibernate apps now', 'Run hibernation manually from Home. Choose Stop the app or Close background processes only, and review the apps and skipped counts before continuing.'],
       ['Background and network tuning', 'Android background work now has its own CPU scheduling limits, while Faster network connections includes the TCP tuning from Common kernel tuning.'],
       ['HyperCool (Glacier) colour', 'The original HyperCool accent is back in Settings, Colors.'],
-      ['Clearer recent activity', 'Apps show by name, hibernation status is included, and the last measured screen-off drain stays visible until a new value is ready.']
+      ['Clearer recent activity', 'Apps show by name, hibernation status is included, and the last measured screen-off drain stays visible until a new value is ready.'],
+      ['Game battery mode', 'Off by default. Games get Android\'s battery mode with a 60 FPS cap and a lower render resolution, so they run cooler.'],
+      ['Pause charging / bypass charging', 'Off by default. Charging pauses at the temperature or level you pick, or while a game is open, and the charger powers the phone instead. Kernels without a charging switch get bypass through a 0 mA charge current. Qualcomm and MediaTek.'],
+      ['Battery history and temperature warning', 'Off by default. A 48 h chart of level, temperature and screen-on / screen-off drain on Home, and a notification when the battery gets too hot.'],
+      ['Leftover app folders', 'A new one-shot action finds Android/data and Android/obb folders of uninstalled apps, shows them and deletes them when you confirm.'],
+      ['Memory bus frequency cap', 'Off by default, Qualcomm. The RAM and system cache bus stays below its top speed for less heat under heavy load, with a lock.'],
+      ['Lower screen resolution', 'Off by default. The whole screen is drawn at 90, 80 or 75% with the same sizes; the old values come back when off.'],
+      ['C-state aware scheduler', 'Energy Aware Scheduler now also prefers cores that are awake or lightly asleep, on kernels that have it.'],
+      ['Charge limit ~80% removed', 'The night charging limit and its keeper are gone. Use Hold the battery at in Pause / bypass charging instead. A limit set by an older version is released at the next boot.']
     ]
   };
   function whatsNew(ver) {
     var v = String(ver).replace(/^v/i, '').trim(), seen = null;
     try { seen = localStorage.getItem('hc_seen_ver'); } catch (e) { seen = null; }
-    if (seen === v || !NEWS[v]) return;
+    if (!NEWS[v]) return;
+    // the version and the number of entries: entries added to the same version show once more
+    var key = v + '#' + NEWS[v].length;
+    if (seen === key) return;
     var tries = 0;
     (function show() {
       // another dialog is open: look again a little later (at most a minute)
       if ($('modal').classList.contains('show')) { if (++tries < 20) setTimeout(show, 3000); return; }
-      try { localStorage.setItem('hc_seen_ver', v); } catch (e) { /* no storage: it may show again next time */ }
+      try { localStorage.setItem('hc_seen_ver', key); } catch (e) { /* no storage: it may show again next time */ }
       modal('What\'s new in v' + v, NEWS[v].map(function (x) { return '<p><b>' + esc(x[0]) + '</b><br>' + esc(x[1]) + '</p>'; }).join(''),
         [{ label: 'Got it', primary: true }]);
     })();
@@ -3690,6 +3770,165 @@ html[data-style="mono"],html[data-style="mono"] body{
     }).then(function () {
       btn.disabled = false; btn.textContent = 'Hibernate';
     });
+  };
+
+  /* battery history: bat_hist.csv of the battery keeper (time,level,temp,charger,screen,paused) */
+  var bhRows = [], bhSpan = 24;
+  function bhParse(txt) {
+    var out = [];
+    String(txt || '').split('\n').forEach(function (l) {
+      var a = l.trim().split(',');
+      if (a.length < 6 || !/^\d{9,}$/.test(a[0]) || !/^\d+$/.test(a[1])) return;
+      out.push({ t: +a[0], l: +a[1], c: /^-?\d+$/.test(a[2]) ? +a[2] / 10 : null, p: a[3] === '1', s: a[4] === '1', z: a[5] === '1' });
+    });
+    return out.sort(function (x, y) { return x.t - y.t; });
+  }
+  function bhDur(h) { return h < 1 ? Math.round(h * 60) + ' min' : (Math.round(h * 10) / 10) + ' h'; }
+  // drain per hour between two points without a charger, by the screen state at the first point.
+  // A gap of deep sleep counts for the state before it; a level that rose without a charger is the gauge
+  function bhStats(r) {
+    var on = { d: 0, h: 0 }, off = { d: 0, h: 0 }, gain = 0, tmin = null, tmax = null;
+    for (var i = 1; i < r.length; i++) {
+      var a = r[i - 1], b = r[i], h = (b.t - a.t) / 3600;
+      if (h <= 0 || h > 24) continue;
+      if (a.p || b.p) { if (b.l > a.l) gain += b.l - a.l; continue; }
+      if (b.l > a.l) continue;
+      var x = a.s ? on : off;
+      x.d += a.l - b.l; x.h += h;
+    }
+    r.forEach(function (e) {
+      if (e.c == null) return;
+      if (tmin == null || e.c < tmin) tmin = e.c;
+      if (tmax == null || e.c > tmax) tmax = e.c;
+    });
+    return { on: on, off: off, gain: gain, tmin: tmin, tmax: tmax };
+  }
+  function bhRate(x) { return x.h >= 0.5 ? (x.d / x.h).toFixed(1) + '%/h over ' + bhDur(x.h) : 'not enough data yet'; }
+  function bhHm(t) { var d = new Date(t * 1000); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function bhChart(r, t0, t1) {
+    var W = 320, H = 150, L = 30, R = 26, T = 8, B = 18, w = W - L - R, h = H - T - B, i, a, b;
+    var lo = 25, hi = 45;
+    r.forEach(function (e) { if (e.c != null) { lo = Math.min(lo, Math.floor(e.c / 5) * 5); hi = Math.max(hi, Math.ceil(e.c / 5) * 5); } });
+    function X(t) { return (L + (t - t0) / (t1 - t0) * w).toFixed(1); }
+    function Y(v) { return (T + h - v / 100 * h).toFixed(1); }
+    function TY(c) { return (T + h - (c - lo) / (hi - lo) * h).toFixed(1); }
+    var g = '';
+    [0, 50, 100].forEach(function (v) {
+      g += '<line x1="' + L + '" x2="' + (L + w) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="var(--line)" stroke-width="1"/>' +
+        '<text x="' + (L - 4) + '" y="' + (+Y(v) + 3) + '" text-anchor="end">' + v + '%</text>';
+    });
+    g += '<text x="' + (L + w + 4) + '" y="' + (T + 3) + '">' + hi + '°</text><text x="' + (L + w + 4) + '" y="' + (T + h + 3) + '">' + lo + '°</text>';
+    [t0, (t0 + t1) / 2, t1].forEach(function (t, k) {
+      g += '<text x="' + X(t) + '" y="' + (H - 4) + '" text-anchor="' + (k === 0 ? 'start' : k === 2 ? 'end' : 'middle') + '">' + bhHm(t) + '</text>';
+    });
+    var bands = '', strip = '';
+    for (i = 1; i < r.length; i++) {
+      a = r[i - 1]; b = r[i];
+      var x1 = +X(Math.max(a.t, t0)), x2 = +X(b.t), bw = Math.max(0.5, x2 - x1).toFixed(1);
+      if (a.p) bands += '<rect x="' + x1.toFixed(1) + '" y="' + T + '" width="' + bw + '" height="' + h + '" fill="var(--ok)" opacity="' + (a.z ? '.10' : '.18') + '"/>';
+      if (a.s) strip += '<rect x="' + x1.toFixed(1) + '" y="' + (T + h - 3) + '" width="' + bw + '" height="3" fill="var(--pri)" opacity=".55"/>';
+    }
+    var lv = '', tp = '', pen = 'M';
+    r.forEach(function (e) {
+      lv += (lv ? 'L' : 'M') + X(e.t) + ' ' + Y(e.l);
+      if (e.c == null) { pen = 'M'; return; }
+      tp += pen + X(e.t) + ' ' + TY(e.c); pen = 'L';
+    });
+    return '<svg class="bh-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Battery level and temperature">' + g + bands + strip +
+      (tp ? '<path d="' + tp + '" fill="none" stroke="var(--hot)" stroke-width="1.4" stroke-dasharray="3 2"/>' : '') +
+      '<path d="' + lv + '" fill="none" stroke="var(--pri)" stroke-width="2" stroke-linejoin="round"/></svg>';
+  }
+  function bhBody() {
+    var now = Math.floor(Date.now() / 1000), last = bhRows.length ? bhRows[bhRows.length - 1].t : now;
+    var t1 = Math.max(now, last), t0 = t1 - bhSpan * 3600;
+    // the point just before the window starts the line at its left edge
+    var r = [], prev = null;
+    bhRows.forEach(function (e) { if (e.t < t0) prev = e; else r.push(e); });
+    // the point before the window, moved to its left edge (level and state as they were then)
+    if (prev) r.unshift({ t: t0, l: prev.l, c: prev.c, p: prev.p, s: prev.s, z: prev.z });
+    var real = r.length - (prev ? 1 : 0), st = bhStats(r), seg = [[12, '12 h'], [24, '24 h'], [48, '48 h']];
+    // the temperature of the point before the window is not in it
+    if (prev) { var rt = bhStats(r.slice(1)); st.tmin = rt.tmin; st.tmax = rt.tmax; }
+    return '<div class="apseg bh-seg">' + seg.map(function (x) {
+        return '<button data-h="' + x[0] + '" aria-pressed="' + (x[0] === bhSpan) + '"' + (x[0] === bhSpan ? ' class="on"' : '') + '>' + x[1] + '</button>';
+      }).join('') + '</div>' +
+      (real < 1 ? '<p class="desc">No points in this period. Pick a longer one.</p>' : r.length > 1 ? bhChart(r, t0, t1) : '<p class="desc">Not enough points in this period yet.</p>') +
+      '<div class="bh-leg"><span><i style="background:var(--pri)"></i>Level</span><span><i style="background:var(--hot)"></i>Temperature</span>' +
+      '<span><i style="background:var(--ok);opacity:.5"></i>Charger</span><span><i style="background:var(--pri);opacity:.55"></i>Screen on</span></div>' +
+      '<div class="bcpop"><table>' +
+      '<tr><td>Drain, screen on</td><td>' + esc(bhRate(st.on)) + '</td></tr>' +
+      '<tr><td>Drain, screen off</td><td>' + esc(bhRate(st.off)) + '</td></tr>' +
+      '<tr><td>Charged</td><td>' + (st.gain ? '+' + st.gain + '%' : 'not on the charger') + '</td></tr>' +
+      '<tr><td>Temperature</td><td>' + (st.tmin == null ? 'not readable' : st.tmin.toFixed(1) + ' – ' + st.tmax.toFixed(1) + ' °C') + '</td></tr>' +
+      '<tr><td>Points</td><td>' + real + '</td></tr></table>' +
+      '<div class="hint">A point every 5 minutes while the phone is awake. Deep sleep leaves gaps; the line joins them and the drop counts for the screen state before the gap.</div></div>';
+  }
+  function bhBind() {
+    $('m-body').querySelectorAll('.bh-seg button').forEach(function (b) {
+      b.onclick = function () { bhSpan = +b.getAttribute('data-h'); $('m-body').innerHTML = bhBody(); bhBind(); };
+    });
+  }
+  function bhExport() {
+    exec('f=/sdcard/Download/HyperCool_battery_history.csv; { echo "time,level,temp_0.1C,charger,screen_on,charging_paused"; cat ' + DATA + '/bat_hist.csv; } > "$f" && echo "OK $f"').then(function (r) {
+      var m = /OK (\S+)/.exec(r.stdout || '');
+      snack(m ? 'Saved to Download/HyperCool_battery_history.csv' : 'Could not save the file');
+    });
+  }
+  $('bh-run').onclick = function () {
+    if (!HAS_KSU) return;
+    var btn = this;
+    btn.disabled = true;
+    exec('cat ' + DATA + '/bat_hist.csv 2>/dev/null').then(function (r) {
+      bhRows = bhParse(r.stdout);
+      if (bhRows.length < 2) {
+        var off = String(saved.bat_hist) !== '1';
+        modal('Battery history', off ?
+          '<p>Battery history is off. Turn on <b>Battery history</b> in Battery drain (kernel), save and reboot. The chart fills in from then on.</p>' :
+          '<p>No points yet. The first ones are saved a few minutes after boot, then every 5 minutes while the phone is awake.</p>',
+          [{ label: 'Close' }]);
+        return;
+      }
+      modal('Battery history', bhBody(), [{ label: 'Export', fn: bhExport }, { label: 'Close', primary: true }]);
+      bhBind();
+    }).then(function () { btn.disabled = false; });
+  };
+
+  /* leftover app folders (Android/data, Android/obb of apps that are gone) */
+  function loSize(kb) { kb = +kb || 0; return kb >= 1048576 ? (kb / 1048576).toFixed(1) + ' GB' : kb >= 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB'; }
+  function loClean() {
+    snack('Deleting leftover folders…');
+    exec('sh /data/adb/modules/' + MODID + '/common/leftover.sh clean').then(function (r) {
+      var f = (String(r.stdout || '').split('\n').filter(function (l) { return /^R\|/.test(l); }).pop() || '').split('|');
+      if (f[1] === 'nopkgs') { snack('Installed apps could not be read, nothing was deleted'); return; }
+      if (f.length < 4) { snack('Leftover clean did not answer'); return; }
+      snack(+f[1] ? f[1] + ' folder' + (+f[1] === 1 ? '' : 's') + ' deleted, ' + loSize(f[2]) + ' freed' + (+f[3] ? ', ' + f[3] + ' failed' : '') : 'Nothing was deleted');
+      try { loadKeepers(true); } catch (x) { }
+    });
+  }
+  $('t-left').onclick = function () {
+    if (!HAS_KSU) return;
+    var el = this;
+    if (el.getAttribute('data-busy')) return;
+    el.setAttribute('data-busy', '1');
+    snack('Looking for leftover folders…');
+    exec('sh /data/adb/modules/' + MODID + '/common/leftover.sh scan').then(function (r) {
+      var out = String(r.stdout || ''), rows = [], tot = null;
+      if (/^R\|nopkgs/m.test(out)) throw new Error('The list of installed apps could not be read, so nothing was checked.');
+      out.split('\n').forEach(function (l) { var a = l.split('|'); if (a[0] === 'L' && a.length >= 4) rows.push(a); else if (a[0] === 'T') tot = a; });
+      if (!tot) throw new Error('No answer from leftover.sh.');
+      if (!rows.length) {
+        modal('No leftover folders', '<p>Every folder in Android/data and Android/obb belongs to an app that is installed.</p>', [{ label: 'Close' }]);
+        return;
+      }
+      rows.sort(function (x, y) { return (+y[3] || 0) - (+x[3] || 0); });
+      modal('Delete ' + rows.length + ' leftover folder' + (rows.length === 1 ? '?' : 's?'),
+        '<p>These apps are not installed any more, but their files are still there (' + esc(loSize(tot[2])) + ' in total):</p><ul class="lo-list">' +
+        rows.map(function (a) { return '<li>' + esc(a[2]) + '<span>' + (a[1] === 'obb' ? 'obb, ' : '') + esc(loSize(a[3])) + '</span></li>'; }).join('') +
+        '</ul><p class="wk-n">Game data (obb) of an app you want to install again is deleted too. Apps uninstalled with "keep data" are not listed, and every folder is checked again before it goes.</p>',
+        [{ label: 'Cancel' }, { label: 'Delete', danger: true, fn: loClean }]);
+    }).catch(function (e) {
+      modal('Leftover folders unavailable', '<p>' + esc(e && e.message ? e.message : 'The command did not answer.') + '</p>', [{ label: 'Close' }]);
+    }).then(function () { el.removeAttribute('data-busy'); });
   };
 
   /* charge calibration */
@@ -3803,7 +4042,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       ' echo "kernel=$(uname -r)"; echo "root=$( [ -x /data/adb/ksud ] && /data/adb/ksud -V; magisk -c 2>/dev/null; [ -x /data/adb/apd ] && echo APatch)";' +
       ' echo "== module"; cat $M/module.prop; for x in disable remove update; do [ -e $M/$x ] && echo "flag: $x"; done; echo "last boot: $(cat $D/last_boot 2>/dev/null)";' +
       ' echo "== status"; cat $D/status.conf;' +
-      ' echo "== keepers"; for k in soff_watch chg_watch cache_keeper rr_watch cpu_watch; do p=$(cat $D/$k.pid 2>/dev/null); [ -n "$p" ] && echo "$k pid=$p $( [ -d /proc/$p ] && echo running || echo stopped)"; done; cat $D/soff_watch.state $D/rr_watch.state $D/compact.state $D/soff_radio.save $D/f2fs_gc.state $D/f2fs_gc.meta $D/f2fs_gc.save $D/dexopt_auto.meta $D/dexopt_auto.run $D/boot_tries $D/safe_mode 2>/dev/null; echo "== top battery use"; sh $M/common/topdrain.sh 10 2>&1 | head -n 16; echo "== top battery use, raw dump"; sh $M/common/topdrain.sh raw 2>&1 | head -n 70; echo "== job limit"; dumpsys jobscheduler 2>/dev/null | grep -E "^ *(min_ready_cpu_only_jobs_count|min_ready_non_active_jobs_count|max_cpu_only_job_batch_delay_ms|max_non_active_job_batch_delay_ms|conn_max_connectivity_job_batch_delay_ms)=";' +
+      ' echo "== keepers"; for k in soff_watch bat_watch cache_keeper rr_watch cpu_watch; do p=$(cat $D/$k.pid 2>/dev/null); [ -n "$p" ] && echo "$k pid=$p $( [ -d /proc/$p ] && echo running || echo stopped)"; done; cat $D/soff_watch.state $D/rr_watch.state $D/compact.state $D/soff_radio.save $D/f2fs_gc.state $D/f2fs_gc.meta $D/f2fs_gc.save $D/dexopt_auto.meta $D/dexopt_auto.run $D/boot_tries $D/safe_mode 2>/dev/null; echo "== top battery use"; sh $M/common/topdrain.sh 10 2>&1 | head -n 16; echo "== top battery use, raw dump"; sh $M/common/topdrain.sh raw 2>&1 | head -n 70; echo "== job limit"; dumpsys jobscheduler 2>/dev/null | grep -E "^ *(min_ready_cpu_only_jobs_count|min_ready_non_active_jobs_count|max_cpu_only_job_batch_delay_ms|max_non_active_job_batch_delay_ms|conn_max_connectivity_job_batch_delay_ms)=";' +
       ' echo "== config"; cat $D/config.conf;' +
       ' echo "== battery"; dumpsys battery 2>/dev/null;' +
       ' echo "== cache keep log"; cat $D/cache_keep.log 2>/dev/null;' +
@@ -3812,6 +4051,7 @@ html[data-style="mono"],html[data-style="mono"] body{
       ' echo "== dexopt"; [ -f $D/dexopt/state ] && { cat $D/dexopt/state; tail -n 20 $D/dexopt/fail.log 2>/dev/null; };' +
       ' echo "== activity log (last 50)"; tail -n 50 $D/keeper.log 2>/dev/null;' +
       ' echo "== hibernate"; cat $D/hibernate.state 2>/dev/null;' +
+      ' echo "== battery keeper"; cat $D/bat_watch.state $D/batp.node $D/batp.save $D/batp.games 2>/dev/null; echo "== game mode"; cat $D/game.save 2>/dev/null;' +
       ' echo "== boot log"; cat $D/boot.log 2>/dev/null || echo "(no boot log yet)";' +
       ' } > "$f" 2>&1 || { echo "write failed" >&2; exit 4; }; echo "OK|$f"').then(function (r) {
       var m = /OK\|(.+)/.exec(r.stdout || '');
@@ -3989,8 +4229,8 @@ html[data-style="mono"],html[data-style="mono"] body{
 
   /* navigation */
   /* keepers: which ones run, what each did last (keeper.log, last 50 lines) */
-  var KP_SRC = { 'screen-off': 'Screen-off keeper', cpu: 'CPU cap keeper', charge: 'Charge limit keeper', refresh: 'Touch refresh rate keeper',
-    heat: 'Heat guard', cache: 'Cache clean', calibration: 'Battery calibration', tools: 'Manual action', idle: 'Android daily battery stats',
+  var KP_SRC = { 'screen-off': 'Screen-off keeper', cpu: 'CPU cap keeper', refresh: 'Touch refresh rate keeper',
+    heat: 'Heat guard', battery: 'Battery keeper', cache: 'Cache clean', calibration: 'Battery calibration', tools: 'Manual action', idle: 'Android daily battery stats',
     drain: 'Screen-off keeper', boot: 'Boot', restore: 'Restore', settings: 'Settings' };
   // feature / option names by config key (boot lines and Settings saved lines show names, not keys)
   var FK = null, FL = {}, FB = {};
@@ -4024,7 +4264,8 @@ html[data-style="mono"],html[data-style="mono"] body{
       return !m ? '' : +m[2] > 0 ? 'bad' : +m[1] > 0 ? 'warn' : '';
     }
     if (a === 'Stopped') return /turned off in the settings/.test(r) ? '' : 'warn';
-    if (/\bfailed\b|rejected|\(partly\)|Not started/i.test(a)) return 'warn';
+    if (/\bfailed\b|rejected|\(partly\)|Not started|not possible/i.test(a)) return 'warn';
+    if (e.k === 'battery' && a === 'Battery hot') return 'bad';
     if (/(^|[^0-9])[1-9][0-9]* (of [0-9]+ )?(failed|not accepted)|gave up|did not|not readable|with errors|could not/i.test(a + ' ' + r)) return 'warn';
     return '';
   }
@@ -4160,9 +4401,9 @@ html[data-style="mono"],html[data-style="mono"] body{
     { p: 'soff_watch', n: 'soff_watch', st: 'soff_watch.state', k: 'screen-off', t: 'Screen-off keeper',
       on: ['soff_prof', 'wifi_keep', 'x_compact', 'soff_radio', 'soff_data', 'drain_alert', 'hibernate', 'f2fs_gc', 'x_dexopt_auto'] },
     { p: 'cpu_watch', n: 'cpu_watch', st: 'cpu_watch.state', k: 'cpu', t: 'CPU cap keeper', list: 1 },
-    { p: 'chg_watch', n: 'chg_watch', st: 'chg_watch.state', k: 'charge', t: 'Charge limit keeper', on: ['charge_limit'], sk: 'charge_limit' },
     { p: 'rr_watch', n: 'rr_watch', st: 'rr_watch.state', k: 'refresh', t: 'Touch refresh rate keeper', on: ['rr_adapt'], sk: 'rr_adapt' },
     { p: 'heat_watch', n: 'heat_watch', st: 'heat_watch.state', k: 'heat', t: 'Heat guard', on: ['heat_guard'], sk: 'heat_guard' },
+    { p: 'bat_watch', n: 'bat_watch', st: 'bat_watch.state', k: 'battery', t: 'Battery keeper', on: ['chg_pause', 'bat_hist', 'temp_warn'], skAny: 1 },
     { p: 'cache_keeper', n: 'cache_clean', st: '', k: 'cache', t: 'Cache clean keeper', on: ['x_cache_auto'], sk: 'x_cache_auto' },
     { p: 'bcal_watch', n: 'bcal_watch', st: 'bcal.state', k: 'calibration', t: 'Battery calibration' }
   ];
@@ -4189,6 +4430,12 @@ html[data-style="mono"],html[data-style="mono"] body{
       // a keeper that the saved settings turned off stops by itself (some at once): that is "Off"
       var r = run[x.p] || { a: false }, next = ksOn(x, saved), want = x.list ? cpuList : ksOn(x, base) && next;
       var bs = x.sk && status[x.sk] ? status[x.sk] : null;
+      // a keeper shared by several features: started when one of them was applied at boot
+      if (x.skAny) {
+        var ons = x.on.filter(function (k) { return String(base[k]) === '1' && status[k]; });
+        bs = ons.some(function (k) { return status[k].state === 'applied' || status[k].state === 'partial'; }) ? null :
+          ons.length ? status[ons[0]] : null;
+      }
       var lastEv = null;
       for (var i = kpLog.length - 1; i >= 0; i--) if (kpLog[i].k === x.k) { lastEv = kpLog[i]; break; }
       var cls, lbl, det;

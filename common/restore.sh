@@ -63,6 +63,13 @@ _hc_undo() {
         *) _sb=active ;;
       esac
       am set-standby-bucket "$3" "$_sb" </dev/null >/dev/null 2>&1 ;;
+    wm)
+      # screen size / density before HyperCool (none = no override)
+      case "$3" in
+        size) if [ "$4" = none ]; then wm size reset </dev/null >/dev/null 2>&1; else wm size "$4" </dev/null >/dev/null 2>&1; fi ;;
+        density) if [ "$4" = none ]; then wm density reset </dev/null >/dev/null 2>&1; else wm density "$4" </dev/null >/dev/null 2>&1; fi ;;
+        *) return 0 ;;
+      esac ;;
     inactive)
       # value = idle state before HyperCool changed it
       case "$4" in true|false) am set-inactive "$3" "$4" </dev/null >/dev/null 2>&1 ;; *) return 0 ;; esac ;;
@@ -361,6 +368,51 @@ _hc_radios() {
   return 0
 }
 
+# Game battery mode: hc_game_reset [comma list to keep]. game.save holds "<package>|<game mode before>";
+# every game not in the list gets its interventions removed and its old game mode back.
+hc_game_reset() {
+  _gs=$HC_DATA/game.save
+  [ -s "$_gs" ] || { rm -f "$_gs"; return 0; }
+  _gk=",${1:-},"; _grest=""; _gfail=0
+  while IFS='|' read -r _gp _gm; do
+    [ -n "$_gp" ] || continue
+    case "$_gk" in *",$_gp,"*) _grest="$_grest$_gp|$_gm
+"; continue ;; esac
+    # uninstalled meanwhile: nothing left to put back
+    pm path "$_gp" </dev/null >/dev/null 2>&1 || continue
+    case "$_gm" in standard|performance|battery|custom) ;; *) _gm=standard ;; esac
+    cmd game reset --user 0 "$_gp" </dev/null >/dev/null 2>&1
+    if ! cmd game mode --user 0 "$_gm" "$_gp" </dev/null >/dev/null 2>&1; then
+      _grest="$_grest$_gp|$_gm
+"; _gfail=1
+    fi
+  done < "$_gs"
+  if [ -n "$_grest" ]; then printf '%s' "$_grest" > "$_gs"; else rm -f "$_gs"; fi
+  [ "$_gfail" = 0 ]
+}
+
+# Charging pause left by a battery keeper that is gone. batp.save: "<node>|<normal value>|<value written>|<kind>".
+# A running keeper releases it itself when it stops. After a reboot the kernel has the node back at
+# its normal value already: writing it again changes nothing.
+hc_batp_release() {
+  _brs=$HC_DATA/batp.save
+  [ -s "$_brs" ] || { rm -f "$_brs"; return 0; }
+  _brq=$(cat "$HC_DATA/bat_watch.pid" 2>/dev/null)
+  case "$_brq" in ''|*[!0-9]*) ;; *) grep -q bat_watch "/proc/$_brq/cmdline" 2>/dev/null && return 0 ;; esac
+  _brl=""
+  while IFS='|' read -r _brn _brb _brw _brk; do
+    [ -n "$_brn" ] && [ -e "$_brn" ] || continue
+    # a charge current limit the ROM (or a reboot) has set again is not ours any more
+    [ "$_brk" = limit ] && [ "$(cat "$_brn" 2>/dev/null)" != "$_brw" ] && continue
+    chmod u+w "$_brn" 2>/dev/null
+    { echo "$_brb" > "$_brn"; } 2>/dev/null || _brl="$_brl$_brn|$_brb|$_brw
+"
+  done < "$_brs"
+  if [ -n "$_brl" ]; then printf '%s' "$_brl" > "$_brs"; return 1; fi
+  rm -f "$_brs"
+  return 0
+}
+
 _hc_main() {
   _all=0; _wait=0; _purge=0; _feat=""
   while [ $# -gt 0 ]; do
@@ -399,6 +451,10 @@ _hc_main() {
     _hc_radios || _rc=1
     # refresh rate / CPU limits of a Heat guard keeper that did not stop cleanly
     _hc_heat || _rc=1
+    # charging paused by a battery keeper that did not stop cleanly
+    hc_batp_release || _rc=1
+    # Game battery mode: Android keeps game modes across reboots, so they are put back here
+    hc_game_reset || _rc=1
     if [ "$_rc" -eq 0 ]; then
       echo "All recorded system changes restored."
     else

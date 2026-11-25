@@ -369,6 +369,14 @@ f_x_log_nuke() {
   cmd display dwb-logging-disable </dev/null >/dev/null 2>&1 && _okc=1
   cmd input_method tracing stop </dev/null >/dev/null 2>&1 && _okc=1
   cmd statusbar tracing stop </dev/null >/dev/null 2>&1 && _okc=1
+  cmd accessibility stop-trace </dev/null >/dev/null 2>&1 && _okc=1
+  # Xiaomi migard (game / frame scheduling daemon) keeps its own trace buffer
+  if cmd -l </dev/null 2>/dev/null | grep -qx migard; then
+    for _mc in "dump-trace false" "start-trace false" "stop-trace true" "trace-buffer-size 0"; do
+      # shellcheck disable=SC2086
+      cmd migard $_mc </dev/null >/dev/null 2>&1 && _okc=1
+    done
+  fi
   for _wl in $(dumpsys window </dev/null 2>/dev/null | grep -E "^  (Proto|Logcat):" | sed 's/^  .*://'); do
     cmd window logging disable "$_wl" </dev/null >/dev/null 2>&1
     cmd window logging disable-text "$_wl" </dev/null >/dev/null 2>&1
@@ -407,7 +415,7 @@ f_x_diag() {
     return
   fi
   cnt_reset
-  for _s in charge_logger misight vendor.mi_misight; do
+  for _s in charge_logger misight vendor.mi_misight wlan_logging vendor.wlan_logging; do
     case "$(getprop "init.svc.$_s")" in
       running|restarting) setprop ctl.stop "$_s" 2>/dev/null && cnt_ok ;;
     esac
@@ -668,6 +676,13 @@ f_x_eas() {
   [ -e "$_ea" ] || { st x_eas skipped "no sched_energy_aware (kernel without EAS)"; return; }
   if [ "$(cat "$_ea" 2>/dev/null)" = 1 ]; then cnt_ok; _d="EAS already on"
   else wn "$_ea" 1; _d="EAS switched on (was off)"
+  fi
+  # C-state aware: a light task goes to a core that is awake or sleeps lightly, a core in deep
+  # sleep stays asleep (kernels that have the switch; back to stock after a reboot when off)
+  _cs=/proc/sys/kernel/sched_cstate_aware
+  if [ "$(cfg x_eas_cstate 1)" = 1 ] && [ -e "$_cs" ]; then
+    if [ "$(cat "$_cs" 2>/dev/null)" = 1 ]; then _d="$_d, C-state aware already on"
+    elif wn "$_cs" 1; then _d="$_d, C-state aware on"; fi
   fi
   fin x_eas "$_d"
 }

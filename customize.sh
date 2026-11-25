@@ -31,7 +31,7 @@ if [ -n "$_os" ]; then
   ui_print "- ROM    : HyperOS/MIUI $_os"
 else
   ui_print "- ROM    : $(getprop ro.build.display.id)"
-  ui_print "  Xiaomi-only options (night charging, Joyose,"
+  ui_print "  Xiaomi-only options (Joyose,"
   ui_print "  autostart, MIUI blur) will be skipped."
 fi
 _st=""
@@ -69,6 +69,8 @@ if [ -f "$HC_DATA/config.conf" ]; then
   fi
   # v2.3.3 battery defaults: a value moves only while it still holds the old default,
   # so anything the user chose is kept exactly as it is
+  # Charge limit ~80% was removed
+  sed -i '/^charge_limit=/d' "$C"
   hc_migrate_config "$C" && ui_print "- Battery input defaults updated (your own values are kept)"
   # make sure the last line ends with a newline before appending missing keys
   [ -s "$HC_DATA/config.conf" ] && [ -n "$(tail -c1 "$HC_DATA/config.conf")" ] && echo >> "$HC_DATA/config.conf"
@@ -99,13 +101,14 @@ set_perm "$MODPATH/action.sh" 0 0 0755
 set_perm "$MODPATH/common/restore.sh" 0 0 0755
 set_perm "$MODPATH/common/soff_restore.sh" 0 0 0755
 set_perm "$MODPATH/common/charge_cal.sh" 0 0 0755
-set_perm "$MODPATH/common/chg_watch.sh" 0 0 0755
 set_perm "$MODPATH/common/soff_watch.sh" 0 0 0755
 set_perm "$MODPATH/common/monet.sh" 0 0 0755
 set_perm "$MODPATH/common/cache_clean.sh" 0 0 0755
 set_perm "$MODPATH/common/cpu_watch.sh" 0 0 0755
 set_perm "$MODPATH/common/dexopt.sh" 0 0 0755
 set_perm "$MODPATH/common/hc_guard.sh" 0 0 0755
+set_perm "$MODPATH/common/bat_watch.sh" 0 0 0755
+set_perm "$MODPATH/common/leftover.sh" 0 0 0755
 
 ui_print " "
 ui_print "- Open the WebUI to choose features, then reboot."

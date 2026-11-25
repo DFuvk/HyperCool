@@ -37,6 +37,27 @@ if [ -f "$HC_DATA/chg_watch.set" ] || [ -f "$HC_DATA/chg_watch.state" ]; then
     [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
   done
 fi
+# stop the battery keeper (charging pause, history, temperature warning): its trap turns charging
+# back on; TERM waits for the sleep it is in, so that sleep is stopped too
+_bq=$(cat "$HC_DATA/bat_watch.pid" 2>/dev/null)
+case "$_bq" in ''|*[!0-9]*) ;; *) if grep -q bat_watch "/proc/$_bq/cmdline" 2>/dev/null; then
+  kill "$_bq" 2>/dev/null
+  for _ck in /proc/[0-9]*; do
+    [ "$(awk '/^PPid:/{print $2}' "$_ck/status" 2>/dev/null)" = "$_bq" ] && kill "${_ck##*/}" 2>/dev/null
+  done
+  _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_bq" ]; do sleep 1; _i=$((_i + 1)); done
+  [ -d "/proc/$_bq" ] && grep -q bat_watch "/proc/$_bq/cmdline" 2>/dev/null && kill -9 "$_bq" 2>/dev/null
+fi ;; esac
+if [ -s "$HC_DATA/batp.save" ]; then
+  while IFS='|' read -r _bn _bb _bw _bk; do
+    [ -n "$_bn" ] && [ -e "$_bn" ] || continue
+    [ "$_bk" = limit ] && [ "$(cat "$_bn" 2>/dev/null)" != "$_bw" ] && continue
+    { chmod u+w "$_bn" 2>/dev/null; echo "$_bb" > "$_bn"; } 2>/dev/null
+  done < "$HC_DATA/batp.save"
+  rm -f "$HC_DATA/batp.save"
+fi
+rm -f "$HC_DATA/bat_watch.pid" "$HC_DATA/batp.games" "$HC_DATA/leftover.list" "$HC_DATA"/leftover.pk.*
+# Game battery mode is put back by restore.sh --all below (Android keeps game modes across reboots)
 # stop the Heat guard keeper (it puts its refresh rate / CPU limits back when it stops)
 _hp=$(cat "$HC_DATA/heat_watch.pid" 2>/dev/null)
 case "$_hp" in ''|*[!0-9]*) ;; *) grep -q heat_watch "/proc/$_hp/cmdline" 2>/dev/null && kill "$_hp" 2>/dev/null

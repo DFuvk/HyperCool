@@ -224,7 +224,7 @@ lines() { _ln=$(grep -c . "$1" 2>/dev/null); echo "${_ln:-0}"; }
 # battery level and charging state, for the drain of each screen-off period
 BATP=/sys/class/power_supply/battery
 bat_lv() { _bl=$(cat "$BATP/capacity" 2>/dev/null); case "$_bl" in ''|*[!0-9]*) echo "" ;; *) echo "$_bl" ;; esac; }
-# on the charger counts too: with the 80% charge limit the status is "Not charging" while plugged in
+# on the charger counts too: while charging is paused the status is "Not charging" while plugged in
 bat_chg() {
   case "$(cat "$BATP/status" 2>/dev/null)" in Charging|Full) return 0 ;; esac
   for _bo in /sys/class/power_supply/usb/online /sys/class/power_supply/ac/online \

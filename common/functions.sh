@@ -382,6 +382,87 @@ f_gpu_cap() {
   fin gpu_cap "max $((_fq / 1000000)) MHz via $_how$_cut$_lk"
 }
 
+# bus_cap (Qualcomm) - memory bus ceiling: DDR and LLCC at the step nearest bus_cap % of their highest
+# one (never the lowest step). GKI kernels: bus_dcvs/<DDR|LLCC>/hw_max_freq; older ones: the max_freq of the CPU-DDR /
+# LLCC bandwidth and latency devfreq voters. GPU, L3 and storage are left alone. Applied once at boot
+# (after Balanced system defaults, which opens the full range); the kernel puts the stock value back on
+# reboot. Lock (bus_cap_lock) makes the nodes read-only so the ROM cannot raise them again.
+hc_step_below() { # <available frequencies file> <percent>: "<top> <step nearest that share>"
+  _sl=$(tr ' ' '\n' < "$1" 2>/dev/null | grep -E '^[0-9]+$' | sort -un)
+  _sn=$(echo "$_sl" | grep -c .); [ "$_sn" -ge 3 ] || return 1
+  _sh=$(echo "$_sl" | tail -n 1); _slo=$(echo "$_sl" | head -n 1)
+  _st=$((_sh / 100 * $2)); _sb=""; _sd=""
+  for _sv in $_sl; do
+    # never the lowest step: the bus must still be able to speed up
+    [ "$_sv" = "$_slo" ] && continue
+    _dd=$((_sv - _st)); [ "$_dd" -lt 0 ] && _dd=$((-_dd))
+    if [ -z "$_sd" ] || [ "$_dd" -lt "$_sd" ]; then _sd=$_dd; _sb=$_sv; fi
+  done
+  [ -n "$_sb" ] || return 1
+  echo "$_sh $_sb"
+}
+f_bus_cap() {
+  _bc=$(num bus_cap 0); case "$_bc" in 0) st bus_cap off; return ;; 1) _bc=90 ;; 2) _bc=75 ;; 3) _bc=60 ;; esac
+  [ "$_bc" -lt 50 ] && _bc=50; [ "$_bc" -ge 100 ] && { st bus_cap off; return; }
+  on_qcom_ok || { st bus_cap skipped "Qualcomm only"; return; }
+  cnt_reset
+  _lock=$(cfg bus_cap_lock 1); _done=""; _lk=0
+  # bus_cap_set <name> <node to write> <frequency table> [min node]
+  bus_cap_set() {
+    _hb=$(hc_step_below "$3" "$_bc") || return 1
+    _hi=${_hb% *}; _to=${_hb#* }
+    [ "$_to" -lt "$_hi" ] || return 1
+    if [ -n "$4" ] && [ -e "$4" ]; then
+      _mn=$(rd "$4"); case "$_mn" in ''|*[!0-9]*) _mn=0 ;; esac
+      # a floor above the new ceiling would be refused: leave such a voter as it is
+      [ "$_mn" -gt "$_to" ] && { log "  bus_cap: $1 floor $_mn above $_to, left alone"; return 1; }
+    fi
+    wn "$2" "$_to" || return 1
+    [ "$_lock" = 1 ] && chmod 0444 "$2" 2>/dev/null && _lk=$((_lk + 1))
+    _done="$_done${_done:+, }$1 $(( _to * 100 / _hi ))%"
+  }
+  # bus_cap_voters <name> <bus_dcvs dir>: when the kernel refuses hw_max_freq, lower max_freq of the memlat / bwmon
+  # voters of that block to the same step (they only limit what the CPUs ask for; the block's own ceiling stays)
+  bus_cap_voters() {
+    _hb=$(hc_step_below "$2/available_frequencies" "$_bc") || return 1
+    _hi=${_hb% *}; _to=${_hb#* }; _vn=0
+    for _v in "$2"/*; do
+      [ -f "$_v/max_freq" ] && [ -f "$_v/min_freq" ] || continue
+      case "${_v##*/}" in *memlat*|*bwmon*) ;; *) continue ;; esac
+      _vm=$(rd "$_v/max_freq"); case "$_vm" in ''|*[!0-9]*) continue ;; esac
+      [ "$_to" -lt "$_vm" ] || continue
+      _mn=$(rd "$_v/min_freq"); case "$_mn" in ''|*[!0-9]*) _mn=0 ;; esac
+      [ "$_mn" -gt "$_to" ] && { log "  bus_cap: ${_v##*/} floor $_mn above $_to, left alone"; continue; }
+      wn "$_v/max_freq" "$_to" || continue
+      [ "$_lock" = 1 ] && chmod 0444 "$_v/max_freq" 2>/dev/null && _lk=$((_lk + 1))
+      _vn=$((_vn + 1))
+    done
+    [ "$_vn" -gt 0 ] && _done="$_done${_done:+, }$1 voters $(( _to * 100 / _hi ))% ($_vn)"
+    return 0
+  }
+  _gki=0; _brej=""
+  for _c in DDR LLCC; do
+    _p=/sys/devices/system/cpu/bus_dcvs/$_c
+    [ -f "$_p/available_frequencies" ] && [ -e "$_p/hw_max_freq" ] || continue
+    _gki=1
+    # some kernels refuse every write here (even the value already set): use the voters of that block instead
+    { echo "$(rd "$_p/hw_max_freq")" > "$_p/hw_max_freq"; } 2>/dev/null || { _brej="$_brej $_c"; continue; }
+    bus_cap_set "$_c" "$_p/hw_max_freq" "$_p/available_frequencies" "$_p/hw_min_freq"
+  done
+  for _c in $_brej; do bus_cap_voters "$_c" "/sys/devices/system/cpu/bus_dcvs/$_c"; done
+  [ -n "$_brej" ] && [ -z "$_done" ] && { st bus_cap skipped "the kernel refuses hw_max_freq and no memlat / bwmon voter could be lowered"; return; }
+  if [ "$_gki" = 0 ]; then
+    for _d in /sys/class/devfreq/*; do
+      [ -f "$_d/available_frequencies" ] && [ -e "$_d/max_freq" ] || continue
+      _dn=${_d##*/}
+      case "$_dn" in *kgsl*|*gpu*|*ufs*|*mmc*|*l3*|*L3*|*npu*|*cdsp*|*venus*|*vidc*|*cam*) continue ;; esac
+      case "$_dn" in *ddr*|*llcc*|*cpubw*|*cpu-bw*|*cpu*-lat*|*memlat*|*bw_hwmon*) ;; *) continue ;; esac
+      bus_cap_set "$_dn" "$_d/max_freq" "$_d/available_frequencies" "$_d/min_freq"
+    done
+  fi
+  fin bus_cap "${_done:-nothing lowered}$([ "$_lk" -gt 0 ] && echo ", locked")" "no memory bus frequency node on this kernel"
+}
+
 # GPU devfreq node for Mali / other GPUs (MediaTek, Exynos, Tensor)
 hc_gpu_dev() {
   for _d in /sys/class/devfreq/*; do
@@ -833,67 +914,20 @@ f_soff_prof() {
   fi
 }
 
-# Xiaomi "night charging": the charger stops at ~80% while the flag is set
-hc_watch_pid() {
-  _wp=$(cat "$HC_DATA/chg_watch.pid" 2>/dev/null)
-  case "$_wp" in ''|*[!0-9]*) return 1 ;; esac
-  grep -q chg_watch "/proc/$_wp/cmdline" 2>/dev/null && echo "$_wp"
-}
-hc_watch_stop() {
-  _wp=$(hc_watch_pid) && {
-    kill "$_wp" 2>/dev/null
-    _i=0; while [ "$_i" -lt 6 ] && [ -d "/proc/$_wp" ]; do sleep 1; _i=$((_i + 1)); done
-  }
-  rm -f "$HC_DATA/chg_watch.pid"
-}
-f_charge_limit() {
-  # remember whether HyperCool itself set the flag: the persistent marker below
-  # (written as soon as we set it), the keeper's state, or a running keeper.
-  # The marker matters because the keeper only writes its state on the first
-  # plug-in; without it a reboot before that would leave the 80% cap stuck.
-  _ihad=0
-  [ -f "$HC_DATA/chg_watch.set" ] && _ihad=1
-  [ -f "$HC_DATA/chg_watch.state" ] && _ihad=1
-  hc_watch_pid >/dev/null 2>&1 && _ihad=1
-  hc_watch_stop
-  if ! on charge_limit; then
-    # only release a cap HyperCool set; leave a value set by someone else alone
-    if [ "$_ihad" = 1 ]; then
-      for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
-        [ -e "$_n" ] && { echo 0 > "$_n"; } 2>/dev/null
-      done
-    fi
-    rm -f "$HC_DATA/chg_watch.set" "$HC_DATA/chg_watch.state"
-    st charge_limit off
-    return
+# The "Charge limit ~80%" feature was removed: stop an old keeper and give the night charging
+# flag back, only when HyperCool set it (marker / keeper state) and the battery keeper is not holding it
+f_charge_limit_gone() {
+  _cw=$(cat "$HC_DATA/chg_watch.pid" 2>/dev/null)
+  case "$_cw" in ''|*[!0-9]*) ;; *) grep -q chg_watch "/proc/$_cw/cmdline" 2>/dev/null && { kill "$_cw" 2>/dev/null; sleep 2; } ;; esac
+  if [ -f "$HC_DATA/chg_watch.set" ] || [ -f "$HC_DATA/chg_watch.state" ]; then
+    for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
+      [ -e "$_n" ] || continue
+      grep -q "^$_n|" "$HC_DATA/batp.save" 2>/dev/null && continue
+      { echo 0 > "$_n"; } 2>/dev/null
+    done
   fi
-  cnt_reset
-  _nc=""
-  for _n in /sys/class/qcom-battery/night_charging /sys/class/power_supply/battery/night_charging; do
-    [ -e "$_n" ] && { _nc=$_n; break; }
-  done
-  [ -n "$_nc" ] || { st charge_limit skipped "no night_charging node on this kernel"; return; }
-  # writable at all? (the keeper only re-writes the same value)
-  if ! { echo 1 > "$_nc"; } 2>/dev/null; then
-    chmod 0664 "$_nc" 2>/dev/null
-    { echo 1 > "$_nc"; } 2>/dev/null || { st charge_limit failed "${_nc#/sys/class/} rejected the write"; return; }
-  fi
-  rm -f "$HC_DATA/chg_watch.state"
-  # HyperCool has now set the flag: remember it, so turning the feature off
-  # later releases it even if the keeper never wrote its state (not plugged in)
-  echo "$_nc" > "$HC_DATA/chg_watch.set"
-  if command -v nice >/dev/null 2>&1; then
-    nohup nice -n 19 sh "$MODDIR/common/chg_watch.sh" "$_nc" >/dev/null 2>&1 &
-  else
-    nohup sh "$MODDIR/common/chg_watch.sh" "$_nc" >/dev/null 2>&1 &
-  fi
-  _i=0
-  while [ "$_i" -lt 5 ] && ! hc_watch_pid >/dev/null; do sleep 1; _i=$((_i + 1)); done
-  if _wp=$(hc_watch_pid); then
-    st charge_limit applied "${_nc#/sys/class/}=1 on every plug-in, stops at ~80% (keeper pid $_wp, checks every 15 s)"
-  else
-    st charge_limit failed "keeper did not start; flag only set until the next unplug"
-  fi
+  rm -f "$HC_DATA"/chg_watch.* 2>/dev/null
+  return 0
 }
 
 # The "Hold charge at a set level" feature was removed: put back anything an older version left cut and drop its files
@@ -1814,6 +1848,237 @@ f_heat_guard() {
   fi
 }
 
+# battery keeper - common/bat_watch.sh, one keeper for three features:
+# chg_pause (charging switch off while hot / at a level), bat_hist (history for Home) and temp_warn
+hc_bat_pid() {
+  _bq=$(cat "$HC_DATA/bat_watch.pid" 2>/dev/null)
+  case "$_bq" in ''|*[!0-9]*) return 1 ;; esac
+  grep -q bat_watch "/proc/$_bq/cmdline" 2>/dev/null && echo "$_bq"
+}
+# stop it now: TERM runs its trap only after the sleep it is in, so the sleep is stopped too
+hc_bat_stop() {
+  rm -f "$HC_DATA/bat_watch.state"
+  _bq=$(hc_bat_pid) || return 0
+  kill "$_bq" 2>/dev/null
+  for _ck in /proc/[0-9]*; do
+    [ "$(awk '/^PPid:/{print $2}' "$_ck/status" 2>/dev/null)" = "$_bq" ] && kill "${_ck##*/}" 2>/dev/null
+  done
+  _i=0; while [ "$_i" -lt 5 ] && [ -d "/proc/$_bq" ]; do sleep 1; _i=$((_i + 1)); done
+  [ -d "/proc/$_bq" ] && kill -9 "$_bq" 2>/dev/null
+  rm -f "$HC_DATA/bat_watch.pid"
+}
+# charging switches of this kernel for chg_pause_how (auto | bypass | cut), "kind:node" list
+hc_batp_nodes() {
+  for _e in bypass:/sys/class/power_supply/battery/charging_enabled bypass:/sys/class/power_supply/battery/battery_charging_enabled \
+            bypass:/sys/class/qcom-battery/battery_charging_enabled bypass:/sys/devices/platform/charger/bypass_charger \
+            bypass:/proc/mtk_battery_cmd/current_cmd bypass:/sys/class/qcom-battery/charging_enabled bypass:/sys/class/qcom-battery/night_charging \
+            bypass:/sys/class/power_supply/battery/charge_enabled bypass:/sys/class/power_supply/battery/charge_disable \
+            bypass:/sys/class/power_supply/battery_ext/smart_charging_interruption bypass:/sys/class/power_supply/battery/mmi_charging_enable \
+            bypass:/sys/class/power_supply/battery/op_disable_charge bypass:/sys/devices/platform/mt-battery/disable_charger \
+            bypass:/sys/class/power_supply/ac/charging_enabled bypass:/sys/class/power_supply/dc/charging_enabled \
+            bypass:/sys/class/power_supply/battery/batt_slate_mode bypass:/sys/class/power_supply/battery/stop_charge \
+            bypass:/sys/class/power_supply/battery/device/Charging_Enable bypass:/sys/class/power_supply/chargalg/disable_charging \
+            bypass:/sys/class/power_supply/bq2589x_charger/enable_charging bypass:/sys/class/power_supply/charge_data/enable_charger \
+            bypass:/sys/class/hw_power/charger/charge_data/enable_charger bypass:/sys/devices/platform/huawei_charger/enable_charger \
+            bypass:/sys/class/oplus_chg/battery/mmi_charging_enable bypass:/sys/devices/virtual/oplus_chg/battery/mmi_charging_enable \
+            bypass:/sys/devices/platform/soc/soc:oplus,chg_intf/oplus_chg/battery/mmi_charging_enable \
+            bypass:/sys/devices/platform/soc/soc:oplus,chg_intf/oplus_chg/battery/chg_enable \
+            bypass:/sys/devices/platform/soc/soc:google,charger/charge_disable bypass:/sys/kernel/nubia_charge/charger_bypass \
+            bypass:/sys/devices/platform/lge-unified-nodes/charging_enable bypass:/sys/devices/platform/charger/tran_aichg_disable_charger \
+            bypass:/sys/devices/platform/battery/CCIChargerSwitch bypass:/proc/smb1357_disable_chrg \
+            cut:/sys/class/asuslib/charging_suspend_en cut:/sys/kernel/debug/google_charger/input_suspend \
+            cut:/sys/class/power_supply/battery/input_suspend \
+            limit:/sys/class/power_supply/battery/constant_charge_current limit:/sys/class/power_supply/battery/fast_charge_current \
+            limit:/sys/class/power_supply/battery/thermal_input_current limit:/sys/class/power_supply/battery/charge_control_limit \
+            cut:/sys/class/qcom-battery/input_suspend cut:/proc/mtk_battery_cmd/en_power_path \
+            cut:/sys/class/power_supply/battery/battery_input_suspend \
+            cut:/sys/devices/platform/soc/soc:qcom,pmic_glink/soc:qcom,pmic_glink:qcom,battery_charger/force_charger_suspend; do
+    # bypass = a switch or a charge current limit (the charger keeps powering the phone)
+    case "$1:${_e%%:*}" in auto:*|bypass:bypass|bypass:limit|cut:cut) ;; *) continue ;; esac
+    [ -e "${_e#*:}" ] && printf '%s ' "${_e#*:}" | sed 's#^/sys/class/##; s#^/proc/##'
+  done
+}
+f_bat_watch() {
+  hc_bat_stop
+  # a pause left by a keeper that was killed (the node is back to normal after a reboot anyway)
+  hc_batp_release >/dev/null 2>&1
+  _bp=0; _bh=0; _bw=0; _pt=0; _pl=0; _bwt=45; _how=auto; _bd=""
+  _tv=$(cat /sys/class/power_supply/battery/temp 2>/dev/null)
+  _tok=1; case "$_tv" in ''|-) _tok=0 ;; *) case "${_tv#-}" in *[!0-9]*) _tok=0 ;; esac ;; esac
+  if on chg_pause; then
+    _pt=$(rng chg_pause_temp 40 36 48); _pl=$(rng chg_pause_level 0 50 95)
+    _how=$(cfg chg_pause_how auto); case "$_how" in auto|bypass|cut) ;; *) _how=auto ;; esac
+    [ "$_tok" = 0 ] && _pt=0
+    _nl=$(hc_batp_nodes "$_how")
+    # bypass while gaming: the games of Game battery mode (its list, or every installed game)
+    _bg=0; _bgs=1; rm -f "$HC_DATA/batp.games"
+    if [ "$(cfg chg_pause_game 0)" = 1 ]; then
+      _bgs=$(cfg chg_pause_game_screen 1); [ "$_bgs" = 0 ] || _bgs=1
+      if [ "$_how" = cut ]; then
+        log "  chg_pause: bypass while gaming needs a switch that keeps the charger on, not Cut"
+      else
+        hc_game_list > "$HC_DATA/batp.games"
+        if [ -s "$HC_DATA/batp.games" ]; then _bg=1; else rm -f "$HC_DATA/batp.games"; log "  chg_pause: no game for bypass while gaming"; fi
+      fi
+    fi
+    if [ "$_pt" = 0 ] && [ "$_pl" = 0 ] && [ "$_bg" = 0 ]; then
+      st chg_pause skipped "$([ "$_tok" = 0 ] && echo "battery temperature not readable and no level or game chosen" || echo "no temperature, level or game chosen")"
+    elif [ -z "$_nl" ]; then
+      st chg_pause skipped "no charging switch on this kernel$([ "$_how" != auto ] && echo " for $_how")"
+    else
+      _bp=1
+    fi
+  else
+    st chg_pause off
+  fi
+  on bat_hist && _bh=1
+  on bat_hist || st bat_hist off
+  if on temp_warn; then
+    if [ "$_tok" = 1 ]; then _bw=1; _bwt=$(rng temp_warn_temp 45 40 52); [ "$_bwt" = 0 ] && _bwt=45
+    else st temp_warn skipped "battery temperature not readable (${_tv:-empty})"; fi
+  else
+    st temp_warn off
+  fi
+  [ "$_bp$_bh$_bw" = 000 ] && return 0
+  nohup sh "$MODDIR/common/bat_watch.sh" "$_bp" "$((_pt * 10))" "$_pl" "$_how" "$_bh" "$_bw" "$((_bwt * 10))" "${_bg:-0}" "${_bgs:-1}" >/dev/null 2>&1 &
+  _i=0; while [ "$_i" -lt 5 ] && ! hc_bat_pid >/dev/null; do sleep 1; _i=$((_i + 1)); done
+  if _bq=$(hc_bat_pid); then
+    _bd="keeper pid $_bq"
+    if [ "$_bp" = 1 ]; then
+      _pw=""
+      [ "$_pt" -gt 0 ] && _pw="paused at ${_pt} C, back at $((_pt - 3)) C"
+      [ "$_pl" -gt 0 ] && _pw="${_pw:+$_pw; }held at ${_pl}%"
+      [ "$_bg" = 1 ] && _pw="${_pw:+$_pw; }bypass while $(grep -c . "$HC_DATA/batp.games") game(s) run$([ "$_bgs" = 1 ] && echo " with the screen on")"
+      st chg_pause applied "$_pw; switches ($_how): ${_nl% }; the one that works is found the first time charging is paused ($_bd)"
+    fi
+    [ "$_bh" = 1 ] && st bat_hist applied "level, temperature and screen every 5 min, last 48 h ($_bd)"
+    [ "$_bw" = 1 ] && st temp_warn applied "notification at ${_bwt} C, again after it was 3 C cooler ($_bd)"
+  else
+    [ "$_bp" = 1 ] && st chg_pause failed "keeper did not start"
+    [ "$_bh" = 1 ] && st bat_hist failed "keeper did not start"
+    [ "$_bw" = 1 ] && st temp_warn failed "keeper did not start"
+  fi
+}
+
+# game_mode - Android Game Mode (Android 13+): battery mode with an FPS cap and a lower render
+# resolution for the chosen games (game_mode_pkgs, empty = every installed game Android knows).
+# Android keeps the game mode across reboots: game.save holds the mode before, so off puts it back.
+hc_game_cur() { cmd game list-modes "$1" </dev/null 2>/dev/null | sed -n 's/.*current mode: *\([A-Za-z]*\).*/\1/p' | head -n 1; }
+# hc_game_api: 14 = Android 14+ Game Mode (list-modes reads the mode), 13 = Android 13 (set / mode /
+# reset only, no way to read the mode or to ask whether an app is a game), 0 = no Game Mode service
+hc_game_api() {
+  [ -n "${HC_GAPI:-}" ] && { echo "$HC_GAPI"; return; }
+  _gh=$(cmd game help </dev/null 2>/dev/null)
+  case "$_gh" in *list-modes*) HC_GAPI=14 ;; *"set --mode"*|*"mode [--user"*) HC_GAPI=13 ;; *) HC_GAPI=0 ;; esac
+  echo "$HC_GAPI"
+}
+# hc_game_list: game_mode_pkgs, or every user app Android counts as a game (read once per boot)
+hc_game_list() {
+  _hl=$(cfg game_mode_pkgs "" | tr -d ' \r' | tr ',' '\n' | grep -E '^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+$' | sort -u)
+  if [ -n "$_hl" ]; then echo "$_hl"; return 0; fi
+  # Android 13 cannot tell which apps are games: only a list chosen by hand works there
+  [ "$(hc_game_api)" = 14 ] || return 0
+  if [ -z "${HC_GAMES_DONE:-}" ]; then
+    HC_GAMES=""
+    for _p in $(pm list packages -3 </dev/null 2>/dev/null | sed -n 's/^package://p' | tr -d '\r'); do
+      case "$(hc_game_cur "$_p")" in ''|unsupported) ;; *) HC_GAMES="$HC_GAMES$_p
+" ;; esac
+    done
+    HC_GAMES_DONE=1
+  fi
+  printf '%s' "$HC_GAMES"
+}
+f_game_mode() {
+  if ! on game_mode; then
+    hc_game_reset
+    st game_mode off
+    return
+  fi
+  _gapi=$(hc_game_api)
+  if [ "$_gapi" = 0 ]; then
+    hc_game_reset
+    st game_mode skipped "no Game Mode service on this ROM (Android 13 or newer needed)"
+    return
+  fi
+  # FPS cap: the WebUI offers what this panel can show; never above the fastest panel mode
+  _gf=$(num game_mode_fps 60)
+  { [ "$_gf" -lt 24 ] && [ "$_gf" != 0 ]; } || [ "$_gf" -gt 240 ] && _gf=60
+  _gmx=$(dumpsys display </dev/null 2>/dev/null | grep -m 1 -i 'supportedModes' | grep -o 'fps=[0-9]*' | cut -d= -f2 | sort -n | tail -n 1)
+  case "$_gmx" in ''|*[!0-9]*) _gmx=0 ;; esac
+  [ "$_gmx" -ge 24 ] && [ "$_gf" -gt "$_gmx" ] && { log "  game_mode: ${_gf} FPS is above the panel (${_gmx} Hz), ${_gmx} used"; _gf=$_gmx; }
+  _gr=$(rng game_mode_scale 80 50 100); [ "$_gr" = 0 ] && _gr=100
+  _auto=0; [ -z "$(cfg game_mode_pkgs "" | tr -d ' \r,')" ] && _auto=1
+  # the chosen games, or every user app Android counts as a game (its game mode is not "unsupported")
+  # not $(...): the list of installed games is read once per boot and kept for the battery keeper
+  hc_game_list > "$HC_DATA/.games.$$"; _gl=$(cat "$HC_DATA/.games.$$" 2>/dev/null); rm -f "$HC_DATA/.games.$$"
+  # games no longer in the list get their old mode back
+  hc_game_reset "$(echo "$_gl" | tr '\n' ',')"
+  if [ -z "$(echo "$_gl" | tr -d '\n')" ]; then
+    if [ "$_auto" = 1 ] && [ "$_gapi" = 13 ]; then st game_mode skipped "Android 13 cannot list the games: choose them in the list"
+    elif [ "$_auto" = 1 ]; then st game_mode skipped "no installed app is a game for Android"
+    else st game_mode skipped "no game chosen"; fi
+    return
+  fi
+  _ok=0; _ng=0; _fl=0; _names=""; _gfa=$_gf
+  _sc=""; [ "$_gr" -lt 100 ] && _sc=$(awk -v r="$_gr" 'BEGIN { printf "%.2f", r / 100 }' | sed 's/0$//')
+  for _p in $_gl; do
+    pm path "$_p" </dev/null >/dev/null 2>&1 || continue
+    if [ "$_gapi" = 14 ]; then
+      _cm=$(hc_game_cur "$_p")
+      case "$_cm" in ''|unsupported) _ng=$((_ng + 1)); log "  game_mode: $_p is not a game for Android"; continue ;; esac
+    else
+      # Android 13 cannot read the mode: standard (the default) comes back when this is turned off
+      _cm=standard
+    fi
+    grep -q "^$_p|" "$HC_DATA/game.save" 2>/dev/null || echo "$_p|$_cm" >> "$HC_DATA/game.save"
+    # start from no interventions, then battery mode with the chosen ones
+    cmd game reset --user 0 --mode 3 "$_p" </dev/null >/dev/null 2>&1
+    # Android 13 wants --mode first and has no --user for set (it uses the current user)
+    _ga="--mode 3"
+    [ -n "$_sc" ] && _ga="$_ga --downscale $_sc"
+    [ "$_gf" -gt 0 ] && _ga="$_ga --fps $_gf"
+    [ "$_gapi" = 14 ] && _ga="$_ga --user 0"
+    # shellcheck disable=SC2086
+    _go=$(cmd game set $_ga "$_p" </dev/null 2>&1)
+    case "$_go" in *[Ee]rror*|*[Ee]xception*|*[Uu]nknown*|*[Ii]nvalid*)
+      log "  game_mode: $_p set: $_go"
+      # Android 13 only takes 30 / 45 / 60 / 90 / 120: the nearest one below
+      _gn=0; for _v in 30 45 60 90 120; do [ "$_v" -le "$_gf" ] && _gn=$_v; done
+      if [ "$_gf" -gt 0 ] && [ "$_gn" -gt 0 ] && [ "$_gn" != "$_gf" ]; then
+        _ga=$(echo "$_ga" | sed "s/--fps $_gf/--fps $_gn/")
+        # shellcheck disable=SC2086
+        cmd game set $_ga "$_p" </dev/null >/dev/null 2>&1 && { log "  game_mode: $_p set again with ${_gn} FPS"; _gfa=$_gn; }
+      fi ;;
+    esac
+    _gmo=$(cmd game mode --user 0 battery "$_p" </dev/null 2>&1); _gmr=$?
+    _gok=0
+    if [ "$_gapi" = 14 ]; then
+      [ "$(hc_game_cur "$_p")" = battery ] && _gok=1
+    else
+      # Android 13: the mode command itself says whether battery mode was set
+      [ "$_gmr" = 0 ] && case "$_gmo" in *"not supported"*|*[Ii]nvalid*|*[Ee]rror*|*[Ee]xception*) ;; *) _gok=1 ;; esac
+      [ "$_gok" = 1 ] || {
+        _ng=$((_ng + 1)); log "  game_mode: $_p: $_gmo"
+        cmd game reset --user 0 "$_p" </dev/null >/dev/null 2>&1
+        sed -i "/^$_p|/d" "$HC_DATA/game.save" 2>/dev/null; continue
+      }
+    fi
+    if [ "$_gok" = 1 ]; then
+      _ok=$((_ok + 1)); [ "$_ok" -le 4 ] && _names="$_names${_names:+, }$_p"
+    else
+      _fl=$((_fl + 1)); log "  game_mode: $_p did not switch to battery mode"
+    fi
+  done
+  _what="battery mode$([ "$_gf" -gt 0 ] && echo ", ${_gfa} FPS")$([ "$_gr" -lt 100 ] && echo ", ${_gr}% resolution")"
+  _more=""; [ "$_ok" -gt 4 ] && _more=" +$((_ok - 4)) more"
+  _x="$([ "$_ng" -gt 0 ] && echo "; $_ng not a game for Android")$([ "$_fl" -gt 0 ] && echo "; $_fl refused")"
+  if [ "$_ok" -gt 0 ] && [ "$_fl" -eq 0 ]; then st game_mode applied "$_ok game(s), $_what: $_names$_more$_x"
+  elif [ "$_ok" -gt 0 ]; then st game_mode partial "$_ok game(s), $_what: $_names$_more$_x"
+  elif [ "$_fl" -gt 0 ]; then st game_mode failed "Game Mode refused every game$_x"
+  else st game_mode skipped "none of the chosen apps is installed or a game for Android$_x"
+  fi
+}
+
 f_refresh_rate() {
   _hz=$(rng refresh_rate 0 30 165)
   [ "$_hz" = 0 ] && { restore_feature refresh_rate; st refresh_rate off; return; }
@@ -1829,6 +2094,53 @@ f_refresh_rate() {
   set_s refresh_rate secure user_refresh_rate "$_hz"
   set_s refresh_rate secure miui_refresh_rate "$_hz"
   fin refresh_rate "peak ${_hz}Hz"
+}
+
+# screen_res - lower screen resolution: wm size and wm density at screen_res % (90 / 80 / 75), so
+# everything keeps its size on screen and the GPU draws fewer pixels. Android keeps both after a
+# reboot, so the size and density that were set before are recorded (none = no override) and come
+# back when this is turned off, on Revert and on uninstall. A size or density changed after HyperCool
+# set its own (Settings > Display size) becomes the new base.
+hc_wm() { # <size|density> <Physical|Override>: "Physical size: 1080x2400", "Override density: 396"
+  wm "$1" </dev/null 2>/dev/null | tr -d '\r' | sed -n "s/^$2 $1: *//p" | head -n 1
+}
+f_screen_res() {
+  _sr=$(num screen_res 0); case "$_sr" in 90|80|75) ;; *) _sr=0 ;; esac
+  if [ "$_sr" = 0 ]; then
+    restore_feature screen_res; rm -f "$HC_DATA/screen_res.set"
+    st screen_res off; return
+  fi
+  _ps=$(hc_wm size Physical); _os=$(hc_wm size Override)
+  _pd=$(hc_wm density Physical); _od=$(hc_wm density Override)
+  case "$_ps" in [0-9]*x[0-9]*) ;; *) st screen_res skipped "screen size not readable (wm size)"; return ;; esac
+  case "$_pd" in ''|*[!0-9]*) st screen_res skipped "screen density not readable (wm density)"; return ;; esac
+  cnt_reset
+  # what HyperCool set last time; anything else now is the user's (or the ROM's) own: the new base
+  # (size and density each on their own: Settings > Display size only changes the density)
+  _last=$(cat "$HC_DATA/screen_res.set" 2>/dev/null)
+  if [ -n "$_last" ]; then
+    [ "${_last% *}" != "${_os:-none}" ] && sed -i '/^screen_res|wm|display|size|/d' "$HC_ROMBAK" 2>/dev/null
+    [ "${_last#* }" != "${_od:-none}" ] && sed -i '/^screen_res|wm|display|density|/d' "$HC_ROMBAK" 2>/dev/null
+  fi
+  recv screen_res wm display size "${_os:-none}"
+  recv screen_res wm display density "${_od:-none}"
+  _bs=$(sed -n 's/^screen_res|wm|display|size|//p' "$HC_ROMBAK" | tail -n 1)
+  _bd=$(sed -n 's/^screen_res|wm|display|density|//p' "$HC_ROMBAK" | tail -n 1)
+  case "$_bs" in [0-9]*x[0-9]*) ;; *) _bs=$_ps ;; esac
+  case "$_bd" in ''|*[!0-9]*) _bd=$_pd ;; esac
+  _w=${_bs%x*}; _h=${_bs#*x}
+  # even numbers, and the density in the same proportion (sizes on screen stay the same)
+  _nw=$(( (_w * _sr / 100 + 1) / 2 * 2 )); _nh=$(( (_h * _sr / 100 + 1) / 2 * 2 )); _nd=$(( (_bd * _sr + 50) / 100 ))
+  wm size "${_nw}x${_nh}" </dev/null >/dev/null 2>&1
+  wm density "$_nd" </dev/null >/dev/null 2>&1
+  if [ "$(hc_wm size Override)" = "${_nw}x${_nh}" ] && [ "$(hc_wm density Override)" = "$_nd" ]; then
+    cnt_ok; echo "${_nw}x${_nh} $_nd" > "$HC_DATA/screen_res.set"
+    fin screen_res "${_sr}%: ${_nw}x${_nh}, density $_nd (was ${_bs}, $_bd)"
+  else
+    cnt_fail; log "  screen_res: wm did not keep ${_nw}x${_nh} / $_nd"
+    restore_feature screen_res; rm -f "$HC_DATA/screen_res.set"
+    fin screen_res
+  fi
 }
 
 f_anim_scale() {

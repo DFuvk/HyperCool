@@ -1,6 +1,18 @@
 # Changelog
 
-> Current build: **v2.3.8 (238)**.
+> Current build: **v2.4.0 (240)**.
+
+## v2.4.0 (240)
+
+- New: Game battery mode — off by default. Games get Android's battery mode with a 60 FPS cap and a lower render resolution, so they run cooler. On Android 13 the games to use are picked from the list; on Android 14+ every installed game is detected automatically.
+- New: Pause charging / bypass charging — off by default. Charging pauses at the temperature or level you pick, or while a game is open, and the charger powers the phone instead. Kernels without a charging switch get bypass through a 0 mA charge current. Qualcomm and MediaTek.
+- New: Battery history and temperature warning — off by default. A 48 h chart of level, temperature and screen-on / screen-off drain on Home, and a notification when the battery gets too hot.
+- New: Leftover app folders — a new one-shot action finds Android/data and Android/obb folders of apps that are no longer installed, shows them and deletes them when you confirm.
+- New: Memory bus frequency cap — off by default, Qualcomm. The RAM and system cache bus stays below its top speed for less heat under heavy load, with a lock so the ROM cannot raise it again.
+- New: Lower screen resolution — off by default. The whole screen is drawn at 90, 80 or 75% with the same sizes on screen; the old values come back when it is turned off.
+- Changed: C-state aware scheduler — Energy Aware Scheduler now also prefers cores that are awake or lightly asleep, on kernels that have the switch.
+- Changed: Charge limit ~80% removed — the Xiaomi night charging limit and its keeper are gone. Use Pause / bypass charging instead; a limit set by an older version is released at the next boot.
+- Changed: More charging-switch candidates: also Samsung (ac / dc charging_enabled, batt_slate_mode, stop_charge), Huawei (huawei_charger), Oplus (oplus_chg, google charger), Nubia (nubia_charge), LG (lge-unified-nodes), Transsion (CCIChargerSwitch, smb1357) and generic nodes; the battery keeper records a switch that leaves the battery Discharging as a cut and rejects it while gaming.
 
 ## v2.3.8 (238)
 
